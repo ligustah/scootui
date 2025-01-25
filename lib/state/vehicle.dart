@@ -92,6 +92,10 @@ class VehicleData with $VehicleData {
   @StateField(defaultValue: "off")
   Toggle hornButton;
 
+  @override
+  @StateField(name: "unable-to-drive", defaultValue: "off")
+  Toggle isUnableToDrive;
+
   VehicleData({
     this.blinkerSwitch = BlinkerSwitch.off,
     this.blinkerState = BlinkerState.off,
@@ -104,5 +108,6 @@ class VehicleData with $VehicleData {
     this.seatboxLock = SeatboxLock.closed,
     this.handleBarPosition = HandleBarPosition.onPlace,
     this.seatboxButton = Toggle.off,
+    this.isUnableToDrive = Toggle.off,
   });
 }
