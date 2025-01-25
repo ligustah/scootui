@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   redis: ^4.0.0
   intl: ^0.19.0
+  flutter_svg: ^2.0.17
 
 dev_dependencies:
   flutter_test:
@@ -19,3 +20,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/librescoot-engine-warning.svg
+    - assets/icons/librescoot-hazards.svg
+    - assets/icons/librescoot-parking-brake.svg
+    - assets/icons/librescoot-turn-left.svg
+    - assets/icons/librescoot-turn-right.svg
