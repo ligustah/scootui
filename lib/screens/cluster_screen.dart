@@ -14,6 +14,12 @@ import '../widgets/power/power_display.dart';
 import '../widgets/general/odometer_display.dart';
 import '../widgets/menu/menu_overlay.dart';
 import '../widgets/status_bars/bottom_status_bar.dart';
+import 'map_screen.dart';
+
+enum ViewMode {
+  dashboard,
+  map,
+}
 
 class ClusterScreen extends StatefulWidget {
   final Function(ThemeMode)? onThemeSwitch;
@@ -36,6 +42,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
   String? _errorMessage;
   Timer? _reconnectTimer;
   String? _bluetoothPinCode;
+  ViewMode _currentView = ViewMode.dashboard;
 
   // Track previous odometer values for animation
   double _previousTrip = 0.0;
@@ -49,45 +56,39 @@ class _ClusterScreenState extends State<ClusterScreen> {
     _updateTime();
   }
 
-Future<void> _setupRedis() async {
-  _redis = RedisService(
-    'dummyhost',  // this will be ignored
-    6379, 
-    _vehicleState,
-    onConnectionLost: (message) {
-      setState(() {
-        _errorMessage = message;
-      });
-    },
-    onConnectionRestored: () {
-      setState(() {
-        _errorMessage = null;
-      });
-    },
-    onThemeSwitch: widget.onThemeSwitch,
-    onBrakeEvent: (brake, state) {
-      if (state == 'on') {
-        if (brake == 'brake:left') {
-          _menuManager.handleLeftBrake(_vehicleState.isParked, state);
-        } else if (brake == 'brake:right') {
-          _menuManager.handleRightBrake();
+  void _setupRedis() {
+    _redis = RedisService(
+      '',  // Host is determined by platform
+      6379,  // Default Redis port
+      _vehicleState,
+      onThemeSwitch: widget.onThemeSwitch,
+      onBluetoothPinCodeEvent: (pinCode) {
+        setState(() {
+          _bluetoothPinCode = pinCode;
+        });
+      },
+      onBrakeEvent: (brake, state) {
+        if (state == 'on') {
+          if (brake == 'brake:left') {
+            _menuManager.handleLeftBrake(_vehicleState.isParked, state);
+          } else if (brake == 'brake:right') {
+            _menuManager.handleRightBrake();
+          }
         }
-      }
-    },
-    onBluetoothPinCodeEvent: (pinCode) {
-      print('DEBUG: onBluetoothPinCodeEvent called with pin code: $pinCode');
+      },
+    );
+    _menuManager = MenuManager(
+      widget.onThemeSwitch ?? (_) {},
+      _vehicleState,
+      _redis,
+    );
+    _menuManager.onMapViewToggled = (showMap) {
       setState(() {
-        _bluetoothPinCode = pinCode;
+        _currentView = showMap ? ViewMode.map : ViewMode.dashboard;
       });
-    },
-  );
-  
-  _menuManager = MenuManager((mode) {
-    widget.onThemeSwitch?.call(mode);
-  }, _vehicleState, _redis);
-  
-  await _connectToRedis();
-}
+    };
+    _connectToRedis();
+  }
 
   Future<void> _connectToRedis() async {
     try {
@@ -117,6 +118,12 @@ Future<void> _setupRedis() async {
   void _updateTime() {
     setState(() {
       _currentTime = DateFormat('HH:mm').format(DateTime.now());
+    });
+  }
+
+  void _switchView(ViewMode newView) {
+    setState(() {
+      _currentView = newView;
     });
   }
 
@@ -150,61 +157,67 @@ Future<void> _setupRedis() async {
       child: Stack(
         children: [
           // Main content layout
-          Column(
-            children: [
-              // Status bar at top
-              StatusBar(
-                state: _vehicleState,
-                currentTime: _currentTime,
-              ),
+          if (_currentView == ViewMode.dashboard)
+            Column(
+              children: [
+                // Status bar at top
+                StatusBar(
+                  state: _vehicleState,
+                  currentTime: _currentTime,
+                ),
 
-              // Warning indicators
-              WarningIndicators(
-                state: _vehicleState,
-              ),
+                // Warning indicators
+                WarningIndicators(
+                  state: _vehicleState,
+                ),
 
-              // Main speedometer area
-              Expanded(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Speedometer
-                    SpeedometerDisplay(
-                      state: _vehicleState,
-                    ),
-
-                    // Power display at bottom of speedometer area
-                    Positioned(
-                      bottom: 20,
-                      left: 40,
-                      right: 40,
-                      child: PowerDisplay(
+                // Main speedometer area
+                Expanded(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Speedometer
+                      SpeedometerDisplay(
                         state: _vehicleState,
                       ),
-                    ),
-                  ],
-                ),
-              ),
 
-              // Bottom area with trip/total distance
-              Container(
-                height: 80,
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: isDark ? Colors.white10 : Colors.black12,
-                      width: 1,
-                    ),
+                      // Power display at bottom of speedometer area
+                      Positioned(
+                        bottom: 20,
+                        left: 40,
+                        right: 40,
+                        child: PowerDisplay(
+                          state: _vehicleState,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: AnimatedOdometerDisplay(
-                  state: _vehicleState,
-                  previousTrip: _previousTrip,
-                  previousTotal: _previousTotal,
+
+                // Bottom area with trip/total distance
+                Container(
+                  height: 80,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: AnimatedOdometerDisplay(
+                    state: _vehicleState,
+                    previousTrip: _previousTrip,
+                    previousTotal: _previousTotal,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            )
+          else
+            MapScreen(
+              vehicleState: _vehicleState,
+              currentTime: _currentTime,
+            ),
 
           // Error message overlay
           if (_errorMessage != null)

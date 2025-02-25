@@ -12,6 +12,13 @@ dependencies:
   redis: ^4.0.0
   intl: ^0.19.0
   flutter_svg: ^2.0.17
+  flutter_map: ^6.1.0
+  vector_map_tiles: ^7.3.1
+  vector_map_tiles_mbtiles: ^1.1.0
+  vector_tile_renderer: ^5.2.1
+  mbtiles: ^0.4.0
+  latlong2: ^0.9.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
@@ -26,3 +33,5 @@ flutter:
     - assets/icons/librescoot-parking-brake.svg
     - assets/icons/librescoot-turn-left.svg
     - assets/icons/librescoot-turn-right.svg
+    - assets/maplight.json
+    - assets/mapdark.json

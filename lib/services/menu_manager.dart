@@ -2,21 +2,52 @@ import 'package:flutter/material.dart';
 import '../models/vehicle_state.dart';
 import '../widgets/menu/menu_item.dart';
 import 'redis_service.dart';
+import 'map_service.dart';
 
 class MenuManager extends ChangeNotifier {
   bool _isMenuVisible = false;
   bool _isInSubmenu = false;
   int _selectedIndex = 0;
-  late List<MenuItem> _menuItems;
+  List<MenuItem> _menuItems = [];
   DateTime? _lastLeftBrakePress;
   static const _doublePressThreshold = Duration(milliseconds: 300);
   ThemeMode _currentTheme = ThemeMode.dark;
   final Function(ThemeMode) _onThemeChanged;
   final VehicleState _vehicleState;
   late RedisService _redisService;
+  Function(bool)? onMapViewToggled;
+  bool _isMapView = false;
+  bool _isMapAvailable = false;
   
   MenuManager(this._onThemeChanged, this._vehicleState, this._redisService) {
-    _menuItems = [
+    _initializeMenu();
+  }
+
+  Future<void> _initializeMenu() async {
+    _isMapAvailable = await MapService.isMapAvailable();
+    _buildMenuItems();
+    notifyListeners();
+  }
+
+  void _buildMenuItems() {
+    final List<MenuItem> items = [];
+    
+    if (_isMapAvailable) {
+      items.add(
+        MenuItem(
+          title: 'Show Map View',
+          type: MenuItemType.action,
+          onChanged: (_) {
+            _isMapView = !_isMapView;
+            onMapViewToggled?.call(_isMapView);
+            _updateMapViewMenuItem();
+            closeMenu();
+          },
+        ),
+      );
+    }
+
+    items.addAll([
       MenuItem(
         title: 'Hazard lights',
         type: MenuItemType.action,
@@ -29,7 +60,6 @@ class MenuManager extends ChangeNotifier {
         title: 'Change Theme',
         type: MenuItemType.action,
         onChanged: (_) {
-          // Cycle through theme modes
           final newTheme = _currentTheme == ThemeMode.dark 
               ? ThemeMode.light 
               : ThemeMode.dark;
@@ -51,7 +81,25 @@ class MenuManager extends ChangeNotifier {
         type: MenuItemType.action,
         onChanged: (_) => closeMenu(),
       ),
-    ];
+    ]);
+
+    _menuItems = items;
+  }
+
+  void _updateMapViewMenuItem() {
+    if (!_isMapAvailable) return;
+    
+    _menuItems[0] = MenuItem(
+      title: _isMapView ? 'Show Dashboard' : 'Show Map View',
+      type: MenuItemType.action,
+      onChanged: (_) {
+        _isMapView = !_isMapView;
+        onMapViewToggled?.call(_isMapView);
+        _updateMapViewMenuItem();
+        closeMenu();
+      },
+    );
+    notifyListeners();
   }
 
   bool get isMenuVisible => _isMenuVisible;
