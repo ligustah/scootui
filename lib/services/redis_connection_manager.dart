@@ -67,7 +67,8 @@ class RedisConnectionManager {
         "battery:1",
         "cb-battery",
         "aux-battery",
-        "ble"
+        "ble",
+        "gps"
       ]);
       
       // Set up stream listener

@@ -6,6 +6,7 @@ class RedisEventHandler {
   final Function(ThemeMode)? onThemeSwitch;
   final Function(String)? onBatteryAlert;
   final Function(String?)? onBluetoothPinCodeEvent;
+  final Function(double, double)? onLocationUpdate;
 
   // Battery state tracking
   String? _lastBattery0State;
@@ -19,6 +20,7 @@ class RedisEventHandler {
     this.onThemeSwitch,
     this.onBatteryAlert,
     this.onBluetoothPinCodeEvent,
+    this.onLocationUpdate,
   });
 
   void handleEvent(String key) {
@@ -27,6 +29,11 @@ class RedisEventHandler {
     // Handle battery state changes
     if (key.startsWith('battery:')) {
       _handleBatteryStateChange();
+    } else if (key == 'location-update') {
+      // Handle GPS location update
+      if (vehicleState.hasGpsSignal && onLocationUpdate != null) {
+        onLocationUpdate!(vehicleState.gpsLatitude, vehicleState.gpsLongitude);
+      }
     }
   }
 

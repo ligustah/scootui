@@ -22,6 +22,7 @@ class RedisStateFetcher {
         _fetchAuxBatteryState(),
         _fetchBattery0State(),
         _fetchBattery1State(),
+        _fetchGpsState(),
       ]);
     } catch (e) {
       print('Error fetching state: $e');
@@ -241,6 +242,34 @@ class RedisStateFetcher {
       if (responses[1] != null) vehicleState.updateFromRedis('aux-battery', 'charge-status', responses[1]);
     } catch (e) {
       print('Error fetching aux battery state: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _fetchGpsState() async {
+    try {
+      final command = getCommand();
+      if (command == null) return;
+
+      final futures = [
+        command.send_object(["HGET", "gps", "latitude"]),
+        command.send_object(["HGET", "gps", "longitude"]),
+        command.send_object(["HGET", "gps", "altitude"]),
+        command.send_object(["HGET", "gps", "speed"]),
+        command.send_object(["HGET", "gps", "course"]),
+        command.send_object(["HGET", "gps", "timestamp"]),
+      ];
+      
+      final responses = await Future.wait(futures);
+      
+      if (responses[0] != null) vehicleState.updateFromRedis('gps', 'latitude', responses[0]);
+      if (responses[1] != null) vehicleState.updateFromRedis('gps', 'longitude', responses[1]);
+      if (responses[2] != null) vehicleState.updateFromRedis('gps', 'altitude', responses[2]);
+      if (responses[3] != null) vehicleState.updateFromRedis('gps', 'speed', responses[3]);
+      if (responses[4] != null) vehicleState.updateFromRedis('gps', 'course', responses[4]);
+      if (responses[5] != null) vehicleState.updateFromRedis('gps', 'timestamp', responses[5]);
+    } catch (e) {
+      print('Error fetching GPS state: $e');
       rethrow;
     }
   }

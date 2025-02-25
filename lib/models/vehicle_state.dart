@@ -15,6 +15,15 @@ class VehicleState {
   String vehicleState = '';
   String seatboxLock = '';
   
+  // GPS data
+  double gpsLatitude = 0.0;
+  double gpsLongitude = 0.0;
+  double gpsAltitude = 0.0;
+  double gpsSpeed = 0.0;
+  double gpsCourse = 0.0;
+  String gpsTimestamp = '';
+  bool hasGpsSignal = false;
+  
   // Brake states
   bool leftBrakeActive = false;
   bool rightBrakeActive = false;
@@ -113,6 +122,9 @@ class VehicleState {
         break;
       case 'ble':
         _updateBluetoothState(key, value);
+        break;
+      case 'gps':
+        _updateGpsState(key, value);
         break;
     }
   }
@@ -369,6 +381,30 @@ class VehicleState {
         break;
       case 'charge-status':
         auxBatteryChargeStatus = value.toString();
+        break;
+    }
+  }
+
+  void _updateGpsState(String key, dynamic value) {
+    switch (key) {
+      case 'latitude':
+        gpsLatitude = double.tryParse(value.toString()) ?? gpsLatitude;
+        hasGpsSignal = true;
+        break;
+      case 'longitude':
+        gpsLongitude = double.tryParse(value.toString()) ?? gpsLongitude;
+        break;
+      case 'altitude':
+        gpsAltitude = double.tryParse(value.toString()) ?? gpsAltitude;
+        break;
+      case 'speed':
+        gpsSpeed = double.tryParse(value.toString()) ?? gpsSpeed;
+        break;
+      case 'course':
+        gpsCourse = double.tryParse(value.toString()) ?? gpsCourse;
+        break;
+      case 'timestamp':
+        gpsTimestamp = value.toString();
         break;
     }
   }

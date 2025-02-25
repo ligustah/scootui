@@ -42,6 +42,7 @@ class RedisService {
     Function(String)? onBatteryAlert,
     Function(String, String)? onBrakeEvent,
     Function(String?)? onBluetoothPinCodeEvent,
+    Function(double, double)? onLocationUpdate,
   }) {
     return RedisService._internal(
       getRedisHost(),
@@ -53,6 +54,7 @@ class RedisService {
       onBatteryAlert: onBatteryAlert,
       onBrakeEvent: onBrakeEvent,
       onBluetoothPinCodeEvent: onBluetoothPinCodeEvent,
+      onLocationUpdate: onLocationUpdate,
     );
   }
 
@@ -67,6 +69,7 @@ class RedisService {
     this.onBatteryAlert,
     this.onBrakeEvent,
     this.onBluetoothPinCodeEvent,
+    this.onLocationUpdate,
   }) {
     _connectionManager = RedisConnectionManager(
       host: host,
@@ -91,6 +94,7 @@ class RedisService {
       onThemeSwitch: onThemeSwitch,
       onBatteryAlert: onBatteryAlert,
       onBluetoothPinCodeEvent: onBluetoothPinCodeEvent,
+      onLocationUpdate: onLocationUpdate,
     );
   }
 
@@ -109,6 +113,9 @@ class RedisService {
 
   // Bluetooth pin code event callback
   final Function(String?)? onBluetoothPinCodeEvent;
+  
+  // Location update callback
+  final Function(double, double)? onLocationUpdate;
 
   Future<void> connect() async {
     if (_isDisposed) return;
@@ -175,6 +182,35 @@ class RedisService {
         if (key == 'pin-code') {
           print('BLE pin code cleared');
           onBluetoothPinCodeEvent?.call(null);
+        }
+      }
+    } else if (channel == 'gps') {
+      // Handle GPS events
+      print('GPS event: $key');
+      if (key == 'location-update') {
+        // Fetch all GPS data fields
+        final command = _connectionManager.command;
+        if (command != null) {
+          final futures = <Future<dynamic>>[
+            command.send_object(["HGET", "gps", "latitude"]),
+            command.send_object(["HGET", "gps", "longitude"]),
+            command.send_object(["HGET", "gps", "altitude"]),
+            command.send_object(["HGET", "gps", "speed"]),
+            command.send_object(["HGET", "gps", "course"]),
+            command.send_object(["HGET", "gps", "timestamp"]),
+          ];
+          
+          final responses = await Future.wait(futures);
+          
+          if (responses[0] != null) vehicleState.updateFromRedis('gps', 'latitude', responses[0]);
+          if (responses[1] != null) vehicleState.updateFromRedis('gps', 'longitude', responses[1]);
+          if (responses[2] != null) vehicleState.updateFromRedis('gps', 'altitude', responses[2]);
+          if (responses[3] != null) vehicleState.updateFromRedis('gps', 'speed', responses[3]);
+          if (responses[4] != null) vehicleState.updateFromRedis('gps', 'course', responses[4]);
+          if (responses[5] != null) vehicleState.updateFromRedis('gps', 'timestamp', responses[5]);
+          
+          // Trigger event handler
+          _eventHandler.handleEvent(key);
         }
       }
     } else {
