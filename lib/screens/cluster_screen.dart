@@ -5,6 +5,8 @@ import '../models/vehicle_state.dart';
 import '../services/redis_service.dart';
 import '../services/menu_manager.dart';
 import '../theme_config.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 // Import widgets
 import '../widgets/status_bars/top_status_bar.dart';
@@ -54,6 +56,18 @@ class _ClusterScreenState extends State<ClusterScreen> {
     _setupRedis();
     _startClock();
     _updateTime();
+    _printDocumentsDirectory();
+  }
+
+  Future<void> _printDocumentsDirectory() async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      print('ClusterScreen - Application Documents Directory: ${appDir.path}');
+      final mapPath = '${appDir.path}/maps/map.mbtiles';
+      print('ClusterScreen - MBTiles path: $mapPath');
+    } catch (e) {
+      print('ClusterScreen - Error getting documents directory: $e');
+    }
   }
 
   void _setupRedis() {

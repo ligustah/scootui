@@ -292,9 +292,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   Future<void> _initMap() async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      print('Application Documents Directory: ${appDir.path}');
       final mapPath = '${appDir.path}/maps/map.mbtiles';
-      print('MBTiles path: $mapPath');
       
       // Ensure directory exists
       await Directory('${appDir.path}/maps').create(recursive: true);
