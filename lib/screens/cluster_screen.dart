@@ -1,21 +1,19 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:intl/intl.dart';
-import '../models/vehicle_state.dart';
-import '../services/redis_service.dart';
-import '../services/menu_manager.dart';
-import '../theme_config.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 
-// Import widgets
-import '../widgets/status_bars/top_status_bar.dart';
-import '../widgets/general/warning_indicators.dart';
-import '../widgets/speedometer/speedometer_display.dart';
-import '../widgets/power/power_display.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+
+import '../cubits/mdb_cubits.dart';
+import '../models/vehicle_state.dart';
+import '../services/menu_manager.dart';
+import '../services/redis_service.dart';
 import '../widgets/general/odometer_display.dart';
+import '../widgets/general/warning_indicators.dart';
 import '../widgets/menu/menu_overlay.dart';
-import '../widgets/status_bars/bottom_status_bar.dart';
+import '../widgets/power/power_display.dart';
+import '../widgets/speedometer/speedometer_display.dart';
+import '../widgets/status_bars/top_status_bar.dart';
 import 'map_screen.dart';
 
 enum ViewMode {
@@ -27,7 +25,7 @@ class ClusterScreen extends StatefulWidget {
   final Function(ThemeMode)? onThemeSwitch;
 
   const ClusterScreen({
-    super.key, 
+    super.key,
     this.onThemeSwitch,
   });
 
@@ -72,8 +70,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
   void _setupRedis() {
     _redis = RedisService(
-      '',  // Host is determined by platform
-      6379,  // Default Redis port
+      '', // Host is determined by platform
+      6379, // Default Redis port
       _vehicleState,
       onThemeSwitch: widget.onThemeSwitch,
       onBluetoothPinCodeEvent: (pinCode) {
@@ -153,9 +151,11 @@ class _ClusterScreenState extends State<ClusterScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
+    final engineState = EngineSync.watch(context);
+
     // Store current odometer values before update
-    final currentTrip = _vehicleState.odometerKm;
+    final currentTrip = engineState.odometer;
     final currentTotal = _vehicleState.odometerKm;
 
     // Update previous values for next animation
@@ -181,9 +181,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                 ),
 
                 // Warning indicators
-                WarningIndicators(
-                  state: _vehicleState,
-                ),
+                WarningIndicators(),
 
                 // Main speedometer area
                 Expanded(
@@ -191,9 +189,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                     alignment: Alignment.center,
                     children: [
                       // Speedometer
-                      SpeedometerDisplay(
-                        state: _vehicleState,
-                      ),
+                      SpeedometerDisplay(),
 
                       // Power display at bottom of speedometer area
                       Positioned(
@@ -240,7 +236,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.red.withOpacity(0.8),
                 child: Text(
                   _errorMessage!,
@@ -260,7 +257,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.blue.withOpacity(0.8),
                 child: Text(
                   'Bluetooth Pin Code: $_bluetoothPinCode',
@@ -272,7 +270,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                 ),
               ),
             ),
-            
+
           // Menu overlay
           ListenableBuilder(
             listenable: _menuManager,

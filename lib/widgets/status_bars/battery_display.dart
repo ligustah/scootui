@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
-import '../../models/vehicle_state.dart';
+
+import '../../cubits/mdb_cubits.dart';
+import '../../state/battery.dart';
 
 class BatteryStatusDisplay extends StatelessWidget {
-  final VehicleState state;
+  final BatteryData battery;
 
-  const BatteryStatusDisplay({super.key, required this.state});
+  const BatteryStatusDisplay({super.key, required this.battery});
 
-  Color _getBatteryColor(BuildContext context, bool isPresent, double charge, String batteryState) {
-    if (!isPresent) return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
-    
-    if (batteryState == 'fault') return Theme.of(context).colorScheme.error;
-    if (charge <= 20) return Theme.of(context).colorScheme.error;
+  Color _getBatteryColor(BuildContext context, bool isPresent, int charge,
+      String batteryState) {
+    if (!isPresent)
+      return Theme
+          .of(context)
+          .textTheme
+          .bodyMedium
+          ?.color ?? Colors.grey;
+
+    if (batteryState == 'fault') return Theme
+        .of(context)
+        .colorScheme
+        .error;
+    if (charge <= 20) return Theme
+        .of(context)
+        .colorScheme
+        .error;
     if (charge <= 30) return Colors.orange;
     return Colors.green;
   }
@@ -35,35 +49,34 @@ class BatteryStatusDisplay extends StatelessWidget {
                 Icon(
                   Icons.battery_full,
                   color: _getBatteryColor(
-                    context, 
-                    state.battery0Present,
-                    state.battery0Charge,
-                    state.battery0State,
+                    context,
+                    battery.present,
+                    battery.charge,
+                    battery.state,
                   ),
                   size: 20,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  state.battery0Present 
-                    ? '${state.battery0Charge.toStringAsFixed(0)}%'
-                    : '--',
+                  battery.present ? '${battery.charge}%' : '--',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: primaryColor,
                   ),
                 ),
               ],
             ),
-            if (state.battery0Present) ...[
+            if (battery.present) ...[
               Text(
-                state.battery0TempState == 'high' 
-                  ? 'High Temp!'
-                  : state.battery0State,
+                battery.temperatureState == 'high'
+                    ? 'High Temp!'
+                    : battery.state,
                 style: TextStyle(
                   fontSize: 12,
-                  color: state.battery0TempState == 'high' || state.battery0State == 'fault'
-                    ? theme.colorScheme.error 
-                    : secondaryColor,
+                  color: battery.temperatureState == 'high' ||
+                      battery.state == 'fault'
+                      ? theme.colorScheme.error
+                      : secondaryColor,
                 ),
               ),
             ],
@@ -74,86 +87,21 @@ class BatteryStatusDisplay extends StatelessWidget {
   }
 }
 
-class SecondaryBatteryDisplay extends StatelessWidget {
-  final VehicleState state;
-
-  const SecondaryBatteryDisplay({super.key, required this.state});
-
-  Color _getBatteryColor(BuildContext context, bool isPresent, double charge, String batteryState) {
-    if (!isPresent) return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
-    
-    if (batteryState == 'fault') return Theme.of(context).colorScheme.error;
-    if (charge <= 20) return Theme.of(context).colorScheme.error;
-    if (charge <= 30) return Colors.orange;
-    return Colors.green;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primaryColor = theme.textTheme.bodyLarge?.color;
-    final secondaryColor = theme.textTheme.bodyMedium?.color;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.battery_4_bar,
-              color: _getBatteryColor(
-                context,
-                state.battery1Present,
-                state.battery1Charge,
-                state.battery1State,
-              ),
-              size: 20,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              state.battery1Present 
-                ? '${state.battery1Charge.toStringAsFixed(0)}%'
-                : '--',
-              style: TextStyle(
-                fontSize: 16,
-                color: primaryColor,
-              ),
-            ),
-          ],
-        ),
-        if (state.battery1Present) ...[
-          Text(
-            state.battery1TempState == 'high'
-              ? 'High Temp!'
-              : state.battery1State,
-            style: TextStyle(
-              fontSize: 12,
-              color: state.battery1TempState == 'high' || state.battery1State == 'fault'
-                ? theme.colorScheme.error
-                : secondaryColor,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 class CombinedBatteryDisplay extends StatelessWidget {
-  final VehicleState state;
-  
-  const CombinedBatteryDisplay({super.key, required this.state});
-  
+  const CombinedBatteryDisplay({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final battery1 = Battery1Sync.watch(context);
+    final battery2 = Battery2Sync.watch(context);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        BatteryStatusDisplay(state: state),
-        if (state.battery1Present) ...[
+        BatteryStatusDisplay(battery: battery1),
+        if (battery2.present) ...[
           const SizedBox(width: 8),
-          SecondaryBatteryDisplay(state: state),
+          BatteryStatusDisplay(battery: battery2,),
         ],
       ],
     );

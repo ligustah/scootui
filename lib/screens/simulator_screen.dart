@@ -12,10 +12,10 @@ class SimulatorScreen extends StatefulWidget {
 
 class _SimulatorScreenState extends State<SimulatorScreen> {
   late RedisConnectionManager _redis;
-  double _simulatedSpeed = 0.0;
+  int _simulatedSpeed = 0;
   int _simulatedRpm = 0;
-  double _simulatedBatteryCharge0 = 100.0;
-  double _simulatedBatteryCharge1 = 100.0;
+  int _simulatedBatteryCharge0 = 100;
+  int _simulatedBatteryCharge1 = 100;
   String? _errorMessage;
   bool _battery0Present = true;
   bool _battery1Present = true;
@@ -141,13 +141,13 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                       0,
                       100,
                       (value) {
-                        setState(() => _simulatedSpeed = value);
+                        setState(() => _simulatedSpeed = value.toInt());
                         _updateEngineValues();
                       },
                     ),
                     _buildSlider(
                       'RPM',
-                      _simulatedRpm.toDouble(),
+                      _simulatedRpm,
                       0,
                       10000,
                       (value) {
@@ -187,7 +187,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                   0,
                                   100,
                                   (value) {
-                                    setState(() => _simulatedBatteryCharge0 = value);
+                                    setState(() => _simulatedBatteryCharge0 = value.toInt());
                                     _updateBatteryValues();
                                   },
                                 ),
@@ -224,7 +224,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                   0,
                                   100,
                                   (value) {
-                                    setState(() => _simulatedBatteryCharge1 = value);
+                                    setState(() => _simulatedBatteryCharge1 = value.toInt());
                                     _updateBatteryValues();
                                   },
                                 ),
@@ -370,9 +370,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   Widget _buildSlider(
     String label,
-    double value,
-    double min,
-    double max,
+    int value,
+    int min,
+    int max,
     ValueChanged<double> onChanged,
   ) {
     return Column(
@@ -380,9 +380,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       children: [
         Text(label),
         Slider(
-          value: value,
-          min: min,
-          max: max,
+          value: value.toDouble(),
+          min: min.toDouble(),
+          max: max.toDouble(),
           divisions: (max - min).toInt(),
           label: value.toStringAsFixed(1),
           onChanged: onChanged,

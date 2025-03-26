@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../models/vehicle_state.dart';
+import 'battery_display.dart';
 
 class StatusBar extends StatelessWidget {
   final VehicleState state;
@@ -11,7 +13,7 @@ class StatusBar extends StatelessWidget {
     required this.currentTime,
   });
 
-  Widget _buildBatteryIndicator(bool isPresent, double charge, bool isSecondary) {
+  Widget _buildBatteryIndicator(bool isPresent, int charge, bool isSecondary) {
     IconData icon;
     Color color;
     
@@ -86,23 +88,7 @@ class StatusBar extends StatelessWidget {
           // Left side - Battery indicators
           Expanded(
             flex: 2,
-            child: Row(
-              children: [
-                _buildBatteryIndicator(
-                  state.battery0Present, 
-                  state.battery0Charge,
-                  false,
-                ),
-                if (state.battery1Present) ...[
-                  const SizedBox(width: 12),
-                  _buildBatteryIndicator(
-                    state.battery1Present,
-                    state.battery1Charge,
-                    true,
-                  ),
-                ],
-              ],
-            ),
+            child: CombinedBatteryDisplay(),
           ),
 
           // Center - Time

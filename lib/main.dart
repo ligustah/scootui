@@ -1,13 +1,18 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'cubits/mdb_cubits.dart';
+import 'repositories/redis_repository.dart';
 import 'screens/cluster_screen.dart';
-import 'dart:io' show Platform;
 import 'theme_config.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   if (kDebugMode) {
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   }
@@ -23,10 +28,10 @@ void _setupPlatformConfigurations() {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    
+
     const windowSize = Size(480.0, 480.0);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SystemChannels.platform.invokeMethod('Window.setSize', {
         'width': windowSize.width,
@@ -56,21 +61,30 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Scooter Cluster',
-      theme: AppThemes.lightTheme,
-      darkTheme: AppThemes.darkTheme,
-      themeMode: _currentTheme,
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: SizedBox(
-          width: 480,
-          height: 480,
-          child: ClusterScreen(
-            onThemeSwitch: _updateTheme,
-          ),
-        ),
-      ),
-    );
+    return RepositoryProvider(
+        create: (context) => RedisRepository(host: '127.0.0.1', port: 6379),
+        child: MultiBlocProvider(
+            providers: [
+              BlocProvider(create: EngineSync.create),
+              BlocProvider(create: VehicleSync.create),
+              BlocProvider(create: Battery1Sync.create),
+              BlocProvider(create: Battery2Sync.create),
+            ],
+            child: MaterialApp(
+              title: 'Scooter Cluster',
+              theme: AppThemes.lightTheme,
+              darkTheme: AppThemes.darkTheme,
+              themeMode: _currentTheme,
+              debugShowCheckedModeBanner: false,
+              home: Scaffold(
+                body: SizedBox(
+                  width: 480,
+                  height: 480,
+                  child: ClusterScreen(
+                    onThemeSwitch: _updateTheme,
+                  ),
+                ),
+              ),
+            )));
   }
 }
