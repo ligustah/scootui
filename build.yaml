@@ -1,0 +1,15 @@
+builders:
+  sync:
+    import: "package:scooter_cluster/builders/sync/builder.dart"
+    builder_factories: [ "stateSyncBuilder" ]
+    build_extensions: { ".dart": [ "sync.g.part" ] }
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: [ "source_gen|combining_builder" ]
+
+targets:
+  $default:
+    builders:
+      scooter_cluster|sync:
+        generate_for:
+          - lib/state/*.dart
