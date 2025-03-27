@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../models/vehicle_state.dart';
+import 'package:scooter_cluster/state/vehicle.dart';
+
+import '../../cubits/mdb_cubits.dart';
 
 class WarningIndicators extends StatelessWidget {
-  final VehicleState state;
-
   const WarningIndicators({
     super.key,
-    required this.state,
   });
 
   @override
   Widget build(BuildContext context) {
+    final state = VehicleSync.watch(context);
+
     return Container(
       height: 60,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -21,16 +22,16 @@ class WarningIndicators extends StatelessWidget {
           // Left turn signal
           _IndicatorSvgIcon(
             iconPath: 'librescoot-turn-left.svg',
-            isActive: state.blinkerState == 'left' || state.blinkerState == 'both',
+            isActive: state.blinkerState == BlinkerState.left || state.blinkerState == BlinkerState.both,
             activeColor: Colors.green,
             size: 48,
-            isBlinking: state.blinkerState == 'left' || state.blinkerState == 'both',
+            isBlinking: state.blinkerState == BlinkerState.left || state.blinkerState == BlinkerState.both,
           ),
 
           // Parking indicator
           _IndicatorSvgIcon(
             iconPath: 'librescoot-parking-brake.svg',
-            isActive: state.isParked,
+            isActive: state.state == ScooterState.parked,
             activeColor: Colors.red,
             size: 36, // Smaller than blinkers
           ),
@@ -38,10 +39,10 @@ class WarningIndicators extends StatelessWidget {
           // Right turn signal
           _IndicatorSvgIcon(
             iconPath: 'librescoot-turn-right.svg',
-            isActive: state.blinkerState == 'right' || state.blinkerState == 'both',
+            isActive: state.blinkerState == BlinkerState.right || state.blinkerState == BlinkerState.both,
             activeColor: Colors.green,
             size: 48,
-            isBlinking: state.blinkerState == 'right' || state.blinkerState == 'both',
+            isBlinking: state.blinkerState == BlinkerState.right || state.blinkerState == BlinkerState.both,
           ),
         ],
       ),

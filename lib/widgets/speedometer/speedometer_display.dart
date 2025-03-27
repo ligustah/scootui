@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../../models/vehicle_state.dart';
+
+import 'package:flutter/material.dart';
+
+import '../../cubits/mdb_cubits.dart';
 
 class SpeedometerDisplay extends StatefulWidget {
-  final VehicleState state;
   final double maxSpeed;
 
   const SpeedometerDisplay({
     super.key,
-    required this.state,
     this.maxSpeed = 70.0,
   });
 
@@ -28,8 +28,6 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _lastSpeed = widget.state.currentSpeed;
-    _controller.value = widget.state.currentSpeed / widget.maxSpeed;
   }
 
   @override
@@ -39,33 +37,14 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
   }
 
   @override
-  void didUpdateWidget(SpeedometerDisplay oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    
-    setState(() {
-      _isRegenerating = widget.state.currentSpeed < _lastSpeed;
-    });
-    
-    _updateSpeedometer();
-  }
-
-  void _updateSpeedometer() {
-    _controller.animateTo(
-      widget.state.currentSpeed / widget.maxSpeed,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    ).then((_) {
-      _lastSpeed = widget.state.currentSpeed;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final engine = EngineSync.watch(context);
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 50),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -79,7 +58,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
             animation: _controller,
             builder: (context, child) {
               return TweenAnimationBuilder<Color?>(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 50),
                 tween: ColorTween(
                   begin: _isRegenerating 
                       ? Colors.red.withOpacity(0.3)
@@ -92,7 +71,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
                   return CustomPaint(
                     size: const Size.fromRadius(150),
                     painter: _SpeedometerPainter(
-                      progress: _controller.value,
+                      progress: engine.speed / widget.maxSpeed,
                       isDark: isDark,
                       isRegenerating: _isRegenerating,
                       backgroundColor: color ?? Colors.grey,
@@ -108,7 +87,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                widget.state.currentSpeed.toStringAsFixed(0),
+                engine.speed.toStringAsFixed(0),
                 style: TextStyle(
                   fontSize: 96,
                   fontWeight: FontWeight.bold,

@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
-import '../../models/vehicle_state.dart';
+
+import '../../cubits/mdb_cubits.dart';
+import '../../state/battery.dart';
 
 class BottomStatusBar extends StatelessWidget {
-  final VehicleState state;
   final String? errorMessage;
   final String? bluetoothPinCode;
 
   const BottomStatusBar({
     super.key, 
-    required this.state,
     this.errorMessage,
     this.bluetoothPinCode,
   });
 
-  String? _getStatusMessage() {
+  String? _getStatusMessage(BatteryData battery1, BatteryData battery2) {
     if (errorMessage != null) {
       return errorMessage;
     }
     
-    if (!state.battery0Present && !state.battery1Present) {
+    if (!battery1.present && !battery2.present) {
       return 'No battery connected';
     }
     
@@ -27,7 +27,10 @@ class BottomStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final message = _getStatusMessage();
+    final battery1 = Battery1Sync.watch(context);
+    final battery2 = Battery2Sync.watch(context);
+
+    final message = _getStatusMessage(battery1, battery2);
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
