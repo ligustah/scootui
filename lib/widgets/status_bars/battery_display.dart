@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../state/battery.dart';
 
-
 const powerLevels = [
   (88, Icons.battery_full, Colors.green),
   (75, Icons.battery_6_bar, Colors.green),
@@ -23,16 +22,16 @@ class BatteryStatusDisplay extends StatelessWidget {
   const BatteryStatusDisplay({super.key, required this.battery});
 
   (IconData, MaterialColor) getIcon(BatteryData battery) {
-    if(!battery.present) {
+    if (!battery.present) {
       return (Icons.battery_0_bar, Colors.grey);
     }
 
-    if(battery.state == 'fault') {
+    if (battery.state == 'fault') {
       return (Icons.battery_alert, Colors.red);
     }
 
-    for(final (threshold, icon, color) in powerLevels) {
-      if(battery.charge >= threshold) return (icon, color);
+    for (final (threshold, icon, color) in powerLevels) {
+      if (battery.charge >= threshold) return (icon, color);
     }
 
     // we shouldn't ever get here, so just in case
@@ -50,7 +49,6 @@ class BatteryStatusDisplay extends StatelessWidget {
       children: [
         Icon(icon, color: color),
         if (battery.present) ...[
-          const SizedBox(width: 4),
           Text(
             '${battery.charge.toStringAsFixed(0)}%',
             style: TextStyle(
@@ -76,10 +74,11 @@ class CombinedBatteryDisplay extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        BatteryStatusDisplay(battery: battery1),
+        SizedBox(width: 60, child: BatteryStatusDisplay(battery: battery1)),
         if (battery2.present) ...[
-          const SizedBox(width: 8),
-          BatteryStatusDisplay(battery: battery2,),
+          BatteryStatusDisplay(
+            battery: battery2,
+          ),
         ],
       ],
     );
