@@ -3,85 +3,61 @@ import 'package:flutter/material.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../state/battery.dart';
 
+const powerLevels = [
+  (88, Icons.battery_full, Colors.green),
+  (75, Icons.battery_6_bar, Colors.green),
+  (63, Icons.battery_5_bar, Colors.green),
+  (50, Icons.battery_4_bar, Colors.green),
+  (38, Icons.battery_3_bar, Colors.green),
+  (30, Icons.battery_2_bar, Colors.green),
+  (25, Icons.battery_2_bar, Colors.orange),
+  (15, Icons.battery_1_bar, Colors.orange),
+  (10, Icons.battery_1_bar, Colors.red),
+  (0, Icons.battery_0_bar, Colors.red),
+];
+
 class BatteryStatusDisplay extends StatelessWidget {
   final BatteryData battery;
 
   const BatteryStatusDisplay({super.key, required this.battery});
 
-  Color _getBatteryColor(BuildContext context, bool isPresent, int charge,
-      String batteryState) {
-    if (!isPresent)
-      return Theme
-          .of(context)
-          .textTheme
-          .bodyMedium
-          ?.color ?? Colors.grey;
+  (IconData, MaterialColor) getIcon(BatteryData battery) {
+    if (!battery.present) {
+      return (Icons.battery_0_bar, Colors.grey);
+    }
 
-    if (batteryState == 'fault') return Theme
-        .of(context)
-        .colorScheme
-        .error;
-    if (charge <= 20) return Theme
-        .of(context)
-        .colorScheme
-        .error;
-    if (charge <= 30) return Colors.orange;
-    return Colors.green;
+    if (battery.state == 'fault') {
+      return (Icons.battery_alert, Colors.red);
+    }
+
+    for (final (threshold, icon, color) in powerLevels) {
+      if (battery.charge >= threshold) return (icon, color);
+    }
+
+    // we shouldn't ever get here, so just in case
+    return (Icons.battery_unknown, Colors.grey);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryColor = theme.textTheme.bodyLarge?.color;
-    final secondaryColor = theme.textTheme.bodyMedium?.color;
+    final (icon, color) = getIcon(battery);
 
     // Primary battery indicator
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // First driving battery
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.battery_full,
-                  color: _getBatteryColor(
-                    context,
-                    battery.present,
-                    battery.charge,
-                    battery.state,
-                  ),
-                  size: 20,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  battery.present ? '${battery.charge}%' : '--',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: primaryColor,
-                  ),
-                ),
-              ],
+        Icon(icon, color: color),
+        if (battery.present) ...[
+          Text(
+            '${battery.charge.toStringAsFixed(0)}%',
+            style: TextStyle(
+              fontSize: 14,
+              color: color,
+              fontWeight: FontWeight.w500,
             ),
-            if (battery.present) ...[
-              Text(
-                battery.temperatureState == 'high'
-                    ? 'High Temp!'
-                    : battery.state,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: battery.temperatureState == 'high' ||
-                      battery.state == 'fault'
-                      ? theme.colorScheme.error
-                      : secondaryColor,
-                ),
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ],
     );
   }
@@ -98,10 +74,11 @@ class CombinedBatteryDisplay extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        BatteryStatusDisplay(battery: battery1),
+        SizedBox(width: 60, child: BatteryStatusDisplay(battery: battery1)),
         if (battery2.present) ...[
-          const SizedBox(width: 8),
-          BatteryStatusDisplay(battery: battery2,),
+          BatteryStatusDisplay(
+            battery: battery2,
+          ),
         ],
       ],
     );

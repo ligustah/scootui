@@ -13,58 +13,6 @@ class StatusBar extends StatelessWidget {
     required this.currentTime,
   });
 
-  Widget _buildBatteryIndicator(bool isPresent, int charge, bool isSecondary) {
-    IconData icon;
-    Color color;
-    
-    if (!isPresent) {
-      icon = isSecondary ? Icons.battery_4_bar : Icons.battery_full;
-      color = Colors.grey;
-    } else {
-      // Select battery icon based on charge level
-      if (charge >= 90) {
-        icon = isSecondary ? Icons.battery_6_bar : Icons.battery_full;
-      } else if (charge >= 70) {
-        icon = isSecondary ? Icons.battery_5_bar : Icons.battery_6_bar;
-      } else if (charge >= 50) {
-        icon = isSecondary ? Icons.battery_4_bar : Icons.battery_5_bar;
-      } else if (charge >= 30) {
-        icon = isSecondary ? Icons.battery_3_bar : Icons.battery_4_bar;
-      } else if (charge >= 15) {
-        icon = isSecondary ? Icons.battery_2_bar : Icons.battery_3_bar;
-      } else {
-        icon = isSecondary ? Icons.battery_1_bar : Icons.battery_2_bar;
-      }
-
-      // Determine color based on charge level
-      if (charge <= 15) {
-        color = Colors.red;
-      } else if (charge <= 30) {
-        color = Colors.orange;
-      } else {
-        color = Colors.green;
-      }
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color),
-        if (isPresent) ...[
-          const SizedBox(width: 4),
-          Text(
-            '${charge.toStringAsFixed(0)}%',
-            style: TextStyle(
-              fontSize: 14,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
