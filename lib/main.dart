@@ -59,10 +59,17 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
     });
   }
 
+  static String getRedisHost() {
+    if (Platform.isMacOS || Platform.isWindows) {
+      return '127.0.0.1';  // Local development
+    }
+    return '192.168.7.1';  // Target system
+  }
+
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-        create: (context) => RedisRepository(host: '127.0.0.1', port: 6379),
+        create: (context) => RedisRepository(host: getRedisHost(), port: 6379),
         child: MultiBlocProvider(
             providers: [
               BlocProvider(create: EngineSync.create),
