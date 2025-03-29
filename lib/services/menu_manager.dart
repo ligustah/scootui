@@ -18,8 +18,10 @@ class MenuManager extends ChangeNotifier {
   Function(bool)? onMapViewToggled;
   bool _isMapView = false;
   bool _isMapAvailable = false;
+
+  final Function() _onResetTrip;
   
-  MenuManager(this._onThemeChanged, this._vehicleState, this._redisService) {
+  MenuManager(this._onThemeChanged, this._vehicleState, this._redisService, this._onResetTrip) {
     _initializeMenu();
   }
 
@@ -72,7 +74,7 @@ class MenuManager extends ChangeNotifier {
         title: 'Reset Trip',
         type: MenuItemType.action,
         onChanged: (_) {
-          _vehicleState.resetTrip();
+          _onResetTrip();
           closeMenu();
         },
       ),

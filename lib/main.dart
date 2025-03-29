@@ -93,8 +93,15 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
             body: SizedBox(
               width: 480,
               height: 480,
-              child: ClusterScreen(
-                onThemeSwitch: _updateTheme,
+              child: Builder(
+                builder: (context) {
+                  final trip = context.read<TripCubit>();
+
+                  return ClusterScreen(
+                    onThemeSwitch: _updateTheme,
+                    onResetTrip: trip.reset,
+                  );
+                }
               ),
             ),
           ),

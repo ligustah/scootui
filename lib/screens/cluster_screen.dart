@@ -24,10 +24,12 @@ enum ViewMode {
 
 class ClusterScreen extends StatefulWidget {
   final Function(ThemeMode)? onThemeSwitch;
+  final Function()? onResetTrip;
 
   const ClusterScreen({
     super.key,
     this.onThemeSwitch,
+    this.onResetTrip,
   });
 
   @override
@@ -94,6 +96,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
       widget.onThemeSwitch ?? (_) {},
       _vehicleState,
       _redis,
+      widget.onResetTrip ?? () {},
     );
     _menuManager.onMapViewToggled = (showMap) {
       setState(() {
