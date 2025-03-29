@@ -32,10 +32,6 @@ class VehicleState {
   double cbBatteryRemainingCapacity = 0.0;
   double cbBatteryFullCapacity = 0.0;
 
-  // Aux battery
-  double auxBatteryVoltage = 0.0;
-  String auxBatteryChargeStatus = '';
-
   // System state
   bool isConnected = false;
   String internetTech = '';
@@ -59,9 +55,6 @@ class VehicleState {
         break;
       case 'internet':
         _updateInternetState(key, value);
-        break;
-      case 'aux-battery':
-        _updateAuxBatteryState(key, value);
         break;
       case 'ble':
         _updateBluetoothState(key, value);
@@ -123,17 +116,6 @@ class VehicleState {
         break;
       case 'signal-quality':
         signalQuality = int.tryParse(value.toString()) ?? signalQuality;
-        break;
-    }
-  }
-
-  void _updateAuxBatteryState(String key, dynamic value) {
-    switch (key) {
-      case 'voltage':
-        auxBatteryVoltage = (int.tryParse(value.toString()) ?? 0) / 1000;
-        break;
-      case 'charge-status':
-        auxBatteryChargeStatus = value.toString();
         break;
     }
   }
