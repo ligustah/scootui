@@ -26,7 +26,7 @@ class EngineData extends Equatable with $EngineData {
   @StateField()
   final num rpm;
 
-  @StateField(interval: Duration(milliseconds: 250))
+  @StateField(interval: Duration(milliseconds: 100))
   final num speed;
 
   @StateField(defaultValue: "off")
