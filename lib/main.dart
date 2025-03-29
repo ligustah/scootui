@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scooter_cluster/cubits/system_cubit.dart';
+import 'package:scooter_cluster/cubits/trip_cubit.dart';
 
 import 'cubits/mdb_cubits.dart';
 import 'repositories/redis_repository.dart';
@@ -80,6 +81,7 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
           BlocProvider(create: BluetoothSync.create),
           BlocProvider(create: GpsSync.create),
           BlocProvider(create: SystemCubit.create),
+          BlocProvider(create: TripCubit.create),
         ],
         child: MaterialApp(
           title: 'Scooter Cluster',

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../cubits/mdb_cubits.dart';
+import '../cubits/trip_cubit.dart';
 import '../models/vehicle_state.dart';
 import '../services/menu_manager.dart';
 import '../services/redis_service.dart';
@@ -153,9 +154,10 @@ class _ClusterScreenState extends State<ClusterScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     final engineState = EngineSync.watch(context);
+    final trip = TripCubit.watch(context);
 
     // Store current odometer values before update
-    final currentTrip = engineState.odometer / 1000;
+    final currentTrip = trip.distanceTravelled / 1000;
     final currentTotal = engineState.odometer / 1000;
 
     // Update previous values for next animation
@@ -213,9 +215,10 @@ class _ClusterScreenState extends State<ClusterScreen> {
                     ),
                   ),
                   child: AnimatedOdometerDisplay(
-                    state: _vehicleState,
                     previousTrip: _previousTrip,
                     previousTotal: _previousTotal,
+                    totalDistance: currentTotal,
+                    tripDistance: currentTrip,
                   ),
                 ),
               ],
