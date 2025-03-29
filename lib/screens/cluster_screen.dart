@@ -155,8 +155,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
     final engineState = EngineSync.watch(context);
 
     // Store current odometer values before update
-    final currentTrip = engineState.odometer;
-    final currentTotal = _vehicleState.odometerKm;
+    final currentTrip = engineState.odometer / 1000;
+    final currentTotal = engineState.odometer / 1000;
 
     // Update previous values for next animation
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -175,10 +175,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
             Column(
               children: [
                 // Status bar at top
-                StatusBar(
-                  state: _vehicleState,
-                  currentTime: _currentTime,
-                ),
+                StatusBar(),
 
                 // Warning indicators
                 WarningIndicators(),
@@ -197,7 +194,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                         left: 40,
                         right: 40,
                         child: PowerDisplay(
-                          state: _vehicleState,
+                          powerOutput: engineState.powerOutput / 1000,
                         ),
                       ),
                     ],

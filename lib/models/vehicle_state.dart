@@ -24,55 +24,15 @@ class VehicleState {
   String gpsTimestamp = '';
   bool hasGpsSignal = false;
 
-  // System state
-  bool isConnected = false;
-  String internetTech = '';
-  int signalQuality = 0;
-  String mdbVersion = '';
-  String nrfFwVersion = '';
-
-  double get powerOutput => motorVoltage * motorCurrent / 1000;
-  
   double get odometerKm => odometer / 1000;
   bool get isParked => vehicleState == 'parked';
 
   void updateFromRedis(String channel, String key, dynamic value) {
-    switch (channel) {
-      case 'gps':
-        _updateGpsState(key, value);
-        break;
-    }
   }
-
-
 
   // Reset trip distance to 0
   void resetTrip() {
     tripDistance = 0.0;
     _lastOdometer = odometer;  // Reset last odometer to current value
-  }
-
-  void _updateGpsState(String key, dynamic value) {
-    switch (key) {
-      case 'latitude':
-        gpsLatitude = double.tryParse(value.toString()) ?? gpsLatitude;
-        hasGpsSignal = true;
-        break;
-      case 'longitude':
-        gpsLongitude = double.tryParse(value.toString()) ?? gpsLongitude;
-        break;
-      case 'altitude':
-        gpsAltitude = double.tryParse(value.toString()) ?? gpsAltitude;
-        break;
-      case 'speed':
-        gpsSpeed = double.tryParse(value.toString()) ?? gpsSpeed;
-        break;
-      case 'course':
-        gpsCourse = double.tryParse(value.toString()) ?? gpsCourse;
-        break;
-      case 'timestamp':
-        gpsTimestamp = value.toString();
-        break;
-    }
   }
 }

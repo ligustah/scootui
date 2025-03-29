@@ -350,10 +350,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       child: Column(
         children: [
           // Top status bar
-          StatusBar(
-            state: widget.vehicleState,
-            currentTime: widget.currentTime,
-          ),
+          StatusBar(),
 
           // Map view
           Expanded(
@@ -361,9 +358,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
           ),
 
           // Bottom status bar with speed
-          MapBottomStatusBar(
-            state: widget.vehicleState,
-          ),
+          MapBottomStatusBar(),
         ],
       ),
     );

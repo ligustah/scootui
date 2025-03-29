@@ -5,6 +5,7 @@ import '../repositories/redis_repository.dart';
 import '../state/battery.dart';
 import '../state/bluetooth.dart';
 import '../state/engine.dart';
+import '../state/gps.dart';
 import '../state/vehicle.dart';
 import 'syncable_cubit.dart';
 
@@ -55,7 +56,6 @@ class Battery2Sync extends BatterySync {
   Battery2Sync(RedisRepository repo) : super(repo, "1");
 }
 
-
 class BluetoothSync extends SyncableCubit<BluetoothData> {
   static BluetoothData watch(BuildContext context) =>
       context.watch<BluetoothSync>().state;
@@ -65,4 +65,15 @@ class BluetoothSync extends SyncableCubit<BluetoothData> {
 
   BluetoothSync(RedisRepository repo)
       : super(redisRepository: repo, initialState: BluetoothData());
+}
+
+class GpsSync extends SyncableCubit<GpsData> {
+  static GpsData watch(BuildContext context) =>
+      context.watch<GpsSync>().state;
+
+  static GpsSync create(BuildContext context) =>
+      GpsSync(RepositoryProvider.of<RedisRepository>(context))..start();
+
+  GpsSync(RedisRepository repo)
+      : super(redisRepository: repo, initialState: GpsData());
 }
