@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:meta/meta.dart';
 
 @immutable
@@ -11,7 +12,7 @@ class SystemState {
 
   const SystemState(this.currentTime);
 
-  String get formattedTime => "${currentTime.hour}:${currentTime.minute}";
+  String get formattedTime => DateFormat("HH:mm").format(currentTime);
 }
 
 class SystemCubit extends Cubit<SystemState> {
