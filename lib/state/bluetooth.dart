@@ -2,13 +2,9 @@ import 'package:equatable/equatable.dart';
 
 import '../builders/sync/annotations.dart';
 import '../builders/sync/settings.dart';
+import 'enums.dart';
 
 part 'bluetooth.g.dart';
-
-enum ConnectionStatus {
-  connected,
-  disconnected,
-}
 
 @StateClass("ble", Duration(seconds: 5))
 class BluetoothData extends Equatable with $BluetoothData {

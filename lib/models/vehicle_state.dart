@@ -38,9 +38,6 @@ class VehicleState {
 
   void updateFromRedis(String channel, String key, dynamic value) {
     switch (channel) {
-      case 'internet':
-        _updateInternetState(key, value);
-        break;
       case 'gps':
         _updateGpsState(key, value);
         break;
@@ -53,21 +50,6 @@ class VehicleState {
   void resetTrip() {
     tripDistance = 0.0;
     _lastOdometer = odometer;  // Reset last odometer to current value
-  }
-
-
-  void _updateInternetState(String key, dynamic value) {
-    switch (key) {
-      case 'status':
-        isConnected = value == 'connected';
-        break;
-      case 'access-tech':
-        internetTech = value.toString();
-        break;
-      case 'signal-quality':
-        signalQuality = int.tryParse(value.toString()) ?? signalQuality;
-        break;
-    }
   }
 
   void _updateGpsState(String key, dynamic value) {
