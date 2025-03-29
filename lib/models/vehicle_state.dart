@@ -24,14 +24,6 @@ class VehicleState {
   String gpsTimestamp = '';
   bool hasGpsSignal = false;
 
-  // Communication board battery state (cb-battery)
-  double cbBatteryVoltage = 0.0;
-  double cbBatteryCurrent = 0.0;
-  int cbBatteryTimeToFull = 0;
-  double cbBatteryTemp = 0.0;
-  double cbBatteryRemainingCapacity = 0.0;
-  double cbBatteryFullCapacity = 0.0;
-
   // System state
   bool isConnected = false;
   String internetTech = '';
@@ -46,9 +38,6 @@ class VehicleState {
 
   void updateFromRedis(String channel, String key, dynamic value) {
     switch (channel) {
-      case 'cb-battery':
-        _updateCBBatteryState(key, value);
-        break;
       case 'internet':
         _updateInternetState(key, value);
         break;
@@ -66,28 +55,6 @@ class VehicleState {
     _lastOdometer = odometer;  // Reset last odometer to current value
   }
 
-    void _updateCBBatteryState(String key, dynamic value) {
-    switch (key) {
-      case 'cell-voltage':
-        cbBatteryVoltage = (int.tryParse(value.toString()) ?? 0) / 1000000;
-        break;
-      case 'current':
-        cbBatteryCurrent = (int.tryParse(value.toString()) ?? 0) / 1000;
-        break;
-      case 'temperature':
-        cbBatteryTemp = double.tryParse(value.toString()) ?? cbBatteryTemp;
-        break;
-      case 'remaining-capacity':
-        cbBatteryRemainingCapacity = (int.tryParse(value.toString()) ?? 0) / 1000;
-        break;
-      case 'full-capacity':
-        cbBatteryFullCapacity = (int.tryParse(value.toString()) ?? 0) / 1000;
-        break;
-      case 'time-to-full':
-        cbBatteryTimeToFull = int.tryParse(value.toString()) ?? cbBatteryTimeToFull;
-        break;
-    }
-  }
 
   void _updateInternetState(String key, dynamic value) {
     switch (key) {
