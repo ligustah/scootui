@@ -39,10 +39,6 @@ class VehicleState {
   String mdbVersion = '';
   String nrfFwVersion = '';
 
-  // Bluetooth connection status
-  bool isBluetoothConnected = false;
-  String blePin = '';
-
   double get powerOutput => motorVoltage * motorCurrent / 1000;
   
   double get odometerKm => odometer / 1000;
@@ -56,25 +52,12 @@ class VehicleState {
       case 'internet':
         _updateInternetState(key, value);
         break;
-      case 'ble':
-        _updateBluetoothState(key, value);
-        break;
       case 'gps':
         _updateGpsState(key, value);
         break;
     }
   }
 
-  void _updateBluetoothState(String key, dynamic value) {
-    switch (key) {
-      case 'status':
-        isBluetoothConnected = value.toString() == 'connected';
-        break;
-      case 'pin-code':
-        blePin = value.toString();
-        break;
-    }
-  }
 
 
   // Reset trip distance to 0

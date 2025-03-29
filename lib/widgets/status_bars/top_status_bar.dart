@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../cubits/mdb_cubits.dart';
 import '../../models/vehicle_state.dart';
+import '../../state/bluetooth.dart';
 import 'battery_display.dart';
 
 class StatusBar extends StatelessWidget {
@@ -15,6 +17,7 @@ class StatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bluetooth = BluetoothSync.watch(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
@@ -62,7 +65,7 @@ class StatusBar extends StatelessWidget {
               children: [
                 Icon(
                   Icons.bluetooth,
-                  color: state.isBluetoothConnected ? Colors.blue : Colors.grey,
+                  color: bluetooth.status == ConnectionStatus.connected ? Colors.blue : Colors.grey,
                   size: 20,
                 ),
               ],

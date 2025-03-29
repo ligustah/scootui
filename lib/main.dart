@@ -76,6 +76,7 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
           BlocProvider(create: VehicleSync.create),
           BlocProvider(create: Battery1Sync.create),
           BlocProvider(create: Battery2Sync.create),
+          BlocProvider(create: BluetoothSync.create),
         ],
         child: MaterialApp(
           title: 'Scooter Cluster',
