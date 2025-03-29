@@ -61,37 +61,39 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
 
   static String getRedisHost() {
     if (Platform.isMacOS || Platform.isWindows) {
-      return '127.0.0.1';  // Local development
+      return '127.0.0.1'; // Local development
     }
-    return '192.168.7.1';  // Target system
+    return '192.168.7.1'; // Target system
   }
 
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-        create: (context) => RedisRepository(host: getRedisHost(), port: 6379),
-        child: MultiBlocProvider(
-            providers: [
-              BlocProvider(create: EngineSync.create),
-              BlocProvider(create: VehicleSync.create),
-              BlocProvider(create: Battery1Sync.create),
-              BlocProvider(create: Battery2Sync.create),
-            ],
-            child: MaterialApp(
-              title: 'Scooter Cluster',
-              theme: AppThemes.lightTheme,
-              darkTheme: AppThemes.darkTheme,
-              themeMode: _currentTheme,
-              debugShowCheckedModeBanner: false,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 480,
-                  height: 480,
-                  child: ClusterScreen(
-                    onThemeSwitch: _updateTheme,
-                  ),
-                ),
+      create: (context) => RedisRepository(host: getRedisHost(), port: 6379),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: EngineSync.create),
+          BlocProvider(create: VehicleSync.create),
+          BlocProvider(create: Battery1Sync.create),
+          BlocProvider(create: Battery2Sync.create),
+        ],
+        child: MaterialApp(
+          title: 'Scooter Cluster',
+          theme: AppThemes.lightTheme,
+          darkTheme: AppThemes.darkTheme,
+          themeMode: _currentTheme,
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            body: SizedBox(
+              width: 480,
+              height: 480,
+              child: ClusterScreen(
+                onThemeSwitch: _updateTheme,
               ),
-            )));
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
