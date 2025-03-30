@@ -1,20 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
 
-import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:scooter_cluster/cubits/mdb_cubits.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../state/gps.dart';
 
@@ -35,7 +32,7 @@ class MapCubit extends Cubit<MapState> {
   @override
   Future<void> close() {
     final current = state;
-    if(current is MapLoaded) {
+    if (current is MapLoaded) {
       current.controller.dispose();
       current.mbTiles.dispose();
     }
@@ -47,7 +44,8 @@ class MapCubit extends Cubit<MapState> {
     final current = state;
     if (current is! MapLoaded) return;
 
-    current.controller.move(center, current.controller.camera.zoom, offset: Offset(0, 100));
+    current.controller
+        .move(center, current.controller.camera.zoom, offset: Offset(0, 100));
     current.controller.rotateAroundPoint(course, offset: Offset(0, 100));
   }
 
@@ -55,7 +53,7 @@ class MapCubit extends Cubit<MapState> {
     final current = state;
     if (current is! MapLoaded) return;
 
-    final course =  (360 - data.course);
+    final course = (360 - data.course);
     final position = LatLng(data.latitude, data.longitude);
 
     _moveAndRotate(position, course);
