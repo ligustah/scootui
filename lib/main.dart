@@ -4,12 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scooter_cluster/cubits/system_cubit.dart';
-import 'package:scooter_cluster/cubits/trip_cubit.dart';
 
+import 'cubits/map_cubit.dart';
 import 'cubits/mdb_cubits.dart';
+import 'cubits/system_cubit.dart';
+import 'cubits/trip_cubit.dart';
 import 'repositories/redis_repository.dart';
-import 'screens/cluster_screen.dart';
+import 'screens/map_screen.dart';
 import 'theme_config.dart';
 
 void main() {
@@ -82,6 +83,7 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
           BlocProvider(create: GpsSync.create),
           BlocProvider(create: SystemCubit.create),
           BlocProvider(create: TripCubit.create),
+          BlocProvider(create: MapCubit.create),
         ],
         child: MaterialApp(
           title: 'Scooter Cluster',
@@ -93,16 +95,7 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
             body: SizedBox(
               width: 480,
               height: 480,
-              child: Builder(
-                builder: (context) {
-                  final trip = context.read<TripCubit>();
-
-                  return ClusterScreen(
-                    onThemeSwitch: _updateTheme,
-                    onResetTrip: trip.reset,
-                  );
-                }
-              ),
+              child: MapScreen(),
             ),
           ),
         ),
