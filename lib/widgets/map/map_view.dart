@@ -16,8 +16,6 @@ class MapView extends StatelessWidget {
   final MbTiles mbTiles;
   final LatLng position;
   final double orientation;
-  final double maxZoom;
-  final double minZoom;
   final void Function()? mapReady;
 
   const MapView({
@@ -26,8 +24,6 @@ class MapView extends StatelessWidget {
     required this.theme,
     required this.mbTiles,
     required this.position,
-    required this.maxZoom,
-    required this.minZoom,
     required this.orientation,
     this.mapReady,
   });

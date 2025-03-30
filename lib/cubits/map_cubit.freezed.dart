@@ -149,9 +149,7 @@ class MapLoaded implements MapState {
       required this.controller,
       required this.theme,
       this.onReady,
-      this.isReady = false,
-      this.minZoom = 0,
-      this.maxZoom = 18});
+      this.isReady = false});
 
   final MbTiles mbTiles;
   final LatLng position;
@@ -161,10 +159,6 @@ class MapLoaded implements MapState {
   final void Function()? onReady;
   @JsonKey()
   final bool isReady;
-  @JsonKey()
-  final double minZoom;
-  @JsonKey()
-  final double maxZoom;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -187,18 +181,16 @@ class MapLoaded implements MapState {
                 other.controller == controller) &&
             (identical(other.theme, theme) || other.theme == theme) &&
             (identical(other.onReady, onReady) || other.onReady == onReady) &&
-            (identical(other.isReady, isReady) || other.isReady == isReady) &&
-            (identical(other.minZoom, minZoom) || other.minZoom == minZoom) &&
-            (identical(other.maxZoom, maxZoom) || other.maxZoom == maxZoom));
+            (identical(other.isReady, isReady) || other.isReady == isReady));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, mbTiles, position, orientation,
-      controller, theme, onReady, isReady, minZoom, maxZoom);
+      controller, theme, onReady, isReady);
 
   @override
   String toString() {
-    return 'MapState.loaded(mbTiles: $mbTiles, position: $position, orientation: $orientation, controller: $controller, theme: $theme, onReady: $onReady, isReady: $isReady, minZoom: $minZoom, maxZoom: $maxZoom)';
+    return 'MapState.loaded(mbTiles: $mbTiles, position: $position, orientation: $orientation, controller: $controller, theme: $theme, onReady: $onReady, isReady: $isReady)';
   }
 }
 
@@ -215,9 +207,7 @@ abstract mixin class $MapLoadedCopyWith<$Res>
       MapController controller,
       Theme theme,
       void Function()? onReady,
-      bool isReady,
-      double minZoom,
-      double maxZoom});
+      bool isReady});
 }
 
 /// @nodoc
@@ -238,8 +228,6 @@ class _$MapLoadedCopyWithImpl<$Res> implements $MapLoadedCopyWith<$Res> {
     Object? theme = null,
     Object? onReady = freezed,
     Object? isReady = null,
-    Object? minZoom = null,
-    Object? maxZoom = null,
   }) {
     return _then(MapLoaded(
       mbTiles: null == mbTiles
@@ -270,14 +258,6 @@ class _$MapLoadedCopyWithImpl<$Res> implements $MapLoadedCopyWith<$Res> {
           ? _self.isReady
           : isReady // ignore: cast_nullable_to_non_nullable
               as bool,
-      minZoom: null == minZoom
-          ? _self.minZoom
-          : minZoom // ignore: cast_nullable_to_non_nullable
-              as double,
-      maxZoom: null == maxZoom
-          ? _self.maxZoom
-          : maxZoom // ignore: cast_nullable_to_non_nullable
-              as double,
     ));
   }
 }

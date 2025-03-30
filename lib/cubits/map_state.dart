@@ -16,7 +16,5 @@ sealed class MapState with _$MapState {
     required Theme theme,
     void Function ()? onReady,
     @Default(false) bool isReady,
-    @Default(0) double minZoom,
-    @Default(18) double maxZoom,
   }) = MapLoaded;
 }

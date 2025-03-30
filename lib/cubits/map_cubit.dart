@@ -113,8 +113,6 @@ class MapCubit extends Cubit<MapState> {
       orientation: 0,
       controller: ctrl,
       theme: theme,
-      maxZoom: meta.maxZoom ?? 18,
-      minZoom: meta.minZoom ?? 0,
       onReady: _onMapReady,
     ));
   }
