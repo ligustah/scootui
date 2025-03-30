@@ -227,10 +227,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
               ],
             )
           else
-            MapScreen(
-              vehicleState: _vehicleState,
-              currentTime: _currentTime,
-            ),
+            MapScreen(),
 
           // Error message overlay
           if (_errorMessage != null)
