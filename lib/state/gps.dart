@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../builders/sync/annotations.dart';
 import '../builders/sync/settings.dart';
@@ -24,6 +25,8 @@ class GpsData extends Equatable with $GpsData {
 
   @StateField()
   final String timestamp;
+
+  LatLng get latLng => LatLng(latitude, longitude);
 
   GpsData({
     this.speed = 0,

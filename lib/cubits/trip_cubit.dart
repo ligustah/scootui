@@ -29,6 +29,14 @@ class TripCubit extends Cubit<TripState> {
   }
 
   void _onData(EngineData data) {
+    if (_tripStart != null) {
+      if (data.odometer < _tripStart!.odometer) {
+        // Odometer reset detected, reset trip start
+        _tripStart = data;
+        _tripStartTime = DateTime.now();
+      }
+    }
+
     // ignore data if the odometer is not set
     if (data.odometer > 0) {
       _tripStart ??= data;
