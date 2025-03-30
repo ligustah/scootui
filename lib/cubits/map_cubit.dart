@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -42,13 +43,25 @@ class MapCubit extends Cubit<MapState> {
     return super.close();
   }
 
+  void _moveAndRotate(LatLng center, double course) {
+    final current = state;
+    if (current is! MapLoaded) return;
+
+    current.controller.move(center, current.controller.camera.zoom, offset: Offset(0, 100));
+    current.controller.rotateAroundPoint(course, offset: Offset(0, 100));
+  }
+
   void _onGpsData(GpsData data) {
     final current = state;
     if (current is! MapLoaded) return;
 
-    current.controller.move(data.latLng, current.controller.camera.zoom);
+    final course =  (360 - data.course);
+    final position = LatLng(data.latitude, data.longitude);
+
+    _moveAndRotate(position, course);
     emit(current.copyWith(
-      position: LatLng(data.latitude, data.longitude),
+      position: position,
+      orientation: course,
     ));
   }
 
@@ -56,7 +69,7 @@ class MapCubit extends Cubit<MapState> {
     final current = state;
     if (current is! MapLoaded) return;
 
-    current.controller.move(current.position, current.maxZoom);
+    _moveAndRotate(current.position, 0);
     emit(current.copyWith(isReady: true));
   }
 
@@ -97,6 +110,7 @@ class MapCubit extends Cubit<MapState> {
     emit(MapState.loaded(
       mbTiles: mbTiles,
       position: initialCoordinates,
+      orientation: 0,
       controller: ctrl,
       theme: theme,
       maxZoom: meta.maxZoom ?? 18,

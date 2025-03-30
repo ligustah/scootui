@@ -14,7 +14,7 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
   double get altitude;
   String get timestamp;
   get syncSettings => SyncSettings(
-      "aux-battery",
+      "gps",
       Duration(microseconds: 3000000),
       [
         SyncFieldSettings(

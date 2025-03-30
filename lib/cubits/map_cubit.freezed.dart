@@ -145,6 +145,7 @@ class MapLoaded implements MapState {
   const MapLoaded(
       {required this.mbTiles,
       required this.position,
+      required this.orientation,
       required this.controller,
       required this.theme,
       this.onReady,
@@ -154,6 +155,7 @@ class MapLoaded implements MapState {
 
   final MbTiles mbTiles;
   final LatLng position;
+  final double orientation;
   final MapController controller;
   final Theme theme;
   final void Function()? onReady;
@@ -179,6 +181,8 @@ class MapLoaded implements MapState {
             (identical(other.mbTiles, mbTiles) || other.mbTiles == mbTiles) &&
             (identical(other.position, position) ||
                 other.position == position) &&
+            (identical(other.orientation, orientation) ||
+                other.orientation == orientation) &&
             (identical(other.controller, controller) ||
                 other.controller == controller) &&
             (identical(other.theme, theme) || other.theme == theme) &&
@@ -189,12 +193,12 @@ class MapLoaded implements MapState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, mbTiles, position, controller,
-      theme, onReady, isReady, minZoom, maxZoom);
+  int get hashCode => Object.hash(runtimeType, mbTiles, position, orientation,
+      controller, theme, onReady, isReady, minZoom, maxZoom);
 
   @override
   String toString() {
-    return 'MapState.loaded(mbTiles: $mbTiles, position: $position, controller: $controller, theme: $theme, onReady: $onReady, isReady: $isReady, minZoom: $minZoom, maxZoom: $maxZoom)';
+    return 'MapState.loaded(mbTiles: $mbTiles, position: $position, orientation: $orientation, controller: $controller, theme: $theme, onReady: $onReady, isReady: $isReady, minZoom: $minZoom, maxZoom: $maxZoom)';
   }
 }
 
@@ -207,6 +211,7 @@ abstract mixin class $MapLoadedCopyWith<$Res>
   $Res call(
       {MbTiles mbTiles,
       LatLng position,
+      double orientation,
       MapController controller,
       Theme theme,
       void Function()? onReady,
@@ -228,6 +233,7 @@ class _$MapLoadedCopyWithImpl<$Res> implements $MapLoadedCopyWith<$Res> {
   $Res call({
     Object? mbTiles = null,
     Object? position = null,
+    Object? orientation = null,
     Object? controller = null,
     Object? theme = null,
     Object? onReady = freezed,
@@ -244,6 +250,10 @@ class _$MapLoadedCopyWithImpl<$Res> implements $MapLoadedCopyWith<$Res> {
           ? _self.position
           : position // ignore: cast_nullable_to_non_nullable
               as LatLng,
+      orientation: null == orientation
+          ? _self.orientation
+          : orientation // ignore: cast_nullable_to_non_nullable
+              as double,
       controller: null == controller
           ? _self.controller
           : controller // ignore: cast_nullable_to_non_nullable

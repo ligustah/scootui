@@ -11,6 +11,7 @@ sealed class MapState with _$MapState {
   const factory MapState.loaded({
     required MbTiles mbTiles,
     required LatLng position,
+    required double orientation,
     required MapController controller,
     required Theme theme,
     void Function ()? onReady,

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:equatable/equatable.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -6,7 +8,7 @@ import '../builders/sync/settings.dart';
 
 part 'gps.g.dart';
 
-@StateClass("aux-battery", Duration(seconds: 3))
+@StateClass("gps", Duration(seconds: 3))
 class GpsData extends Equatable with $GpsData {
   @StateField()
   final double latitude;
@@ -27,6 +29,7 @@ class GpsData extends Equatable with $GpsData {
   final String timestamp;
 
   LatLng get latLng => LatLng(latitude, longitude);
+  double get courseRadians => course * (math.pi / 180);
 
   GpsData({
     this.speed = 0,

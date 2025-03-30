@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart'
     show Alignment, BuildContext, Colors, Icon, Icons, StatelessWidget, Widget;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
@@ -12,6 +15,7 @@ class MapView extends StatelessWidget {
   final Theme theme;
   final MbTiles mbTiles;
   final LatLng position;
+  final double orientation;
   final double maxZoom;
   final double minZoom;
   final void Function()? mapReady;
@@ -24,6 +28,7 @@ class MapView extends StatelessWidget {
     required this.position,
     required this.maxZoom,
     required this.minZoom,
+    required this.orientation,
     this.mapReady,
   });
 
@@ -32,11 +37,10 @@ class MapView extends StatelessWidget {
     return FlutterMap(
       options: MapOptions(
         onMapReady: mapReady,
-        minZoom: minZoom,
-        maxZoom: maxZoom,
-
+        minZoom: 8,
+        maxZoom: 18,
         initialCenter: position,
-        initialZoom: maxZoom,
+        initialZoom: 17,
       ),
       mapController: mapController,
       children: [
@@ -48,7 +52,7 @@ class MapView extends StatelessWidget {
               silenceTileNotFound: true,
             ),
           }),
-          maximumZoom: maxZoom.toDouble(),
+          maximumZoom: 18,
           // Set minimal cache settings to prevent theme persistence
           fileCacheTtl: const Duration(seconds: 1),
           memoryTileCacheMaxSize: 0,
@@ -66,10 +70,13 @@ class MapView extends StatelessWidget {
             height: 30.0,
             point: position,
             alignment: Alignment.center,
-            child: const Icon(
-              Icons.navigation,
-              color: Colors.blue,
-              size: 30.0,
+            child: Transform.rotate(
+              angle: -orientation * (math.pi / 180),
+              child: const Icon(
+                Icons.navigation,
+                color: Colors.blue,
+                size: 30.0,
+              ),
             ),
           ),
         ]),
