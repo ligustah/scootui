@@ -19,15 +19,6 @@ class RedisEventHandler {
   });
 
   void handleEvent(String key) {
-    // print('Handling Redis event: $key');
-    
-    // Handle battery state changes
-    if (key == 'location-update') {
-      // Handle GPS location update
-      if (vehicleState.hasGpsSignal && onLocationUpdate != null) {
-        onLocationUpdate!(vehicleState.gpsLatitude, vehicleState.gpsLongitude);
-      }
-    }
   }
 
   void handleBrakeEvent(String brake, String state) {

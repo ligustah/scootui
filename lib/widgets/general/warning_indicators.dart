@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:scooter_cluster/state/vehicle.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../state/vehicle.dart';
 
 class WarningIndicators extends StatelessWidget {
   const WarningIndicators({

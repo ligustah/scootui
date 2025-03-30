@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:scooter_cluster/cubits/system_cubit.dart';
 
 import '../../cubits/mdb_cubits.dart';
-import '../../models/vehicle_state.dart';
-import '../../state/bluetooth.dart';
+import '../../cubits/system_cubit.dart';
 import '../../state/enums.dart';
 import 'battery_display.dart';
 
@@ -64,7 +62,9 @@ class StatusBar extends StatelessWidget {
               children: [
                 Icon(
                   Icons.bluetooth,
-                  color: bluetooth.status == ConnectionStatus.connected ? Colors.blue : Colors.grey,
+                  color: bluetooth.status == ConnectionStatus.connected
+                      ? Colors.blue
+                      : Colors.grey,
                   size: 20,
                 ),
               ],

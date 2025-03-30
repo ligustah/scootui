@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scooter_cluster/screens/cluster_screen.dart';
 
 import 'cubits/map_cubit.dart';
 import 'cubits/mdb_cubits.dart';
@@ -95,7 +96,7 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
             body: SizedBox(
               width: 480,
               height: 480,
-              child: MapScreen(),
+              child: ClusterScreen(),
             ),
           ),
         ),

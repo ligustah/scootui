@@ -10,13 +10,12 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:scooter_cluster/cubits/mdb_cubits.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import '../state/gps.dart';
+import 'mdb_cubits.dart';
 
 part 'map_cubit.freezed.dart';
-
 part 'map_state.dart';
 
 class MapCubit extends Cubit<MapState> {
