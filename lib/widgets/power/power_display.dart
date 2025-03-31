@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../models/vehicle_state.dart';
 
 class PowerDisplay extends StatefulWidget {
   final double powerOutput;

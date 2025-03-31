@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/vehicle_state.dart';
 import '../widgets/menu/menu_item.dart';
-import 'redis_service.dart';
 import 'map_service.dart';
 
 class MenuManager extends ChangeNotifier {
@@ -13,15 +11,13 @@ class MenuManager extends ChangeNotifier {
   static const _doublePressThreshold = Duration(milliseconds: 300);
   ThemeMode _currentTheme = ThemeMode.dark;
   final Function(ThemeMode) _onThemeChanged;
-  final VehicleState _vehicleState;
-  late RedisService _redisService;
   Function(bool)? onMapViewToggled;
   bool _isMapView = false;
   bool _isMapAvailable = false;
 
   final Function() _onResetTrip;
   
-  MenuManager(this._onThemeChanged, this._vehicleState, this._redisService, this._onResetTrip) {
+  MenuManager(this._onThemeChanged, this._onResetTrip) {
     _initializeMenu();
   }
 
@@ -181,6 +177,6 @@ class MenuManager extends ChangeNotifier {
   }
 
   void _toggleHazardLights() async {
-    await _redisService.toggleHazardLights();
+    // await _redisService.toggleHazardLights();
   }
 }
