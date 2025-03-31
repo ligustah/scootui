@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:scooter_cluster/screens/main_screen.dart';
 
 import '../services/redis_connection_manager.dart';
 
@@ -325,6 +326,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                     ),
                   ],
                 ),
+                _buildSection("Screen", [MainScreen()])
               ],
             ),
           ),
