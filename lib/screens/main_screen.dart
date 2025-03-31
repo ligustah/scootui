@@ -20,22 +20,22 @@ class MainScreen extends StatelessWidget {
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
       onLeftDoubleTap: () => menu.showMenu(),
-      child: Stack(
-        children: [
-          SizedBox(
-            width: 480,
-            height: 480,
-            child: switch (state) {
+      child: SizedBox(
+        width: 480,
+        height: 480,
+        child: Stack(
+          children: [
+            switch (state) {
               ScreenMap() => const MapScreen(),
               ScreenCluster() => const ClusterScreen(),
             },
-          ),
 
-          // Menu overlay
-          MenuOverlay(
-            onThemeChanged: (mode) {},
-          ),
-        ],
+            // Menu overlay
+            MenuOverlay(
+              onThemeChanged: (mode) {},
+            ),
+          ],
+        ),
       ),
     );
   }

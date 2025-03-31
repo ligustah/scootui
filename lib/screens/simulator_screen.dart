@@ -134,115 +134,130 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSection(
-                  'Speed & RPM',
-                  [
-                    _buildSlider(
-                      'Speed (km/h)',
-                      _simulatedSpeed,
-                      0,
-                      100,
-                      (value) {
-                        setState(() => _simulatedSpeed = value.toInt());
-                        _updateEngineValues();
-                      },
-                    ),
-                    _buildSlider(
-                      'RPM',
-                      _simulatedRpm,
-                      0,
-                      10000,
-                      (value) {
-                        setState(() => _simulatedRpm = value.toInt());
-                        _updateEngineValues();
-                      },
+                // Top row with simulator screen and controls
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(child: _buildSection("Screen", [MainScreen()]), width: 480 + 32, height: 560,),
+                    // Right side - Speed, RPM, and Battery controls
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildSection(
+                            'Speed & RPM',
+                            [
+                              _buildSlider(
+                                'Speed (km/h)',
+                                _simulatedSpeed,
+                                0,
+                                100,
+                                (value) {
+                                  setState(() => _simulatedSpeed = value.toInt());
+                                  _updateEngineValues();
+                                },
+                              ),
+                              _buildSlider(
+                                'RPM',
+                                _simulatedRpm,
+                                0,
+                                10000,
+                                (value) {
+                                  setState(() => _simulatedRpm = value.toInt());
+                                  _updateEngineValues();
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSection(
+                            'Battery States',
+                            [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Text('Battery 0'),
+                                            const SizedBox(width: 8),
+                                            Checkbox(
+                                              value: _battery0Present,
+                                              onChanged: (value) {
+                                                setState(() => _battery0Present = value ?? false);
+                                                _updateBatteryValues();
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        if (_battery0Present)
+                                          _buildSlider(
+                                            'Charge (%)',
+                                            _simulatedBatteryCharge0,
+                                            0,
+                                            100,
+                                            (value) {
+                                              setState(() => _simulatedBatteryCharge0 = value.toInt());
+                                              _updateBatteryValues();
+                                            },
+                                          ),
+                                        _buildButtonGroup(
+                                          'State',
+                                          ['unknown', 'charging', 'discharging', 'idle'],
+                                          (value) => _publishEvent('battery:0', 'state', value),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Text('Battery 1'),
+                                            const SizedBox(width: 8),
+                                            Checkbox(
+                                              value: _battery1Present,
+                                              onChanged: (value) {
+                                                setState(() => _battery1Present = value ?? false);
+                                                _updateBatteryValues();
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        if (_battery1Present)
+                                          _buildSlider(
+                                            'Charge (%)',
+                                            _simulatedBatteryCharge1,
+                                            0,
+                                            100,
+                                            (value) {
+                                              setState(() => _simulatedBatteryCharge1 = value.toInt());
+                                              _updateBatteryValues();
+                                            },
+                                          ),
+                                        _buildButtonGroup(
+                                          'State',
+                                          ['unknown', 'charging', 'discharging', 'idle'],
+                                          (value) => _publishEvent('battery:1', 'state', value),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildSection(
-                  'Battery States',
-                  [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Text('Battery 0'),
-                                  const SizedBox(width: 8),
-                                  Checkbox(
-                                    value: _battery0Present,
-                                    onChanged: (value) {
-                                      setState(() => _battery0Present = value ?? false);
-                                      _updateBatteryValues();
-                                    },
-                                  ),
-                                ],
-                              ),
-                              if (_battery0Present)
-                                _buildSlider(
-                                  'Charge (%)',
-                                  _simulatedBatteryCharge0,
-                                  0,
-                                  100,
-                                  (value) {
-                                    setState(() => _simulatedBatteryCharge0 = value.toInt());
-                                    _updateBatteryValues();
-                                  },
-                                ),
-                              _buildButtonGroup(
-                                'State',
-                                ['unknown', 'charging', 'discharging', 'idle'],
-                                (value) => _publishEvent('battery:0', 'state', value),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Text('Battery 1'),
-                                  const SizedBox(width: 8),
-                                  Checkbox(
-                                    value: _battery1Present,
-                                    onChanged: (value) {
-                                      setState(() => _battery1Present = value ?? false);
-                                      _updateBatteryValues();
-                                    },
-                                  ),
-                                ],
-                              ),
-                              if (_battery1Present)
-                                _buildSlider(
-                                  'Charge (%)',
-                                  _simulatedBatteryCharge1,
-                                  0,
-                                  100,
-                                  (value) {
-                                    setState(() => _simulatedBatteryCharge1 = value.toInt());
-                                    _updateBatteryValues();
-                                  },
-                                ),
-                              _buildButtonGroup(
-                                'State',
-                                ['unknown', 'charging', 'discharging', 'idle'],
-                                (value) => _publishEvent('battery:1', 'state', value),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                // Bottom row with remaining controls
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -326,7 +341,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                     ),
                   ],
                 ),
-                _buildSection("Screen", [MainScreen()])
               ],
             ),
           ),
