@@ -9,21 +9,6 @@ class MapBottomStatusBar extends StatelessWidget {
     super.key,
   });
 
-  Widget _buildBlinkerIcon(
-      BuildContext context, String iconPath, bool isActive) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final color =
-        isActive ? Colors.green : (isDark ? Colors.white24 : Colors.black26);
-
-    return SvgPicture.asset(
-      iconPath,
-      width: 48,
-      height: 48,
-      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final engine = EngineSync.watch(context);
