@@ -251,7 +251,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                         [
                           _buildButtonGroup(
                             'Blinker State',
-                            ['off', 'left', 'right', 'hazard'],
+                            ['off', 'left', 'right', 'both'],
                             (value) => _publishEvent('vehicle', 'blinker:state', value),
                           ),
                           _buildButtonGroup(

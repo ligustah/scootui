@@ -1,6 +1,5 @@
 // General widgets
 export 'general/status_indicator.dart';
-export 'general/blinking_icon.dart';
 
 // Speedometer widgets
 export 'speedometer/speedometer_display.dart';
