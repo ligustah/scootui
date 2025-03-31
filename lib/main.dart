@@ -5,9 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'cubits/map_cubit.dart';
 import 'cubits/mdb_cubits.dart';
+import 'cubits/menu_cubit.dart';
+import 'cubits/screen_cubit.dart';
+import 'cubits/system_cubit.dart';
+import 'cubits/trip_cubit.dart';
 import 'repositories/redis_repository.dart';
-import 'screens/cluster_screen.dart';
+import 'screens/main_screen.dart';
+import 'screens/map_screen.dart';
 import 'theme_config.dart';
 
 void main() {
@@ -61,37 +67,40 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
 
   static String getRedisHost() {
     if (Platform.isMacOS || Platform.isWindows) {
-      return '127.0.0.1';  // Local development
+      return '127.0.0.1'; // Local development
     }
-    return '192.168.7.1';  // Target system
+    return '192.168.7.1'; // Target system
   }
 
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-        create: (context) => RedisRepository(host: getRedisHost(), port: 6379),
-        child: MultiBlocProvider(
-            providers: [
-              BlocProvider(create: EngineSync.create),
-              BlocProvider(create: VehicleSync.create),
-              BlocProvider(create: Battery1Sync.create),
-              BlocProvider(create: Battery2Sync.create),
-            ],
-            child: MaterialApp(
-              title: 'Scooter Cluster',
-              theme: AppThemes.lightTheme,
-              darkTheme: AppThemes.darkTheme,
-              themeMode: _currentTheme,
-              debugShowCheckedModeBanner: false,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 480,
-                  height: 480,
-                  child: ClusterScreen(
-                    onThemeSwitch: _updateTheme,
-                  ),
-                ),
-              ),
-            )));
+      create: (context) => RedisRepository(host: getRedisHost(), port: 6379),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: EngineSync.create),
+          BlocProvider(create: VehicleSync.create),
+          BlocProvider(create: Battery1Sync.create),
+          BlocProvider(create: Battery2Sync.create),
+          BlocProvider(create: BluetoothSync.create),
+          BlocProvider(create: GpsSync.create),
+          BlocProvider(create: SystemCubit.create),
+          BlocProvider(create: TripCubit.create),
+          BlocProvider(create: MapCubit.create),
+          BlocProvider(create: ScreenCubit.create),
+          BlocProvider(create: MenuCubit.create),
+        ],
+        child: MaterialApp(
+          title: 'Scooter Cluster',
+          theme: AppThemes.lightTheme,
+          darkTheme: AppThemes.darkTheme,
+          themeMode: _currentTheme,
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            body: MainScreen(),
+          ),
+        ),
+      ),
+    );
   }
 }

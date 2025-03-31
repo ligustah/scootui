@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../models/vehicle_state.dart';
 
 class PowerDisplay extends StatefulWidget {
-  final VehicleState state;
+  final double powerOutput;
   final double maxRegenPower; 
   final double maxDischargePower;
 
   const PowerDisplay({
     super.key,
-    required this.state,
+    required this.powerOutput,
     this.maxRegenPower = 1.0, // 1kW max regen
     this.maxDischargePower = 4.0, // 4kW max discharge
   });
@@ -38,7 +37,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
         curve: Curves.easeOutCubic,
       ),
     );
-    _lastPowerKW = widget.state.powerOutput / 1000;
+    _lastPowerKW = widget.powerOutput / 1000;
   }
 
   @override
@@ -51,7 +50,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
   void didUpdateWidget(PowerDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
     
-    final newPowerKW = widget.state.powerOutput / 1000;
+    final newPowerKW = widget.powerOutput / 1000;
     
     // Only animate if power has changed significantly
     if ((newPowerKW - _lastPowerKW).abs() > 0.01) {

@@ -49,7 +49,7 @@ class RedisConnectionManager {
       _isReconnecting = false;
       
     } catch (e) {
-      print('Redis connection error: $e');
+      // print('Redis connection error: $e');
       await cleanup();
       rethrow;
     }
@@ -83,16 +83,16 @@ class RedisConnectionManager {
           if (msg is List && msg.length >= 3 && msg[0] == "message") {
             String channel = msg[1].toString();
             String message = msg[2].toString();
-            print('Redis message received: Channel=$channel, Message=$message');
+            // print('Redis message received: Channel=$channel, Message=$message');
             handler(channel, message);
           }
         },
         onError: (error) {
-          print('PubSub stream error: $error');
+          // print('PubSub stream error: $error');
           handleConnectionLoss();
         },
         onDone: () {
-          print('PubSub stream closed');
+          // print('PubSub stream closed');
           handleConnectionLoss();
         },
         cancelOnError: false,

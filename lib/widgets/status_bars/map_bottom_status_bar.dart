@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../models/vehicle_state.dart';
+
+import '../../cubits/mdb_cubits.dart';
+import '../../state/vehicle.dart';
 
 class MapBottomStatusBar extends StatelessWidget {
-  final VehicleState state;
-
   const MapBottomStatusBar({
     super.key,
-    required this.state,
   });
 
-  Widget _buildBlinkerIcon(BuildContext context, String iconPath, bool isActive) {
+  Widget _buildBlinkerIcon(
+      BuildContext context, String iconPath, bool isActive) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final color = isActive ? Colors.green : (isDark ? Colors.white24 : Colors.black26);
+    final color =
+        isActive ? Colors.green : (isDark ? Colors.white24 : Colors.black26);
 
     return SvgPicture.asset(
       iconPath,
@@ -25,6 +26,8 @@ class MapBottomStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final engine = EngineSync.watch(context);
+    final vehicle = VehicleSync.watch(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
@@ -48,7 +51,8 @@ class MapBottomStatusBar extends StatelessWidget {
           _buildBlinkerIcon(
             context,
             'assets/icons/librescoot-turn-left.svg',
-            state.blinkerState == 'left' || state.blinkerState == 'both',
+            vehicle.blinkerState == BlinkerState.left ||
+                vehicle.blinkerState == BlinkerState.both,
           ),
 
           // Speed display
@@ -56,7 +60,7 @@ class MapBottomStatusBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                state.currentSpeed.toStringAsFixed(0),
+                engine.speed.toStringAsFixed(0),
                 style: TextStyle(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
@@ -77,10 +81,11 @@ class MapBottomStatusBar extends StatelessWidget {
           _buildBlinkerIcon(
             context,
             'assets/icons/librescoot-turn-right.svg',
-            state.blinkerState == 'right' || state.blinkerState == 'both',
+            vehicle.blinkerState == BlinkerState.right ||
+                vehicle.blinkerState == BlinkerState.both,
           ),
         ],
       ),
     );
   }
-} 
+}

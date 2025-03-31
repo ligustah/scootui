@@ -50,6 +50,22 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
     // connect to redis
     redisRepository.connect().then((cmd) {
       _command = cmd;
+
+      // once connection is established, get the initial state
+      _command?.send_object(["HGETALL", settings.channel]).then((response) {
+        if (response is List) {
+          T newState = state;
+
+          for (int i = 0; i < response.length; i += 2) {
+            final variable = response[i].toString();
+            final value = response[i + 1].toString();
+
+            newState = newState.update(variable, value);
+          }
+
+          emit(newState);
+        }
+      });
     });
 
     // set up all field timers

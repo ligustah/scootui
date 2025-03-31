@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../models/vehicle_state.dart';
 
 class OdometerDisplay extends StatelessWidget {
-  final VehicleState state;
   final double tripDistance;
   final double totalDistance;
 
   const OdometerDisplay({
     super.key,
-    required this.state,
     required this.tripDistance,
     required this.totalDistance,
   });
@@ -79,7 +76,7 @@ class _DistanceDisplay extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        
+
         // Distance value
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -130,15 +127,14 @@ class _DistanceDisplay extends StatelessWidget {
 }
 
 class TripDisplay extends StatelessWidget {
-  final VehicleState state;
-
   const TripDisplay({
     super.key,
-    required this.state,
   });
 
   @override
   Widget build(BuildContext context) {
+    // final trip = TripCubit.watch(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
@@ -152,7 +148,7 @@ class TripDisplay extends StatelessWidget {
               _buildValue('${_calculateAverageSpeed()} km/h'),
             ],
           ),
-          
+
           // Trip time
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -167,35 +163,31 @@ class TripDisplay extends StatelessWidget {
   }
 
   Widget _buildLabel(String text) {
-    return Builder(
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: isDark ? Colors.white60 : Colors.black54,
-            letterSpacing: 0.5,
-          ),
-        );
-      }
-    );
+    return Builder(builder: (context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      return Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: isDark ? Colors.white60 : Colors.black54,
+          letterSpacing: 0.5,
+        ),
+      );
+    });
   }
 
   Widget _buildValue(String text) {
-    return Builder(
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        );
-      }
-    );
+    return Builder(builder: (context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      return Text(
+        text,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: isDark ? Colors.white : Colors.black,
+        ),
+      );
+    });
   }
 
   double _calculateAverageSpeed() {
@@ -213,15 +205,18 @@ class TripDisplay extends StatelessWidget {
 
 // Optional: Animated version of the odometer display
 class AnimatedOdometerDisplay extends StatelessWidget {
-  final VehicleState state;
   final double previousTrip;
   final double previousTotal;
 
+  final double tripDistance;
+  final double totalDistance;
+
   const AnimatedOdometerDisplay({
     super.key,
-    required this.state,
     required this.previousTrip,
     required this.previousTotal,
+    required this.tripDistance,
+    required this.totalDistance,
   });
 
   @override
@@ -230,18 +225,17 @@ class AnimatedOdometerDisplay extends StatelessWidget {
       duration: const Duration(milliseconds: 500),
       tween: Tween<double>(
         begin: previousTrip,
-        end: state.tripDistance,
+        end: tripDistance,
       ),
       builder: (context, tripValue, child) {
         return TweenAnimationBuilder<double>(
           duration: const Duration(milliseconds: 500),
           tween: Tween<double>(
             begin: previousTotal,
-            end: state.odometerKm,
+            end: totalDistance,
           ),
           builder: (context, totalValue, child) {
             return OdometerDisplay(
-              state: state,
               tripDistance: tripValue,
               totalDistance: totalValue,
             );

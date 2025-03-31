@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../../models/vehicle_state.dart';
+import '../../cubits/mdb_cubits.dart';
+import '../../cubits/system_cubit.dart';
+import '../../state/enums.dart';
 import 'battery_display.dart';
 
 class StatusBar extends StatelessWidget {
-  final VehicleState state;
-  final String currentTime;
-
   const StatusBar({
     super.key,
-    required this.state,
-    required this.currentTime,
   });
 
   @override
   Widget build(BuildContext context) {
+    final system = SystemCubit.watch(context);
+    final bluetooth = BluetoothSync.watch(context);
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
@@ -44,7 +44,7 @@ class StatusBar extends StatelessWidget {
             flex: 1,
             child: Center(
               child: Text(
-                currentTime,
+                system.formattedTime,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w500,
@@ -62,7 +62,9 @@ class StatusBar extends StatelessWidget {
               children: [
                 Icon(
                   Icons.bluetooth,
-                  color: state.isBluetoothConnected ? Colors.blue : Colors.grey,
+                  color: bluetooth.status == ConnectionStatus.connected
+                      ? Colors.blue
+                      : Colors.grey,
                   size: 20,
                 ),
               ],
