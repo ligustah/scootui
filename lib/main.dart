@@ -69,7 +69,8 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-      create: (context) => RedisRepository(host: getRedisHost(), port: 6379),
+      create: (context) =>
+          RedisRepository(host: getRedisHost(), port: 6379)..dashboardReady(),
       child: MultiBlocProvider(
         providers: allCubits,
         child: MaterialApp(

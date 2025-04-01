@@ -44,7 +44,8 @@ class SimulatorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-      create: (context) => RedisRepository(host: '127.0.0.1', port: 6379),
+      create: (context) =>
+          RedisRepository(host: '127.0.0.1', port: 6379)..dashboardReady(),
       child: MultiBlocProvider(
         providers: allCubits,
         child: MaterialApp(

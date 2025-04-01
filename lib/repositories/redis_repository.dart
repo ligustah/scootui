@@ -8,6 +8,12 @@ class RedisRepository {
 
   RedisRepository({required this.host, required this.port});
 
+  Future<void> dashboardReady() async {
+    final cmd = await connect();
+    await cmd.send_object(["HSET", "dashboard", "ready", "true"]);
+    await cmd.send_object(["PUBLISH", "dashboard", "ready"]);
+  }
+
   // TODO: create simple connection pool
   // TODO: add function here to query state (to fully encapsulate redis logic)
   // TODO: determine redis host based on platform
