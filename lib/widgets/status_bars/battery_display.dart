@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../cubits/theme_cubit.dart';
 import '../../state/battery.dart';
 
 const powerLevels = [
@@ -40,7 +41,6 @@ class BatteryStatusDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final (icon, color) = getIcon(battery);
 
     // Primary battery indicator

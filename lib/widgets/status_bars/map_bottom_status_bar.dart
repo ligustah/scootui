@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../cubits/theme_cubit.dart';
 import '../general/indicator_lights.dart';
 
 class MapBottomStatusBar extends StatelessWidget {
@@ -13,8 +13,7 @@ class MapBottomStatusBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final speed = EngineSync.select(context, (data) => data.speed);
     final vehicle = VehicleSync.watch(context);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final ThemeState(:isDark, :theme) = ThemeCubit.watch(context);
     final textColor = isDark ? Colors.white : Colors.black;
 
     return Container(

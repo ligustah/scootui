@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:simple_animations/simple_animations.dart';
 
+import '../../cubits/theme_cubit.dart';
+
 typedef IndicatorIcon = Widget Function(
     Color color, double size);
 
@@ -31,7 +33,6 @@ class IndicatorLight extends StatelessWidget {
   final bool isActive;
   final bool blinking;
   final Color activeColor;
-  final Color inactiveColor;
 
   const IndicatorLight({
     super.key,
@@ -40,11 +41,15 @@ class IndicatorLight extends StatelessWidget {
     this.isActive = true,
     this.blinking = false,
     this.activeColor = Colors.green,
-    this.inactiveColor = Colors.white24,
   });
 
   @override
   Widget build(BuildContext context) {
+    // TODO: this should probably not live in here, but it's easier for now
+    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
+
+    final inactiveColor = isDark ? Colors.white24 : Colors.black12;
+
     render(final Color color) => icon(color, size);
 
     return Stack(children: [

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../cubits/theme_cubit.dart';
 
 class SpeedometerDisplay extends StatefulWidget {
   final double maxSpeed;
@@ -40,8 +41,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
   Widget build(BuildContext context) {
     final speed = EngineSync.select(context, (data) => data.speed);
 
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final theme = ThemeCubit.watch(context);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 50),
@@ -62,17 +62,17 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
                 tween: ColorTween(
                   begin: _isRegenerating 
                       ? Colors.red.withOpacity(0.3)
-                      : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                      : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200),
                   end: _isRegenerating 
                       ? Colors.red.withOpacity(0.3)
-                      : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                      : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200),
                 ),
                 builder: (context, color, child) {
                   return CustomPaint(
                     size: const Size.fromRadius(150),
                     painter: _SpeedometerPainter(
                       progress: speed / widget.maxSpeed,
-                      isDark: isDark,
+                      isDark: theme.isDark,
                       isRegenerating: _isRegenerating,
                       backgroundColor: color ?? Colors.grey,
                       maxSpeed: widget.maxSpeed,
@@ -91,14 +91,14 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
                 style: TextStyle(
                   fontSize: 96,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: theme.isDark ? Colors.white : Colors.black,
                 ),
               ),
               Text(
                 'km/h',
                 style: TextStyle(
                   fontSize: 24,
-                  color: isDark ? Colors.white70 : Colors.black54,
+                  color: theme.isDark ? Colors.white70 : Colors.black54,
                 ),
               ),
             ],

@@ -14,18 +14,24 @@ import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import '../state/gps.dart';
 import 'mdb_cubits.dart';
+import 'theme_cubit.dart';
 
 part 'map_cubit.freezed.dart';
+
 part 'map_state.dart';
 
 class MapCubit extends Cubit<MapState> {
-  late final StreamSubscription<GpsData> _sub;
+  late final StreamSubscription<GpsData> _gpsSub;
+  late final StreamSubscription<ThemeState> _themeSub;
 
-  static MapCubit create(BuildContext context) =>
-      MapCubit(context.read<GpsSync>().stream).._loadMap();
+  static MapCubit create(BuildContext context) => MapCubit(
+      context.read<GpsSync>().stream, context.read<ThemeCubit>().stream)
+    .._loadMap(context.read<ThemeCubit>().state);
 
-  MapCubit(Stream<GpsData> stream) : super(MapInitial()) {
-    _sub = stream.listen(_onGpsData);
+  MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates)
+      : super(MapInitial()) {
+    _gpsSub = stream.listen(_onGpsData);
+    _themeSub = themeUpdates.listen(_onThemeUpdate);
   }
 
   @override
@@ -35,7 +41,8 @@ class MapCubit extends Cubit<MapState> {
       current.controller.dispose();
       current.mbTiles.dispose();
     }
-    _sub.cancel();
+    _themeSub.cancel();
+    _gpsSub.cancel();
     return super.close();
   }
 
@@ -62,6 +69,19 @@ class MapCubit extends Cubit<MapState> {
     ));
   }
 
+  void _onThemeUpdate(ThemeState event) {
+    final current = state;
+    if (current is! MapLoaded) return;
+
+    emit(MapState.loading());
+    // wait 100ms for the current map widget to unload before updating the theme.
+    // otherwise the theme will not reliably update on the live map.
+    Future.delayed(const Duration(milliseconds: 100), () async {
+      final theme = await _getTheme(event.isDark);
+      emit(current.copyWith(theme: theme));
+    });
+  }
+
   void _onMapReady() {
     final current = state;
     if (current is! MapLoaded) return;
@@ -70,7 +90,14 @@ class MapCubit extends Cubit<MapState> {
     emit(current.copyWith(isReady: true));
   }
 
-  Future<void> _loadMap() async {
+  Future<Theme> _getTheme(bool isDark) async {
+    final mapTheme = isDark ? 'assets/mapdark.json' : 'assets/maplight.json';
+    final themeStr = await rootBundle.loadString(mapTheme);
+
+    return ThemeReader().read(jsonDecode(themeStr));
+  }
+
+  Future<void> _loadMap(ThemeState themeState) async {
     emit(MapState.loading());
 
     final appDir = await getApplicationDocumentsDirectory();
@@ -99,9 +126,7 @@ class MapCubit extends Cubit<MapState> {
               )
             : LatLng(0, 0));
 
-    final themeStr = await rootBundle.loadString('assets/mapdark.json');
-    final theme = ThemeReader().read(jsonDecode(themeStr));
-
+    final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
     emit(MapState.loaded(
