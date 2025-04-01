@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/map_cubit.dart';
+import '../cubits/theme_cubit.dart';
 import '../widgets/map/map_view.dart';
 import '../widgets/status_bars/map_bottom_status_bar.dart';
 import '../widgets/status_bars/top_status_bar.dart';
@@ -13,10 +14,12 @@ class MapScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeState(:theme) = ThemeCubit.watch(context);
+
     return Container(
       width: 480,
       height: 480,
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [
           // Top status bar
@@ -24,7 +27,7 @@ class MapScreen extends StatelessWidget {
 
           // Map view
           Expanded(
-            child: _buildMap(context, context.watch<MapCubit>().state),
+            child: _buildMap(context, context.watch<MapCubit>().state, theme),
           ),
 
           // Bottom status bar with speed
@@ -34,7 +37,7 @@ class MapScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMap(BuildContext context, MapState mapState) =>
+  Widget _buildMap(BuildContext context, MapState mapState, ThemeData theme) =>
       switch (mapState) {
         MapInitial() ||
         MapLoading() =>
@@ -53,15 +56,15 @@ class MapScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     error,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: theme.textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Please install the map data to use this feature',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey,
-                        ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],

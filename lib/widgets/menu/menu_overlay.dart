@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/menu_cubit.dart';
 import '../../cubits/screen_cubit.dart';
+import '../../cubits/theme_cubit.dart';
 import '../../cubits/trip_cubit.dart';
 import '../general/control_gestures_detector.dart';
 import 'menu_item.dart';
@@ -96,6 +98,7 @@ class _MenuOverlayState extends State<MenuOverlay>
     final menu = context.watch<MenuCubit>();
     final screen = context.read<ScreenCubit>();
     final trip = context.read<TripCubit>();
+    final theme = context.read<ThemeCubit>();
 
     switch (menu.state) {
       case MenuHidden():
@@ -112,7 +115,7 @@ class _MenuOverlayState extends State<MenuOverlay>
         }
         break;
       case MenuVisible():
-        if(_animController.isDismissed) {
+        if (_animController.isDismissed) {
           _selectedIndex = 0;
           // use a separate variable here, because we only want to set this
           // just before we start fading in the menu
@@ -122,11 +125,10 @@ class _MenuOverlayState extends State<MenuOverlay>
         break;
     }
 
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = theme.state.themeMode == ThemeMode.dark;
 
     final items = [
-      if(_showMapView)
+      if (_showMapView)
         MenuItem(
           title: 'Show Cluster View',
           type: MenuItemType.action,
@@ -135,8 +137,7 @@ class _MenuOverlayState extends State<MenuOverlay>
             menu.hideMenu();
           },
         ),
-
-      if(!_showMapView)
+      if (!_showMapView)
         MenuItem(
           title: 'Show Map View',
           type: MenuItemType.action,
@@ -154,6 +155,13 @@ class _MenuOverlayState extends State<MenuOverlay>
         },
       ),
       MenuItem(
+          title: "Switch Theme",
+          type: MenuItemType.action,
+          onChanged: (_) {
+            theme.toggleTheme();
+            menu.hideMenu();
+          }),
+      MenuItem(
         title: 'Reset Trip',
         type: MenuItemType.action,
         onChanged: (_) {
@@ -169,13 +177,10 @@ class _MenuOverlayState extends State<MenuOverlay>
     ];
 
     return ControlGestureDetector(
-      stream: context
-          .read<VehicleSync>()
-          .stream,
-      onLeftTap: () =>
-          setState(() {
-            _selectedIndex = (_selectedIndex + 1) % items.length;
-          }),
+      stream: context.read<VehicleSync>().stream,
+      onLeftTap: () => setState(() {
+        _selectedIndex = (_selectedIndex + 1) % items.length;
+      }),
       onRightTap: () {
         final item = items[_selectedIndex];
         item.onChanged?.call(item.currentValue);
@@ -218,7 +223,7 @@ class _MenuOverlayState extends State<MenuOverlay>
                             item: item,
                             isSelected: _selectedIndex == index,
                             isInSubmenu:
-                            false, //widget.isInSubmenu && widget.selectedIndex == index,
+                                false, //widget.isInSubmenu && widget.selectedIndex == index,
                           ),
                         );
                       },
@@ -317,10 +322,9 @@ class _MenuOverlayState extends State<MenuOverlay>
     );
   }
 
-  Widget _buildControlHint(BuildContext context, String control,
-      String action) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  Widget _buildControlHint(
+      BuildContext context, String control, String action) {
+    final theme = ThemeCubit.watch(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -329,7 +333,7 @@ class _MenuOverlayState extends State<MenuOverlay>
           control,
           style: TextStyle(
             fontSize: 14,
-            color: isDark ? Colors.white70 : Colors.black54,
+            color: theme.isDark ? Colors.white70 : Colors.black54,
           ),
         ),
         const SizedBox(height: 4),
@@ -338,7 +342,7 @@ class _MenuOverlayState extends State<MenuOverlay>
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black,
+            color: theme.isDark ? Colors.white : Colors.black,
           ),
         ),
       ],

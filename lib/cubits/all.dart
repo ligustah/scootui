@@ -6,9 +6,11 @@ import 'mdb_cubits.dart';
 import 'menu_cubit.dart';
 import 'screen_cubit.dart';
 import 'system_cubit.dart';
+import 'theme_cubit.dart';
 import 'trip_cubit.dart';
 
 final List<SingleChildWidget> allCubits = [
+  BlocProvider(create: ThemeCubit.create),
   BlocProvider(create: EngineSync.create),
   BlocProvider(create: VehicleSync.create),
   BlocProvider(create: Battery1Sync.create),

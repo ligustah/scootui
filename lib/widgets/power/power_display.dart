@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../cubits/theme_cubit.dart';
+
 class PowerDisplay extends StatefulWidget {
   final double powerOutput;
   final double maxRegenPower; 
@@ -71,9 +73,8 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
+    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
+
     return AnimatedBuilder(
       animation: _powerAnimation,
       builder: (context, child) {

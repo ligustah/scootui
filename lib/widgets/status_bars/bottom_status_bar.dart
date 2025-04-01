@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../cubits/theme_cubit.dart';
 import '../../state/battery.dart';
 
 class BottomStatusBar extends StatelessWidget {
@@ -29,6 +30,7 @@ class BottomStatusBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final battery1 = Battery1Sync.watch(context);
     final battery2 = Battery2Sync.watch(context);
+    final ThemeState(:theme) = ThemeCubit.watch(context);
 
     final message = _getStatusMessage(battery1, battery2);
     
@@ -40,7 +42,7 @@ class BottomStatusBar extends StatelessWidget {
             child: Text(
               message,
               style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
+                color: theme.colorScheme.error,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),

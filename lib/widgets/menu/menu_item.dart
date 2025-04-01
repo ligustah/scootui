@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../cubits/theme_cubit.dart';
+
 enum MenuItemType {
   action,    // Single action item (e.g. reset trip)
   toggle,    // Toggle between two states (e.g. theme)
@@ -57,8 +59,7 @@ class MenuItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final ThemeState(:isDark) = ThemeCubit.watch(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -82,7 +83,7 @@ class MenuItemWidget extends StatelessWidget {
           // For theme item, show current theme name
           if (item.title == 'Change Theme')
             Text(
-              Theme.of(context).brightness == Brightness.dark ? 'Dark' : 'Light',
+              isDark ? 'Dark' : 'Light',
               style: TextStyle(
                 fontSize: 20,
                 color: isDark ? Colors.white70 : Colors.black54,

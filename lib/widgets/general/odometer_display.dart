@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../cubits/theme_cubit.dart';
+
 class OdometerDisplay extends StatelessWidget {
   final double tripDistance;
   final double totalDistance;
@@ -53,8 +55,7 @@ class _DistanceDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
     // Format the distance value
     final parts = value.split('.');
@@ -133,7 +134,7 @@ class TripDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final trip = TripCubit.watch(context);
+    final ThemeState(:isDark) = ThemeCubit.watch(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -144,8 +145,8 @@ class TripDisplay extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildLabel('AVG SPEED'),
-              _buildValue('${_calculateAverageSpeed()} km/h'),
+              _buildLabel('AVG SPEED', isDark),
+              _buildValue('${_calculateAverageSpeed()} km/h', isDark),
             ],
           ),
 
@@ -153,8 +154,8 @@ class TripDisplay extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              _buildLabel('TRIP TIME'),
-              _buildValue(_formatTripTime()),
+              _buildLabel('TRIP TIME', isDark),
+              _buildValue(_formatTripTime(), isDark),
             ],
           ),
         ],
@@ -162,9 +163,8 @@ class TripDisplay extends StatelessWidget {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, bool isDark) {
     return Builder(builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Text(
         text,
         style: TextStyle(
@@ -176,9 +176,8 @@ class TripDisplay extends StatelessWidget {
     });
   }
 
-  Widget _buildValue(String text) {
+  Widget _buildValue(String text, bool isDark) {
     return Builder(builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Text(
         text,
         style: TextStyle(

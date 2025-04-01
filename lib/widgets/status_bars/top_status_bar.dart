@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/system_cubit.dart';
+import '../../cubits/theme_cubit.dart';
 import '../../state/enums.dart';
 import 'battery_display.dart';
 
@@ -12,11 +13,10 @@ class StatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
     final system = SystemCubit.watch(context);
     final bluetooth = BluetoothSync.watch(context);
 
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
 
     return Container(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../cubits/theme_cubit.dart';
+
 class StatusIndicator extends StatelessWidget {
   final IconData icon;
   final bool active;
@@ -18,7 +20,7 @@ class StatusIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeState(:theme) = ThemeCubit.watch(context);
     final secondaryColor = theme.textTheme.bodyMedium?.color ?? Colors.grey;
     final iconColor = color ?? (active ? Colors.green : secondaryColor);
     
