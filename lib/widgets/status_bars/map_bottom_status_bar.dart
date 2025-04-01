@@ -11,7 +11,7 @@ class MapBottomStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final engine = EngineSync.watch(context);
+    final speed = EngineSync.select(context, (data) => data.speed);
     final vehicle = VehicleSync.watch(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -40,7 +40,7 @@ class MapBottomStatusBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                engine.speed.toStringAsFixed(0),
+                speed.toStringAsFixed(0),
                 style: TextStyle(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,

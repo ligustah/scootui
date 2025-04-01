@@ -16,6 +16,9 @@ class EngineSync extends SyncableCubit<EngineData> {
   static EngineSync create(BuildContext context) =>
       EngineSync(RepositoryProvider.of<RedisRepository>(context))..start();
 
+  static T select<T>(BuildContext context, T Function(EngineData) selector) =>
+      selector(context.select((EngineSync e) => e.state));
+
   EngineSync(RedisRepository repo)
       : super(redisRepository: repo, initialState: EngineData());
 }

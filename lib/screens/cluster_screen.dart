@@ -5,14 +5,11 @@ import 'package:path_provider/path_provider.dart';
 
 import '../cubits/mdb_cubits.dart';
 import '../cubits/trip_cubit.dart';
-import '../services/menu_manager.dart';
 import '../widgets/general/odometer_display.dart';
 import '../widgets/general/warning_indicators.dart';
-import '../widgets/menu/menu_overlay.dart';
 import '../widgets/power/power_display.dart';
 import '../widgets/speedometer/speedometer_display.dart';
 import '../widgets/status_bars/top_status_bar.dart';
-import 'map_screen.dart';
 
 enum ViewMode {
   dashboard,
@@ -70,12 +67,13 @@ class _ClusterScreenState extends State<ClusterScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final engineState = EngineSync.watch(context);
+    final (odometer, powerOutput) =
+        EngineSync.select(context, (data) => (data.odometer, data.powerOutput));
     final trip = TripCubit.watch(context);
 
     // Store current odometer values before update
     final currentTrip = trip.distanceTravelled / 1000;
-    final currentTotal = engineState.odometer / 1000;
+    final currentTotal = odometer / 1000;
 
     // Update previous values for next animation
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -111,7 +109,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                       left: 40,
                       right: 40,
                       child: PowerDisplay(
-                        powerOutput: engineState.powerOutput / 1000,
+                        powerOutput: powerOutput / 1000,
                       ),
                     ),
                   ],

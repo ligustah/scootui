@@ -38,7 +38,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    final engine = EngineSync.watch(context);
+    final speed = EngineSync.select(context, (data) => data.speed);
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -71,7 +71,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
                   return CustomPaint(
                     size: const Size.fromRadius(150),
                     painter: _SpeedometerPainter(
-                      progress: engine.speed / widget.maxSpeed,
+                      progress: speed / widget.maxSpeed,
                       isDark: isDark,
                       isRegenerating: _isRegenerating,
                       backgroundColor: color ?? Colors.grey,
@@ -87,7 +87,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                engine.speed.toStringAsFixed(0),
+                speed.toStringAsFixed(0),
                 style: TextStyle(
                   fontSize: 96,
                   fontWeight: FontWeight.bold,
