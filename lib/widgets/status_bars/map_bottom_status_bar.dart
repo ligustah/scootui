@@ -2,27 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../cubits/mdb_cubits.dart';
-import '../../state/vehicle.dart';
+import '../general/indicator_lights.dart';
 
 class MapBottomStatusBar extends StatelessWidget {
   const MapBottomStatusBar({
     super.key,
   });
-
-  Widget _buildBlinkerIcon(
-      BuildContext context, String iconPath, bool isActive) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final color =
-        isActive ? Colors.green : (isDark ? Colors.white24 : Colors.black26);
-
-    return SvgPicture.asset(
-      iconPath,
-      width: 48,
-      height: 48,
-      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +33,7 @@ class MapBottomStatusBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Left blinker
-          _buildBlinkerIcon(
-            context,
-            'assets/icons/librescoot-turn-left.svg',
-            vehicle.blinkerState == BlinkerState.left ||
-                vehicle.blinkerState == BlinkerState.both,
-          ),
+          IndicatorLights.leftBlinker(vehicle),
 
           // Speed display
           Column(
@@ -78,12 +58,7 @@ class MapBottomStatusBar extends StatelessWidget {
           ),
 
           // Right blinker
-          _buildBlinkerIcon(
-            context,
-            'assets/icons/librescoot-turn-right.svg',
-            vehicle.blinkerState == BlinkerState.right ||
-                vehicle.blinkerState == BlinkerState.both,
-          ),
+          IndicatorLights.rightBlinker(vehicle),
         ],
       ),
     );

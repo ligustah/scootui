@@ -25,6 +25,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.32
   freezed: ^3.0.4
   freezed_annotation: ^3.0.0
+  simple_animations: ^5.1.0
 
 dev_dependencies:
   flutter_test:
