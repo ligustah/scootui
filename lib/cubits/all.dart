@@ -1,0 +1,23 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nested/nested.dart';
+
+import 'map_cubit.dart';
+import 'mdb_cubits.dart';
+import 'menu_cubit.dart';
+import 'screen_cubit.dart';
+import 'system_cubit.dart';
+import 'trip_cubit.dart';
+
+final List<SingleChildWidget> allCubits = [
+  BlocProvider(create: EngineSync.create),
+  BlocProvider(create: VehicleSync.create),
+  BlocProvider(create: Battery1Sync.create),
+  BlocProvider(create: Battery2Sync.create),
+  BlocProvider(create: BluetoothSync.create),
+  BlocProvider(create: GpsSync.create),
+  BlocProvider(create: SystemCubit.create),
+  BlocProvider(create: TripCubit.create),
+  BlocProvider(create: MapCubit.create),
+  BlocProvider(create: ScreenCubit.create),
+  BlocProvider(create: MenuCubit.create),
+];

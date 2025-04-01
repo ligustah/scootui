@@ -4,16 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scooter_cluster/cubits/all.dart';
 
-import 'cubits/map_cubit.dart';
-import 'cubits/mdb_cubits.dart';
-import 'cubits/menu_cubit.dart';
-import 'cubits/screen_cubit.dart';
-import 'cubits/system_cubit.dart';
-import 'cubits/trip_cubit.dart';
 import 'repositories/redis_repository.dart';
 import 'screens/main_screen.dart';
-import 'screens/map_screen.dart';
 import 'theme_config.dart';
 
 void main() {
@@ -75,21 +69,10 @@ class _ScooterClusterAppState extends State<ScooterClusterApp> {
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-      create: (context) => RedisRepository(host: getRedisHost(), port: 6379),
+      create: (context) =>
+          RedisRepository(host: getRedisHost(), port: 6379)..dashboardReady(),
       child: MultiBlocProvider(
-        providers: [
-          BlocProvider(create: EngineSync.create),
-          BlocProvider(create: VehicleSync.create),
-          BlocProvider(create: Battery1Sync.create),
-          BlocProvider(create: Battery2Sync.create),
-          BlocProvider(create: BluetoothSync.create),
-          BlocProvider(create: GpsSync.create),
-          BlocProvider(create: SystemCubit.create),
-          BlocProvider(create: TripCubit.create),
-          BlocProvider(create: MapCubit.create),
-          BlocProvider(create: ScreenCubit.create),
-          BlocProvider(create: MenuCubit.create),
-        ],
+        providers: allCubits,
         child: MaterialApp(
           title: 'Scooter Cluster',
           theme: AppThemes.lightTheme,

@@ -3,8 +3,12 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scooter_cluster/cubits/all.dart';
 
+import 'repositories/redis_repository.dart';
 import 'screens/simulator_screen.dart';
+import 'theme_config.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,14 +43,20 @@ class SimulatorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Cluster Simulator',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
+    return RepositoryProvider(
+      create: (context) =>
+          RedisRepository(host: '127.0.0.1', port: 6379)..dashboardReady(),
+      child: MultiBlocProvider(
+        providers: allCubits,
+        child: MaterialApp(
+          title: 'Cluster Simulator',
+          theme: AppThemes.lightTheme,
+          darkTheme: AppThemes.darkTheme,
+          themeMode: ThemeMode.dark,
+          debugShowCheckedModeBanner: false,
+          home: const SimulatorScreen(),
+        ),
       ),
-      debugShowCheckedModeBanner: false,
-      home: const SimulatorScreen(),
     );
   }
 }
