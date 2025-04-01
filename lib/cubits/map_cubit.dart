@@ -17,7 +17,6 @@ import 'mdb_cubits.dart';
 import 'theme_cubit.dart';
 
 part 'map_cubit.freezed.dart';
-
 part 'map_state.dart';
 
 class MapCubit extends Cubit<MapState> {
@@ -74,12 +73,8 @@ class MapCubit extends Cubit<MapState> {
     if (current is! MapLoaded) return;
 
     emit(MapState.loading());
-    // wait 100ms for the current map widget to unload before updating the theme.
-    // otherwise the theme will not reliably update on the live map.
-    Future.delayed(const Duration(milliseconds: 100), () async {
-      final theme = await _getTheme(event.isDark);
-      emit(current.copyWith(theme: theme));
-    });
+    _getTheme(event.isDark)
+        .then((theme) => emit(current.copyWith(theme: theme)));
   }
 
   void _onMapReady() {
