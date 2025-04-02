@@ -178,10 +178,10 @@ class _MenuOverlayState extends State<MenuOverlay>
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
-      onLeftTap: () => setState(() {
+      onLeftPress: () => setState(() {
         _selectedIndex = (_selectedIndex + 1) % items.length;
       }),
-      onRightTap: () {
+      onRightPress: () {
         final item = items[_selectedIndex];
         item.onChanged?.call(item.currentValue);
       },
