@@ -377,7 +377,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                             (value) =>
                                 _publishEvent('internet', 'modem-state', value),
                           ),
-                          _buildSlider('Signal Quality', _signalQuality, 0, 255,
+                          _buildSlider('Signal Quality', _signalQuality, 0, 100,
                               (value) {
                             setState(() => _signalQuality = value.toInt());
                             _publishEvent('internet', 'signal-quality',

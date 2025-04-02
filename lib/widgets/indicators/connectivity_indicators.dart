@@ -31,10 +31,10 @@ class _Icons {
 }
 
 final signalQuality = [
-  (220, _Icons.connected4),
-  (170, _Icons.connected3),
-  (110, _Icons.connected2),
-  (60, _Icons.connected1),
+  (86, _Icons.connected4),
+  (66, _Icons.connected3),
+  (43, _Icons.connected2),
+  (24, _Icons.connected1),
   (0, _Icons.connected0),
 ];
 
