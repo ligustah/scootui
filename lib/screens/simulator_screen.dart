@@ -22,6 +22,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   int _simulatedRpm = 0;
   int _simulatedBatteryCharge0 = 100;
   int _simulatedBatteryCharge1 = 100;
+  int _signalQuality = 0;
   String? _errorMessage;
   bool _battery0Present = true;
   bool _battery1Present = true;
@@ -35,10 +36,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   Future<void> _initializeValues() async {
     // Initialize engine values
     await _updateEngineValues();
-    
+
     // Initialize battery values
     await _updateBatteryValues();
-    
+
     // Initialize vehicle states
     await Future.wait([
       _publishEvent('vehicle', 'blinker:state', 'off'),
@@ -48,11 +49,11 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       _publishEvent('vehicle', 'brake:left', 'off'),
       _publishEvent('vehicle', 'brake:right', 'off'),
     ]);
-    
+
     // Initialize system states
     await Future.wait([
       _publishEvent('ble', 'status', 'disconnected'),
-      _publishEvent('internet', 'status', 'disconnected'),
+      _publishEvent('internet', 'modem-state', 'disconnected'),
     ]);
   }
 
@@ -333,7 +334,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                       _simulateBrakeTap('left');
                                       break;
                                     default:
-                                      _publishEvent('vehicle', 'brake:left', value);
+                                      _publishEvent(
+                                          'vehicle', 'brake:left', value);
                                   }
                                 },
                               ),
@@ -351,7 +353,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                   _simulateBrakeTap('right');
                                   break;
                                 default:
-                                  _publishEvent('vehicle', 'brake:right', value);
+                                  _publishEvent(
+                                      'vehicle', 'brake:right', value);
                               }
                             },
                           ),
@@ -370,10 +373,25 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                           ),
                           _buildButtonGroup(
                             'Internet Connection',
-                            ['disconnected', 'connected'],
+                            ['off', 'disconnected', 'connected'],
                             (value) =>
-                                _publishEvent('internet', 'status', value),
+                                _publishEvent('internet', 'modem-state', value),
                           ),
+                          _buildSlider('Signal Quality', _signalQuality, 0, 255,
+                              (value) {
+                            setState(() => _signalQuality = value.toInt());
+                            _publishEvent('internet', 'signal-quality',
+                                value.toInt().toString());
+                          }),
+                          _buildButtonGroup(
+                              'Cloud Status',
+                              ['disconnected', 'connected'],
+                              (value) => _publishEvent(
+                                  'internet', 'unu-cloud', value)),
+                          _buildButtonGroup(
+                              'GPS Status',
+                              ['off', 'searching', 'fix-established', 'error'],
+                              (value) => _publishEvent('gps', 'state', value))
                         ],
                       ),
                     ),
