@@ -383,8 +383,15 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                             _publishEvent('internet', 'signal-quality',
                                 value.toInt().toString());
                           }),
-                          _buildButtonGroup('Cloud Status', ['disconnected', 'connected'], (value) =>
-                              _publishEvent('internet', 'unu-cloud', value)),
+                          _buildButtonGroup(
+                              'Cloud Status',
+                              ['disconnected', 'connected'],
+                              (value) => _publishEvent(
+                                  'internet', 'unu-cloud', value)),
+                          _buildButtonGroup(
+                              'GPS Status',
+                              ['off', 'searching', 'fix-established', 'error'],
+                              (value) => _publishEvent('gps', 'state', value))
                         ],
                       ),
                     ),

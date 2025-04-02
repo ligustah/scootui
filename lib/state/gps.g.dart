@@ -6,6 +6,13 @@ part of 'gps.dart';
 // StateGenerator
 // **************************************************************************
 
+final $_GpsStateMap = {
+  "off": GpsState.off,
+  "searching": GpsState.searching,
+  "fix-established": GpsState.fixEstablished,
+  "error": GpsState.error,
+};
+
 abstract mixin class $GpsData implements Syncable<GpsData> {
   double get latitude;
   double get longitude;
@@ -13,6 +20,7 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
   double get speed;
   double get altitude;
   String get timestamp;
+  GpsState get state;
   get syncSettings => SyncSettings(
       "gps",
       Duration(microseconds: 3000000),
@@ -59,6 +67,13 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
             typeName: "String",
             defaultValue: null,
             interval: null),
+        SyncFieldSettings(
+            name: "state",
+            variable: "state",
+            type: SyncFieldType.enum_,
+            typeName: "GpsState",
+            defaultValue: "off",
+            interval: null),
       ],
       "null");
 
@@ -71,11 +86,12 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
       speed: "speed" != name ? speed : double.parse(value),
       altitude: "altitude" != name ? altitude : double.parse(value),
       timestamp: "timestamp" != name ? timestamp : value,
+      state: "state" != name ? state : $_GpsStateMap[value] ?? GpsState.off,
     );
   }
 
   List<Object?> get props =>
-      [latitude, longitude, course, speed, altitude, timestamp];
+      [latitude, longitude, course, speed, altitude, timestamp, state];
   @override
   String toString() {
     final buf = StringBuffer();
@@ -87,6 +103,7 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
     buf.writeln("	speed = $speed");
     buf.writeln("	altitude = $altitude");
     buf.writeln("	timestamp = $timestamp");
+    buf.writeln("	state = $state");
     buf.writeln(")");
 
     return buf.toString();

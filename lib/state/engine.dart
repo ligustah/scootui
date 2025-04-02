@@ -8,7 +8,8 @@ part 'engine.g.dart';
 
 @StateClass("engine-ecu", Duration(seconds: 1))
 class EngineData extends Equatable with $EngineData {
-  @StateField(name: "state", defaultValue: "off", interval: Duration(seconds: 10))
+  @StateField(
+      name: "state", defaultValue: "off", interval: Duration(seconds: 10))
   final Toggle powerState;
 
   @StateField(name: "kers", defaultValue: "on")

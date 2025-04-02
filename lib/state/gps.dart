@@ -8,6 +8,13 @@ import '../builders/sync/settings.dart';
 
 part 'gps.g.dart';
 
+enum GpsState {
+  off,
+  searching,
+  fixEstablished,
+  error,
+}
+
 @StateClass("gps", Duration(seconds: 3))
 class GpsData extends Equatable with $GpsData {
   @StateField()
@@ -28,6 +35,9 @@ class GpsData extends Equatable with $GpsData {
   @StateField()
   final String timestamp;
 
+  @StateField(defaultValue: "off")
+  final GpsState state;
+
   LatLng get latLng => LatLng(latitude, longitude);
   double get courseRadians => course * (math.pi / 180);
 
@@ -38,5 +48,6 @@ class GpsData extends Equatable with $GpsData {
     this.latitude = 0,
     this.longitude = 0,
     this.timestamp = "",
+    this.state = GpsState.off,
   });
 }
