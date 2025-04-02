@@ -39,9 +39,7 @@ class MapScreen extends StatelessWidget {
 
   Widget _buildMap(BuildContext context, MapState mapState, ThemeData theme) =>
       switch (mapState) {
-        MapInitial() ||
-        MapLoading() =>
-          const Center(child: CircularProgressIndicator()),
+        MapLoading() => const Center(child: CircularProgressIndicator()),
         MapUnavailable(:final error) => Center(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -71,7 +69,19 @@ class MapScreen extends StatelessWidget {
               ),
             ),
           ),
-        MapLoaded(
+        MapOnline(
+          :final position,
+          :final controller,
+          :final onReady,
+          :final orientation,
+        ) =>
+          OnlineMapView(
+            mapController: controller,
+            position: position,
+            mapReady: onReady,
+            orientation: orientation,
+          ),
+        MapOffline(
           :final mbTiles,
           :final position,
           :final controller,
@@ -79,7 +89,7 @@ class MapScreen extends StatelessWidget {
           :final onReady,
           :final orientation,
         ) =>
-          MapView(
+          OfflineMapView(
             mbTiles: mbTiles,
             mapController: controller,
             theme: theme,

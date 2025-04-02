@@ -2,19 +2,34 @@ part of 'map_cubit.dart';
 
 @freezed
 sealed class MapState with _$MapState {
-  const factory MapState.initial() = MapInitial;
+  const factory MapState.loading({
+    required LatLng position,
+    @Default(0) double orientation,
+    required MapController controller,
+  }) = MapLoading;
 
-  const factory MapState.loading() = MapLoading;
+  const factory MapState.unavailable(
+    String error, {
+    required LatLng position,
+    @Default(0) double orientation,
+    required MapController controller,
+  }) = MapUnavailable;
 
-  const factory MapState.unavailable(String error) = MapUnavailable;
-
-  const factory MapState.loaded({
+  const factory MapState.offline({
+    required MapController controller,
+    required LatLng position,
+    required double orientation,
     required MbTiles mbTiles,
+    required Theme theme,
+    void Function()? onReady,
+    @Default(false) bool isReady,
+  }) = MapOffline;
+
+  const factory MapState.online({
     required LatLng position,
     required double orientation,
     required MapController controller,
-    required Theme theme,
-    void Function ()? onReady,
+    void Function()? onReady,
     @Default(false) bool isReady,
-  }) = MapLoaded;
+  }) = MapOnline;
 }
