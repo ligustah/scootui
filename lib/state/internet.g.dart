@@ -6,9 +6,10 @@ part of 'internet.dart';
 // StateGenerator
 // **************************************************************************
 
-final $_ToggleMap = {
-  "on": Toggle.on,
-  "off": Toggle.off,
+final $_ModemStateMap = {
+  "off": ModemState.off,
+  "disconnected": ModemState.disconnected,
+  "connected": ModemState.connected,
 };
 
 final $_ConnectionStatusMap = {
@@ -17,23 +18,24 @@ final $_ConnectionStatusMap = {
 };
 
 abstract mixin class $InternetData implements Syncable<InternetData> {
-  Toggle get modemState;
+  ModemState get modemState;
   ConnectionStatus get unuCloud;
   ConnectionStatus get status;
   String get ipAddress;
   String get accessTech;
   int get signalQuality;
   String get simImei;
+  String get simImsi;
   String get simIccid;
   get syncSettings => SyncSettings(
-      "aux-battery",
+      "internet",
       Duration(microseconds: 5000000),
       [
         SyncFieldSettings(
             name: "modemState",
             variable: "modem-state",
             type: SyncFieldType.enum_,
-            typeName: "Toggle",
+            typeName: "ModemState",
             defaultValue: "off",
             interval: null),
         SyncFieldSettings(
@@ -79,6 +81,13 @@ abstract mixin class $InternetData implements Syncable<InternetData> {
             defaultValue: null,
             interval: null),
         SyncFieldSettings(
+            name: "simImsi",
+            variable: "sim-imsi",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: null,
+            interval: null),
+        SyncFieldSettings(
             name: "simIccid",
             variable: "sim-iccid",
             type: SyncFieldType.string,
@@ -91,8 +100,9 @@ abstract mixin class $InternetData implements Syncable<InternetData> {
   @override
   InternetData update(String name, String value) {
     return InternetData(
-      modemState:
-          "modem-state" != name ? modemState : $_ToggleMap[value] ?? Toggle.off,
+      modemState: "modem-state" != name
+          ? modemState
+          : $_ModemStateMap[value] ?? ModemState.off,
       unuCloud: "unu-cloud" != name
           ? unuCloud
           : $_ConnectionStatusMap[value] ?? ConnectionStatus.disconnected,
@@ -104,6 +114,7 @@ abstract mixin class $InternetData implements Syncable<InternetData> {
       signalQuality:
           "signal-quality" != name ? signalQuality : int.parse(value),
       simImei: "sim-imei" != name ? simImei : value,
+      simImsi: "sim-imsi" != name ? simImsi : value,
       simIccid: "sim-iccid" != name ? simIccid : value,
     );
   }
@@ -116,6 +127,7 @@ abstract mixin class $InternetData implements Syncable<InternetData> {
         accessTech,
         signalQuality,
         simImei,
+        simImsi,
         simIccid
       ];
   @override
@@ -130,6 +142,7 @@ abstract mixin class $InternetData implements Syncable<InternetData> {
     buf.writeln("	accessTech = $accessTech");
     buf.writeln("	signalQuality = $signalQuality");
     buf.writeln("	simImei = $simImei");
+    buf.writeln("	simImsi = $simImsi");
     buf.writeln("	simIccid = $simIccid");
     buf.writeln(")");
 

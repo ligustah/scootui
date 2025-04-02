@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
-import '../general/indicator_lights.dart';
+import '../indicators/indicator_lights.dart';
 
 class MapBottomStatusBar extends StatelessWidget {
   const MapBottomStatusBar({

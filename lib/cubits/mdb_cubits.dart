@@ -6,6 +6,7 @@ import '../state/battery.dart';
 import '../state/bluetooth.dart';
 import '../state/engine.dart';
 import '../state/gps.dart';
+import '../state/internet.dart';
 import '../state/vehicle.dart';
 import 'syncable_cubit.dart';
 
@@ -86,4 +87,15 @@ class GpsSync extends SyncableCubit<GpsData> {
 
   GpsSync(MDBRepository repo)
       : super(redisRepository: repo, initialState: GpsData());
+}
+
+class InternetSync extends SyncableCubit<InternetData> {
+  static InternetData watch(BuildContext context) =>
+      context.watch<InternetSync>().state;
+
+  static InternetSync create(BuildContext context) =>
+      InternetSync(RepositoryProvider.of<MDBRepository>(context))..start();
+
+  InternetSync(MDBRepository repo)
+      : super(redisRepository: repo, initialState: InternetData());
 }

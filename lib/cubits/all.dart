@@ -17,6 +17,7 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: Battery2Sync.create),
   BlocProvider(create: BluetoothSync.create),
   BlocProvider(create: GpsSync.create),
+  BlocProvider(create: InternetSync.create),
   BlocProvider(create: SystemCubit.create),
   BlocProvider(create: TripCubit.create),
   BlocProvider(create: MapCubit.create),

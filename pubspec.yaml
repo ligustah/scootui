@@ -39,10 +39,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icons/librescoot-engine-warning.svg
-    - assets/icons/librescoot-hazards.svg
-    - assets/icons/librescoot-parking-brake.svg
-    - assets/icons/librescoot-turn-left.svg
-    - assets/icons/librescoot-turn-right.svg
+    - assets/icons/
     - assets/maplight.json
     - assets/mapdark.json

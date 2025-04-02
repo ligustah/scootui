@@ -7,7 +7,7 @@ import '../cubits/mdb_cubits.dart';
 import '../cubits/theme_cubit.dart';
 import '../cubits/trip_cubit.dart';
 import '../widgets/general/odometer_display.dart';
-import '../widgets/general/warning_indicators.dart';
+import '../widgets/indicators/warning_indicators.dart';
 import '../widgets/power/power_display.dart';
 import '../widgets/speedometer/speedometer_display.dart';
 import '../widgets/status_bars/top_status_bar.dart';
