@@ -1,29 +1,22 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:redis/redis.dart';
 
 import '../builders/sync/annotations.dart';
 import '../builders/sync/settings.dart';
-import '../repositories/redis_repository.dart';
+import '../repositories/mdb_repository.dart';
 
 abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
-  final RedisRepository redisRepository;
+  final MDBRepository redisRepository;
 
   bool _isClosing = false;
-  Command? _command;
-  PubSub? _pubSub;
   final Map<String, Timer> _timers = {};
   final Map<String, SyncFieldSettings> _fields = {};
 
   void _doRefresh(String variable) {
-    _command?.send_object(["HGET", state.syncSettings.channel, variable]).then(
-        (response) {
-      if (response is String) {
-        emit(state.update(variable, response));
-      }
-
-      // prepare for next cycle
+    redisRepository.get(state.syncSettings.channel, variable).then((value) {
+      if (value == null) return;
+      emit(state.update(variable, value));
       _refresh(variable);
     });
   }
@@ -47,25 +40,15 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
   void start() {
     final settings = state.syncSettings;
 
-    // connect to redis
-    redisRepository.connect().then((cmd) {
-      _command = cmd;
+    redisRepository.getAll(settings.channel).then((values) {
+      if (values.isEmpty) return;
 
-      // once connection is established, get the initial state
-      _command?.send_object(["HGETALL", settings.channel]).then((response) {
-        if (response is List) {
-          T newState = state;
+      T newState = state;
+      for (final (variable, value) in values) {
+        newState = newState.update(variable, value);
+      }
 
-          for (int i = 0; i < response.length; i += 2) {
-            final variable = response[i].toString();
-            final value = response[i + 1].toString();
-
-            newState = newState.update(variable, value);
-          }
-
-          emit(newState);
-        }
-      });
+      emit(newState);
     });
 
     // set up all field timers
@@ -77,7 +60,7 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
     redisRepository.subscribe(settings.channel).forEach((rec) {
       final (channel, variable) = rec;
 
-      if(channel == settings.channel) {
+      if (channel == settings.channel) {
         _doRefresh(variable);
       }
     });
@@ -86,9 +69,6 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
   @override
   Future<void> close() {
     _isClosing = true;
-    _command?.get_connection().close();
-    _command = null;
-
     _timers.forEach((_, timer) => timer.cancel());
 
     return super.close();

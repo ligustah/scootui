@@ -19,6 +19,8 @@ import 'theme_cubit.dart';
 part 'map_cubit.freezed.dart';
 part 'map_state.dart';
 
+const defaultCoordinates = LatLng(52.52437, 13.41053);
+
 class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
@@ -28,7 +30,8 @@ class MapCubit extends Cubit<MapState> {
     .._loadMap(context.read<ThemeCubit>().state);
 
   MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates)
-      : super(MapInitial()) {
+      : super(MapLoading(
+            controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = stream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
   }
@@ -36,9 +39,12 @@ class MapCubit extends Cubit<MapState> {
   @override
   Future<void> close() {
     final current = state;
-    if (current is MapLoaded) {
-      current.controller.dispose();
-      current.mbTiles.dispose();
+    current.controller.dispose();
+    switch (current) {
+      case MapOffline():
+        current.mbTiles.dispose();
+        break;
+      default:
     }
     _themeSub.cancel();
     _gpsSub.cancel();
@@ -46,23 +52,23 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _moveAndRotate(LatLng center, double course) {
-    final current = state;
-    if (current is! MapLoaded) return;
-
-    current.controller
-        .move(center, current.controller.camera.zoom, offset: Offset(0, 100));
-    current.controller.rotateAroundPoint(course, offset: Offset(0, 100));
+    final ctrl = switch (state) {
+      MapOnline(:final controller, :final isReady) =>
+        isReady ? controller : null,
+      MapOffline(:final controller, :final isReady) =>
+        isReady ? controller : null,
+      _ => null,
+    };
+    ctrl?.move(center, ctrl.camera.zoom, offset: Offset(0, 100));
+    ctrl?.rotateAroundPoint(course, offset: Offset(0, 100));
   }
 
   void _onGpsData(GpsData data) {
-    final current = state;
-    if (current is! MapLoaded) return;
-
     final course = (360 - data.course);
     final position = LatLng(data.latitude, data.longitude);
 
     _moveAndRotate(position, course);
-    emit(current.copyWith(
+    emit(state.copyWith(
       position: position,
       orientation: course,
     ));
@@ -70,19 +76,24 @@ class MapCubit extends Cubit<MapState> {
 
   void _onThemeUpdate(ThemeState event) {
     final current = state;
-    if (current is! MapLoaded) return;
 
-    emit(MapState.loading());
-    _getTheme(event.isDark)
-        .then((theme) => emit(current.copyWith(theme: theme)));
+    emit(MapState.loading(
+        controller: state.controller, position: state.position));
+    _getTheme(event.isDark).then((theme) => emit(switch (current) {
+          MapOffline() => current.copyWith(theme: theme),
+          _ => current,
+        }));
   }
 
   void _onMapReady() {
     final current = state;
-    if (current is! MapLoaded) return;
 
     _moveAndRotate(current.position, 0);
-    emit(current.copyWith(isReady: true));
+    emit(switch (current) {
+      MapOffline() => current.copyWith(isReady: true),
+      MapOnline() => current.copyWith(isReady: true),
+      _ => current,
+    });
   }
 
   Future<Theme> _getTheme(bool isDark) async {
@@ -93,15 +104,30 @@ class MapCubit extends Cubit<MapState> {
   }
 
   Future<void> _loadMap(ThemeState themeState) async {
-    emit(MapState.loading());
+    emit(MapState.loading(
+        controller: state.controller, position: state.position));
+    final theme = await _getTheme(themeState.isDark);
+    final ctrl = MapController();
 
-    final appDir = await getApplicationDocumentsDirectory();
+    late final Directory appDir;
+
+    try {
+      appDir = await getApplicationDocumentsDirectory();
+    } catch (e) {
+      emit(MapState.online(
+          position: state.position,
+          orientation: state.orientation,
+          controller: state.controller));
+      return;
+    }
+
     final mapPath = '${appDir.path}/maps/map.mbtiles';
 
     // check if map file exists
     final exists = await File(mapPath).exists();
     if (!exists) {
-      emit(MapState.unavailable('Map file not found'));
+      emit(MapState.unavailable('Map file not found',
+          controller: state.controller, position: state.position));
       return;
     }
 
@@ -121,10 +147,7 @@ class MapCubit extends Cubit<MapState> {
               )
             : LatLng(0, 0));
 
-    final theme = await _getTheme(themeState.isDark);
-    final ctrl = MapController();
-
-    emit(MapState.loaded(
+    emit(MapState.offline(
       mbTiles: mbTiles,
       position: initialCoordinates,
       orientation: 0,

@@ -99,6 +99,7 @@ class _MenuOverlayState extends State<MenuOverlay>
     final screen = context.read<ScreenCubit>();
     final trip = context.read<TripCubit>();
     final theme = context.read<ThemeCubit>();
+    final vehicle = context.read<VehicleSync>();
 
     switch (menu.state) {
       case MenuHidden():
@@ -150,7 +151,7 @@ class _MenuOverlayState extends State<MenuOverlay>
         title: 'Hazard lights',
         type: MenuItemType.action,
         onChanged: (_) {
-          // TODO: Implement hazard lights action
+          vehicle.toggleHazardLights();
           menu.hideMenu();
         },
       ),
@@ -178,10 +179,10 @@ class _MenuOverlayState extends State<MenuOverlay>
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
-      onLeftTap: () => setState(() {
+      onLeftPress: () => setState(() {
         _selectedIndex = (_selectedIndex + 1) % items.length;
       }),
-      onRightTap: () {
+      onRightPress: () {
         final item = items[_selectedIndex];
         item.onChanged?.call(item.currentValue);
       },
