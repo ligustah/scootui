@@ -148,6 +148,7 @@ class RedisMDBRepository implements MDBRepository {
 
   Future<void> dashboardReady() => set("dashboard", "ready", "true");
 
+  @override
   Future<void> set(String cluster, String variable, String value,
       {bool publish = true}) {
     return _withConnection((cmd) async {
@@ -158,6 +159,7 @@ class RedisMDBRepository implements MDBRepository {
     });
   }
 
+  @override
   Future<List<(String, String)>> getAll(String cluster) {
     return _withConnection((cmd) async {
       final result = await cmd.send_object(["HGETALL", cluster]);
@@ -175,6 +177,7 @@ class RedisMDBRepository implements MDBRepository {
     });
   }
 
+  @override
   Future<String?> get(String cluster, String variable) {
     return _withConnection((cmd) async {
       final result = await cmd.send_object(["HGET", cluster, variable]);
@@ -186,6 +189,7 @@ class RedisMDBRepository implements MDBRepository {
     });
   }
 
+  @override
   Stream<(String, String)> subscribe(String channel) {
     return _withConnectionStream((cmd) async* {
       final ps = PubSub(cmd);
@@ -206,5 +210,11 @@ class RedisMDBRepository implements MDBRepository {
 
   Future<void> dispose() async {
     await _pool.dispose();
+  }
+
+  @override
+  Future<void> push(String channel, String command) {
+    return _withConnection(
+        (cmd) => cmd.send_object(["LPUSH", channel, command]));
   }
 }

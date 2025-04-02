@@ -11,6 +11,8 @@ abstract class MDBRepository {
       {bool publish = true});
 
   Stream<(String, String)> subscribe(String channel);
+
+  Future<void> push(String channel, String command);
 }
 
 class InMemoryMDBRepository implements MDBRepository {
@@ -72,5 +74,20 @@ class InMemoryMDBRepository implements MDBRepository {
       }
     }
     _subscribers.clear();
+  }
+
+  @override
+  Future<void> push(String channel, String command) async {
+    // scooter:state lock/unlock/lock-hibernate
+    // scooter:seatbox open
+    // scooter:horn on/off
+    // scooter:blinker left/right/both/off
+    // scooter:power reboot/hibernate-manual
+
+    // simulate the mdb handling our commands
+    switch (channel) {
+      case 'scooter:blinker':
+        await set("vehicle", "blinker:state", command);
+    }
   }
 }

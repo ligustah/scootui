@@ -32,6 +32,14 @@ class VehicleSync extends SyncableCubit<VehicleData> {
 
   VehicleSync(MDBRepository repo)
       : super(redisRepository: repo, initialState: VehicleData());
+
+  void toggleHazardLights() {
+    final command = state.blinkerState == BlinkerState.both
+        ? BlinkerState.off
+        : BlinkerState.both;
+
+    super.redisRepository.push("scooter:blinker", command.name);
+  }
 }
 
 class BatterySync extends SyncableCubit<BatteryData> {
