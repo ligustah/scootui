@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../repositories/redis_repository.dart';
+import '../repositories/mdb_repository.dart';
 import '../state/battery.dart';
 import '../state/bluetooth.dart';
 import '../state/engine.dart';
@@ -14,12 +14,12 @@ class EngineSync extends SyncableCubit<EngineData> {
       context.watch<EngineSync>().state;
 
   static EngineSync create(BuildContext context) =>
-      EngineSync(RepositoryProvider.of<RedisRepository>(context))..start();
+      EngineSync(RepositoryProvider.of<MDBRepository>(context))..start();
 
   static T select<T>(BuildContext context, T Function(EngineData) selector) =>
       selector(context.select((EngineSync e) => e.state));
 
-  EngineSync(RedisRepository repo)
+  EngineSync(MDBRepository repo)
       : super(redisRepository: repo, initialState: EngineData());
 }
 
@@ -28,14 +28,14 @@ class VehicleSync extends SyncableCubit<VehicleData> {
       context.watch<VehicleSync>().state;
 
   static VehicleSync create(BuildContext context) =>
-      VehicleSync(RepositoryProvider.of<RedisRepository>(context))..start();
+      VehicleSync(RepositoryProvider.of<MDBRepository>(context))..start();
 
-  VehicleSync(RedisRepository repo)
+  VehicleSync(MDBRepository repo)
       : super(redisRepository: repo, initialState: VehicleData());
 }
 
 class BatterySync extends SyncableCubit<BatteryData> {
-  BatterySync(RedisRepository repo, String id)
+  BatterySync(MDBRepository repo, String id)
       : super(redisRepository: repo, initialState: BatteryData(id: id));
 }
 
@@ -44,9 +44,9 @@ class Battery1Sync extends BatterySync {
       context.watch<Battery1Sync>().state;
 
   static Battery1Sync create(BuildContext context) =>
-      Battery1Sync(RepositoryProvider.of<RedisRepository>(context))..start();
+      Battery1Sync(RepositoryProvider.of<MDBRepository>(context))..start();
 
-  Battery1Sync(RedisRepository repo) : super(repo, "0");
+  Battery1Sync(MDBRepository repo) : super(repo, "0");
 }
 
 class Battery2Sync extends BatterySync {
@@ -54,9 +54,9 @@ class Battery2Sync extends BatterySync {
       context.watch<Battery2Sync>().state;
 
   static Battery2Sync create(BuildContext context) =>
-      Battery2Sync(RepositoryProvider.of<RedisRepository>(context))..start();
+      Battery2Sync(RepositoryProvider.of<MDBRepository>(context))..start();
 
-  Battery2Sync(RedisRepository repo) : super(repo, "1");
+  Battery2Sync(MDBRepository repo) : super(repo, "1");
 }
 
 class BluetoothSync extends SyncableCubit<BluetoothData> {
@@ -64,19 +64,18 @@ class BluetoothSync extends SyncableCubit<BluetoothData> {
       context.watch<BluetoothSync>().state;
 
   static BluetoothSync create(BuildContext context) =>
-      BluetoothSync(RepositoryProvider.of<RedisRepository>(context))..start();
+      BluetoothSync(RepositoryProvider.of<MDBRepository>(context))..start();
 
-  BluetoothSync(RedisRepository repo)
+  BluetoothSync(MDBRepository repo)
       : super(redisRepository: repo, initialState: BluetoothData());
 }
 
 class GpsSync extends SyncableCubit<GpsData> {
-  static GpsData watch(BuildContext context) =>
-      context.watch<GpsSync>().state;
+  static GpsData watch(BuildContext context) => context.watch<GpsSync>().state;
 
   static GpsSync create(BuildContext context) =>
-      GpsSync(RepositoryProvider.of<RedisRepository>(context))..start();
+      GpsSync(RepositoryProvider.of<MDBRepository>(context))..start();
 
-  GpsSync(RedisRepository repo)
+  GpsSync(MDBRepository repo)
       : super(redisRepository: repo, initialState: GpsData());
 }

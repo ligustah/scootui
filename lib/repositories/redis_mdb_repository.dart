@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/widgets.dart';
 import 'package:redis/redis.dart';
+
+import 'mdb_repository.dart';
 
 class ConnectionPool {
   final String host;
@@ -99,10 +103,22 @@ class ConnectionPool {
   }
 }
 
-class RedisRepository {
+class RedisMDBRepository implements MDBRepository {
   final ConnectionPool _pool;
 
-  RedisRepository({required String host, required int port})
+  static String getRedisHost() {
+    if (Platform.isMacOS || Platform.isWindows) {
+      return '127.0.0.1'; // Local development
+    }
+    return '192.168.7.1'; // Target system
+  }
+
+  static MDBRepository create(BuildContext context) {
+    return RedisMDBRepository(host: getRedisHost(), port: 6379)
+      ..dashboardReady();
+  }
+
+  RedisMDBRepository({required String host, required int port})
       : _pool = ConnectionPool(host: host, port: port);
 
   Future<T> _withConnection<T>(Future<T> Function(Command) action) async {
@@ -136,7 +152,9 @@ class RedisRepository {
       {bool publish = true}) {
     return _withConnection((cmd) async {
       await cmd.send_object(["HSET", cluster, variable, value]);
-      await cmd.send_object(["PUBLISH", cluster, variable]);
+      if (publish) {
+        await cmd.send_object(["PUBLISH", cluster, variable]);
+      }
     });
   }
 
@@ -179,7 +197,6 @@ class RedisRepository {
             if (msg is List && msg.length >= 3 && msg[0] == 'message') {
               return (msg[1].toString(), msg[2].toString());
             }
-
             return null;
           })
           .where((result) => result != null)

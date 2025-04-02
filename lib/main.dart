@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/all.dart';
 import 'cubits/theme_cubit.dart';
-import 'repositories/redis_repository.dart';
+import 'repositories/redis_mdb_repository.dart';
 import 'screens/main_screen.dart';
 
 void main() {
@@ -45,18 +45,10 @@ void _setupPlatformConfigurations() {
 class ScooterClusterApp extends StatelessWidget {
   const ScooterClusterApp({super.key});
 
-  static String getRedisHost() {
-    if (Platform.isMacOS || Platform.isWindows) {
-      return '127.0.0.1'; // Local development
-    }
-    return '192.168.7.1'; // Target system
-  }
-
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-      create: (context) =>
-          RedisRepository(host: getRedisHost(), port: 6379)..dashboardReady(),
+      create: RedisMDBRepository.create,
       child: MultiBlocProvider(
         providers: allCubits,
         child: BlocBuilder<ThemeCubit, ThemeState>(

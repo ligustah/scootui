@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../builders/sync/annotations.dart';
 import '../builders/sync/settings.dart';
-import '../repositories/redis_repository.dart';
+import '../repositories/mdb_repository.dart';
 
 abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
-  final RedisRepository redisRepository;
+  final MDBRepository redisRepository;
 
   bool _isClosing = false;
   final Map<String, Timer> _timers = {};
@@ -41,6 +41,8 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
     final settings = state.syncSettings;
 
     redisRepository.getAll(settings.channel).then((values) {
+      if (values.isEmpty) return;
+
       T newState = state;
       for (final (variable, value) in values) {
         newState = newState.update(variable, value);

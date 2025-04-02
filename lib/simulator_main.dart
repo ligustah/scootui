@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/all.dart';
-import 'repositories/redis_repository.dart';
+import 'repositories/mdb_repository.dart';
 import 'screens/simulator_screen.dart';
 import 'theme_config.dart';
 
@@ -44,8 +44,7 @@ class SimulatorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-      create: (context) =>
-          RedisRepository(host: '127.0.0.1', port: 6379)..dashboardReady(),
+      create: InMemoryMDBRepository.create,
       child: MultiBlocProvider(
         providers: allCubits,
         child: MaterialApp(
@@ -54,7 +53,11 @@ class SimulatorApp extends StatelessWidget {
           darkTheme: AppThemes.darkTheme,
           themeMode: ThemeMode.dark,
           debugShowCheckedModeBanner: false,
-          home: const SimulatorScreen(),
+          home: Builder(
+            builder: (context) => SimulatorScreen(
+              repository: context.read<MDBRepository>(),
+            ),
+          ),
         ),
       ),
     );

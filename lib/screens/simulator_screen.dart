@@ -2,18 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../services/redis_connection_manager.dart';
+import '../repositories/mdb_repository.dart';
 import 'main_screen.dart';
 
 class SimulatorScreen extends StatefulWidget {
-  const SimulatorScreen({super.key});
+  final MDBRepository repository;
+
+  const SimulatorScreen({
+    super.key,
+    required this.repository,
+  });
 
   @override
   State<SimulatorScreen> createState() => _SimulatorScreenState();
 }
 
 class _SimulatorScreenState extends State<SimulatorScreen> {
-  late RedisConnectionManager _redis;
   int _simulatedSpeed = 0;
   int _simulatedRpm = 0;
   int _simulatedBatteryCharge0 = 100;
@@ -21,44 +25,35 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   String? _errorMessage;
   bool _battery0Present = true;
   bool _battery1Present = true;
-  Timer? _brakeDoubleTapTimer;
 
   @override
   void initState() {
     super.initState();
-    _setupRedis();
+    _initializeValues();
   }
 
-  void _setupRedis() {
-    _redis = RedisConnectionManager(
-      host: '', // Host is determined by platform
-      port: 6379, // Default Redis port
-      onConnectionLost: (message) {
-        setState(() {
-          _errorMessage = message;
-        });
-      },
-      onConnectionRestored: () {
-        setState(() {
-          _errorMessage = null;
-        });
-      },
-    );
-    _connectToRedis();
-  }
-
-  Future<void> _connectToRedis() async {
-    try {
-      await _redis.connect();
-      setState(() {
-        _errorMessage = null;
-      });
-    } catch (e) {
-      debugPrint('Failed to connect to Redis: $e');
-      setState(() {
-        _errorMessage = 'Connection to MDB failed';
-      });
-    }
+  Future<void> _initializeValues() async {
+    // Initialize engine values
+    await _updateEngineValues();
+    
+    // Initialize battery values
+    await _updateBatteryValues();
+    
+    // Initialize vehicle states
+    await Future.wait([
+      _publishEvent('vehicle', 'blinker:state', 'off'),
+      _publishEvent('vehicle', 'handlebar:position', 'unlocked'),
+      _publishEvent('vehicle', 'kickstand', 'up'),
+      _publishEvent('vehicle', 'state', 'parked'),
+      _publishEvent('vehicle', 'brake:left', 'off'),
+      _publishEvent('vehicle', 'brake:right', 'off'),
+    ]);
+    
+    // Initialize system states
+    await Future.wait([
+      _publishEvent('ble', 'status', 'disconnected'),
+      _publishEvent('internet', 'status', 'disconnected'),
+    ]);
   }
 
   Future<void> _updateEngineValues() async {
@@ -83,43 +78,41 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     await Future.wait(futures);
   }
 
-  Future<void> _publishEvent(String channel, String key, String value) {
-    final command = _redis.command;
-    if (command == null) return Future.value();
-
-    return Future.wait([
-      command.send_object(['HSET', channel, key, value]),
-      command.send_object(['PUBLISH', channel, key]),
-    ]);
+  Future<void> _publishEvent(String channel, String key, String value) async {
+    await widget.repository.set(channel, key, value);
   }
 
-  Future<void> _simulateBrakeDoubleTap() async {
+  Future<void> _simulateBrakeDoubleTap(String brake) async {
     // First press
-    await _publishEvent('engine-ecu', 'brake:left', 'on');
-    await _publishEvent('vehicle', 'brake:left', 'on');
+    await _publishEvent('vehicle', 'brake:$brake', 'on');
 
     await Future.delayed(const Duration(milliseconds: 100));
 
     // First release
-    await _publishEvent('engine-ecu', 'brake:left', 'off');
-    await _publishEvent('vehicle', 'brake:left', 'off');
+    await _publishEvent('vehicle', 'brake:$brake', 'off');
 
     await Future.delayed(const Duration(milliseconds: 100));
 
     // Second press
-    await _publishEvent('engine-ecu', 'brake:left', 'on');
-    await _publishEvent('vehicle', 'brake:left', 'on');
+    await _publishEvent('vehicle', 'brake:$brake', 'on');
     await Future.delayed(const Duration(milliseconds: 100));
 
     // Second release
-    await _publishEvent('engine-ecu', 'brake:left', 'off');
-    await _publishEvent('vehicle', 'brake:left', 'off');
+    await _publishEvent('vehicle', 'brake:$brake', 'off');
+  }
+
+  Future<void> _simulateBrakeTap(String brake) async {
+    // Press
+    await _publishEvent('vehicle', 'brake:$brake', 'on');
+
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Release
+    await _publishEvent('vehicle', 'brake:$brake', 'off');
   }
 
   @override
   void dispose() {
-    _brakeDoubleTapTimer?.cancel();
-    _redis.dispose();
     super.dispose();
   }
 
@@ -330,15 +323,17 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                             children: [
                               _buildButtonGroup(
                                 'Left Brake',
-                                ['off', 'on', 'double-tap'],
+                                ['off', 'on', 'tap', 'double-tap'],
                                 (value) {
-                                  if (value == 'double-tap') {
-                                    _simulateBrakeDoubleTap();
-                                  } else {
-                                    _publishEvent(
-                                        'engine-ecu', 'brake:left', value);
-                                    _publishEvent(
-                                        'vehicle', 'brake:left', value);
+                                  switch (value) {
+                                    case 'double-tap':
+                                      _simulateBrakeDoubleTap('left');
+                                      break;
+                                    case 'tap':
+                                      _simulateBrakeTap('left');
+                                      break;
+                                    default:
+                                      _publishEvent('vehicle', 'brake:left', value);
                                   }
                                 },
                               ),
@@ -346,10 +341,18 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                           ),
                           _buildButtonGroup(
                             'Right Brake',
-                            ['off', 'on'],
+                            ['off', 'on', 'tap', 'double-tap'],
                             (value) {
-                              _publishEvent('engine-ecu', 'brake:right', value);
-                              _publishEvent('vehicle', 'brake:right', value);
+                              switch (value) {
+                                case 'double-tap':
+                                  _simulateBrakeDoubleTap('right');
+                                  break;
+                                case 'tap':
+                                  _simulateBrakeTap('right');
+                                  break;
+                                default:
+                                  _publishEvent('vehicle', 'brake:right', value);
+                              }
                             },
                           ),
                         ],
