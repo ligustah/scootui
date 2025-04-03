@@ -31,9 +31,7 @@ class MainScreen extends StatelessWidget {
             },
 
             // Menu overlay
-            MenuOverlay(
-              onThemeChanged: (mode) {},
-            ),
+            MenuOverlay(),
           ],
         ),
       ),

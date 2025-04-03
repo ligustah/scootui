@@ -10,12 +10,7 @@ import '../general/control_gestures_detector.dart';
 import 'menu_item.dart';
 
 class MenuOverlay extends StatefulWidget {
-  final Function(ThemeMode) onThemeChanged;
-
-  const MenuOverlay({
-    super.key,
-    required this.onThemeChanged,
-  });
+  const MenuOverlay({super.key});
 
   @override
   State<MenuOverlay> createState() => _MenuOverlayState();
@@ -63,34 +58,26 @@ class _MenuOverlayState extends State<MenuOverlay>
     });
   }
 
-  @override
-  void didUpdateWidget(MenuOverlay oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // if (widget.isVisible != oldWidget.isVisible) {
-    //   if (widget.isVisible) {
-    //     _animController.forward();
-    //   } else {
-    //     _animController.reverse();
-    //   }
-    // }
+  void _scrollToSelectedItem() {
+    if (!mounted) return;
+    final itemHeight = 70.0; // Approximate height of each menu item
+    final viewportHeight = MediaQuery.of(context).size.height - 200;
+    final targetOffset = _selectedIndex * itemHeight;
 
-    // // Scroll to selected item if it's not visible
-    // if (widget.selectedIndex != oldWidget.selectedIndex) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     final itemHeight = 70.0; // Approximate height of each menu item
-    //     final targetOffset = widget.selectedIndex * itemHeight;
-    //     const padding = 20.0;
-    //
-    //     if (targetOffset < _scrollController.offset + padding ||
-    //         targetOffset > _scrollController.offset + _scrollController.position.viewportDimension - padding) {
-    //       _scrollController.animateTo(
-    //         targetOffset - (_scrollController.position.viewportDimension / 2) + (itemHeight / 2),
-    //         duration: const Duration(milliseconds: 300),
-    //         curve: Curves.easeOutCubic,
-    //       );
-    //     }
-    //   });
-    // }
+    if (targetOffset < (viewportHeight - _scrollController.offset)) {
+      _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    } else if (targetOffset + itemHeight >
+        _scrollController.offset + viewportHeight) {
+      _scrollController.animateTo(
+        targetOffset - viewportHeight + itemHeight,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
@@ -181,6 +168,7 @@ class _MenuOverlayState extends State<MenuOverlay>
       stream: context.read<VehicleSync>().stream,
       onLeftPress: () => setState(() {
         _selectedIndex = (_selectedIndex + 1) % items.length;
+        _scrollToSelectedItem();
       }),
       onRightPress: () {
         final item = items[_selectedIndex];
