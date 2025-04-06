@@ -6,10 +6,17 @@ part of 'battery.dart';
 // StateGenerator
 // **************************************************************************
 
+final $_BatteryStateMap = {
+  "unknown": BatteryState.unknown,
+  "asleep": BatteryState.asleep,
+  "idle": BatteryState.idle,
+  "active": BatteryState.active,
+};
+
 abstract mixin class $BatteryData implements Syncable<BatteryData> {
   dynamic get id;
   bool get present;
-  String get state;
+  BatteryState get state;
   int get voltage;
   int get current;
   int get charge;
@@ -37,9 +44,9 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
         SyncFieldSettings(
             name: "state",
             variable: "state",
-            type: SyncFieldType.string,
-            typeName: "String",
-            defaultValue: null,
+            type: SyncFieldType.enum_,
+            typeName: "BatteryState",
+            defaultValue: "unknown",
             interval: null),
         SyncFieldSettings(
             name: "voltage",
@@ -140,7 +147,9 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
     return BatteryData(
       id: id,
       present: "present" != name ? present : bool.parse(value),
-      state: "state" != name ? state : value,
+      state: "state" != name
+          ? state
+          : $_BatteryStateMap[value] ?? BatteryState.unknown,
       voltage: "voltage" != name ? voltage : int.parse(value),
       current: "current" != name ? current : int.parse(value),
       charge: "charge" != name ? charge : int.parse(value),

@@ -213,8 +213,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                           'State',
                                           [
                                             'unknown',
-                                            'charging',
-                                            'discharging',
+                                            'asleep',
+                                            'active',
                                             'idle'
                                           ],
                                           (value) => _publishEvent(
@@ -261,8 +261,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                           'State',
                                           [
                                             'unknown',
-                                            'charging',
-                                            'discharging',
+                                            'asleep',
+                                            'active',
                                             'idle'
                                           ],
                                           (value) => _publishEvent(
