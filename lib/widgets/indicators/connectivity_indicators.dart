@@ -42,10 +42,9 @@ class ConnectivityIndicators extends StatelessWidget {
   const ConnectivityIndicators({super.key});
 
   String internetIcon(InternetData internet) {
-    return switch (internet.modemState) {
-      ModemState.off => _Icons.off,
-      ModemState.disconnected => _Icons.diconnected,
-      ModemState.connected => signalQuality
+    return switch (internet.status) {
+      ConnectionStatus.disconnected => _Icons.diconnected,
+      ConnectionStatus.connected => signalQuality
           .firstWhere((element) => internet.signalQuality >= element.$1)
           .$2
     };
