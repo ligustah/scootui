@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/all.dart';
 import 'repositories/mdb_repository.dart';
+import 'repositories/redis_mdb_repository.dart';
 import 'screens/simulator_screen.dart';
 import 'theme_config.dart';
 
@@ -44,7 +45,8 @@ class SimulatorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
-      create: InMemoryMDBRepository.create,
+      // use InMemoryMDBRepository for web and RedisMDBRepository for other platforms
+      create: kIsWeb ? InMemoryMDBRepository.create : RedisMDBRepository.create,
       child: MultiBlocProvider(
         providers: allCubits,
         child: MaterialApp(

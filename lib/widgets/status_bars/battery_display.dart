@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
-import '../../cubits/theme_cubit.dart';
 import '../../state/battery.dart';
 
 const powerLevels = [
@@ -27,9 +26,10 @@ class BatteryStatusDisplay extends StatelessWidget {
       return (Icons.battery_0_bar, Colors.grey);
     }
 
-    if (battery.state == 'fault') {
-      return (Icons.battery_alert, Colors.red);
-    }
+    // TODO: read faults from redis separately
+    // if (battery.state == 'fault') {
+    //   return (Icons.battery_alert, Colors.red);
+    // }
 
     for (final (threshold, icon, color) in powerLevels) {
       if (battery.charge >= threshold) return (icon, color);

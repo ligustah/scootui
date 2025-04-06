@@ -5,6 +5,8 @@ import '../builders/sync/settings.dart';
 
 part 'battery.g.dart';
 
+enum BatteryState { unknown, asleep, idle, active }
+
 @StateClass("battery", Duration(seconds: 30))
 class BatteryData extends Equatable with $BatteryData {
   @StateDiscriminator()
@@ -13,8 +15,8 @@ class BatteryData extends Equatable with $BatteryData {
   @StateField()
   final bool present;
 
-  @StateField()
-  final String state;
+  @StateField(defaultValue: 'unknown')
+  final BatteryState state;
 
   @StateField()
   final int voltage;
@@ -58,7 +60,7 @@ class BatteryData extends Equatable with $BatteryData {
   BatteryData({
     required this.id,
     this.present = false,
-    this.state = "",
+    this.state = BatteryState.unknown,
     this.voltage = 0,
     this.current = 0,
     this.charge = 0,

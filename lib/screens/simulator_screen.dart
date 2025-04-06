@@ -44,6 +44,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     await Future.wait([
       _publishEvent('vehicle', 'blinker:state', 'off'),
       _publishEvent('vehicle', 'handlebar:position', 'unlocked'),
+      _publishEvent('vehicle', 'handlebar:lock-sensor', 'unlocked'),
       _publishEvent('vehicle', 'kickstand', 'up'),
       _publishEvent('vehicle', 'state', 'parked'),
       _publishEvent('vehicle', 'brake:left', 'off'),
@@ -212,8 +213,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                           'State',
                                           [
                                             'unknown',
-                                            'charging',
-                                            'discharging',
+                                            'asleep',
+                                            'active',
                                             'idle'
                                           ],
                                           (value) => _publishEvent(
@@ -260,8 +261,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                           'State',
                                           [
                                             'unknown',
-                                            'charging',
-                                            'discharging',
+                                            'asleep',
+                                            'active',
                                             'idle'
                                           ],
                                           (value) => _publishEvent(
@@ -308,7 +309,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                           ),
                           _buildButtonGroup(
                             'Vehicle State',
-                            ['parked', 'running', 'error'],
+                            ['stand-by', 'ready-to-drive', 'parked', 'off'],
                             (value) => _publishEvent('vehicle', 'state', value),
                           ),
                         ],
