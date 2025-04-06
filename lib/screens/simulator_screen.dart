@@ -373,10 +373,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                             (value) => _publishEvent('ble', 'status', value),
                           ),
                           _buildButtonGroup(
-                            'Internet Connection',
-                            ['off', 'disconnected', 'connected'],
+                            'Internet status',
+                            ['disconnected', 'connected'],
                             (value) =>
-                                _publishEvent('internet', 'modem-state', value),
+                                _publishEvent('internet', 'status', value),
                           ),
                           _buildSlider('Signal Quality', _signalQuality, 0, 100,
                               (value) {
