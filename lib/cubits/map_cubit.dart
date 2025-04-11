@@ -26,8 +26,11 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<ThemeState> _themeSub;
 
   static MapCubit create(BuildContext context) => MapCubit(
-      context.read<GpsSync>().stream, context.read<ThemeCubit>().stream)
-    .._loadMap(context.read<ThemeCubit>().state);
+        context.read<GpsSync>().stream,
+        context.read<ThemeCubit>().stream,
+      )
+        .._onGpsData(context.read<GpsSync>().state)
+        .._loadMap(context.read<ThemeCubit>().state);
 
   MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates)
       : super(MapLoading(
@@ -103,6 +106,26 @@ class MapCubit extends Cubit<MapState> {
     return ThemeReader().read(jsonDecode(themeStr));
   }
 
+  LatLng _getInitialCoordinates(MbTiles tiles) {
+    final meta = tiles.getMetadata();
+    final bounds = meta.bounds;
+    if (bounds != null &&
+        (bounds.left > state.position.longitude ||
+            bounds.right < state.position.longitude ||
+            bounds.top < state.position.latitude ||
+            bounds.bottom > state.position.latitude)) {
+      // if current position is out of bounds of the map,
+      // use the center of the map instead
+      return LatLng(
+        (bounds.top + bounds.bottom) / 2,
+        (bounds.right + bounds.left) / 2,
+      );
+    }
+
+    // if no bounds are set, just use the coordinates we were given
+    return state.position;
+  }
+
   Future<void> _loadMap(ThemeState themeState) async {
     emit(MapState.loading(
         controller: state.controller, position: state.position));
@@ -137,19 +160,9 @@ class MapCubit extends Cubit<MapState> {
       gzip: true,
     );
 
-    final meta = mbTiles.getMetadata();
-    final initialCoordinates = meta.defaultCenter != null
-        ? meta.defaultCenter!
-        : (meta.bounds != null
-            ? LatLng(
-                (meta.bounds!.right + meta.bounds!.left) / 2,
-                (meta.bounds!.top + meta.bounds!.bottom) / 2,
-              )
-            : LatLng(0, 0));
-
     emit(MapState.offline(
       mbTiles: mbTiles,
-      position: initialCoordinates,
+      position: _getInitialCoordinates(mbTiles),
       orientation: 0,
       controller: ctrl,
       theme: theme,
