@@ -62,8 +62,10 @@ class MapCubit extends Cubit<MapState> {
         isReady ? controller : null,
       _ => null,
     };
-    ctrl?.move(center, ctrl.camera.zoom, offset: Offset(0, 100));
-    ctrl?.rotateAroundPoint(course, offset: Offset(0, 100));
+    final offset = Offset(0, 100);
+
+    ctrl?.move(center, ctrl.camera.zoom, offset: offset);
+    ctrl?.rotateAroundPoint(course, offset: offset);
   }
 
   void _onGpsData(GpsData data) {
@@ -91,12 +93,12 @@ class MapCubit extends Cubit<MapState> {
   void _onMapReady() {
     final current = state;
 
-    _moveAndRotate(current.position, 0);
     emit(switch (current) {
       MapOffline() => current.copyWith(isReady: true),
       MapOnline() => current.copyWith(isReady: true),
       _ => current,
     });
+    _moveAndRotate(current.position, current.orientation);
   }
 
   Future<Theme> _getTheme(bool isDark) async {
