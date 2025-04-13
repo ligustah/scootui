@@ -1,11 +1,36 @@
 part of 'map_cubit.dart';
 
+enum TurnDirection {
+  left,
+  right,
+  slightLeft,
+  slightRight,
+  sharpLeft,
+  sharpRight,
+}
+
+@freezed
+sealed class RouteInstruction with _$RouteInstruction {
+  const RouteInstruction._();
+
+  const factory RouteInstruction.straight({
+    required double distance,
+  }) = Straight;
+
+  const factory RouteInstruction.turn({
+    required double distance,
+    required TurnDirection direction,
+  }) = Turn;
+}
+
 @freezed
 sealed class MapState with _$MapState {
   const factory MapState.loading({
     required LatLng position,
     @Default(0) double orientation,
     required MapController controller,
+    @Default(null) Route? route,
+    @Default(null) RouteInstruction? nextInstruction,
   }) = MapLoading;
 
   const factory MapState.unavailable(
@@ -13,6 +38,8 @@ sealed class MapState with _$MapState {
     required LatLng position,
     @Default(0) double orientation,
     required MapController controller,
+    @Default(null) Route? route,
+    @Default(null) RouteInstruction? nextInstruction,
   }) = MapUnavailable;
 
   const factory MapState.offline({
@@ -24,6 +51,7 @@ sealed class MapState with _$MapState {
     void Function()? onReady,
     @Default(false) bool isReady,
     @Default(null) Route? route,
+    @Default(null) RouteInstruction? nextInstruction,
   }) = MapOffline;
 
   const factory MapState.online({
@@ -33,5 +61,6 @@ sealed class MapState with _$MapState {
     void Function()? onReady,
     @Default(false) bool isReady,
     @Default(null) Route? route,
+    @Default(null) RouteInstruction? nextInstruction,
   }) = MapOnline;
 }

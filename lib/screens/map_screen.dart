@@ -89,6 +89,7 @@ class MapScreen extends StatelessWidget {
           :final onReady,
           :final orientation,
           :final route,
+          :final nextInstruction,
         ) =>
           OfflineMapView(
             mbTiles: mbTiles,
@@ -99,6 +100,7 @@ class MapScreen extends StatelessWidget {
             orientation: orientation,
             route: route,
             setDestination: context.read<MapCubit>().setDestination,
+            nextInstruction: nextInstruction,
           ),
       };
 }

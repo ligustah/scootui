@@ -16,7 +16,10 @@ import 'package:flutter_map/flutter_map.dart'
         TileLayer;
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
-import 'package:routing_client_dart/routing_client_dart.dart';
+import 'package:routing_client_dart/routing_client_dart.dart'
+    hide RouteInstruction;
+import 'package:scooter_cluster/cubits/map_cubit.dart'
+    show RouteInstruction, Straight, Turn;
 import 'package:vector_map_tiles/vector_map_tiles.dart'
     show TileProviders, VectorTileLayer;
 import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart'
@@ -83,6 +86,7 @@ class OfflineMapView extends StatelessWidget {
   final void Function()? mapReady;
   final FutureOr<void> Function(LatLng)? setDestination;
   final Route? route;
+  final RouteInstruction? nextInstruction;
 
   const OfflineMapView({
     super.key,
@@ -94,6 +98,7 @@ class OfflineMapView extends StatelessWidget {
     this.setDestination,
     this.route,
     this.mapReady,
+    this.nextInstruction,
   });
 
   Widget? _routeLayer() {
@@ -116,9 +121,64 @@ class OfflineMapView extends StatelessWidget {
     );
   }
 
+  Widget? _instructionLayer() {
+    final current = nextInstruction;
+    if (current == null) {
+      return null;
+    }
+
+    final text = switch (current) {
+      Straight(distance: final distance) =>
+        'Continue for ${distance.toStringAsFixed(0)} m',
+      Turn(distance: final distance, direction: final direction) =>
+        'Turn ${direction.name} in ${distance.toStringAsFixed(0)} m',
+    };
+
+    return Align(
+        alignment: Alignment.topRight,
+        child: ColoredBox(
+          color: Colors.black,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ));
+  }
+
+  List<Marker> _routeMarkers() {
+    final markers = <Marker>[];
+    if (route == null) return markers;
+
+    for (final instruction in route!.instructions) {
+      markers.add(
+        Marker(
+          width: 50.0,
+          height: 15.0,
+          point: LatLng(instruction.location.lat, instruction.location.lng),
+          alignment: Alignment.center,
+          child: ColoredBox(
+              color: Colors.white,
+              child: Text(
+                instruction.instruction,
+                style: TextStyle(color: Colors.black, fontSize: 9),
+              )),
+        ),
+      );
+    }
+    return markers;
+  }
+
   @override
   Widget build(BuildContext context) {
     final routeLayer = _routeLayer();
+    final instructionLayer = _instructionLayer();
 
     return FlutterMap(
       options: MapOptions(
@@ -155,6 +215,7 @@ class OfflineMapView extends StatelessWidget {
           // Force immediate tile updates
           tileDelay: Duration.zero,
         ),
+        if (routeLayer != null) routeLayer,
         MarkerLayer(markers: [
           Marker(
             width: 30.0,
@@ -170,8 +231,9 @@ class OfflineMapView extends StatelessWidget {
               ),
             ),
           ),
+          ..._routeMarkers(),
         ]),
-        if (routeLayer != null) routeLayer,
+        if (instructionLayer != null) instructionLayer,
       ],
     );
   }
