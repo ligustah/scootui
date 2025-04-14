@@ -169,6 +169,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.6"
+  dart_earcut:
+    dependency: transitive
+    description:
+      name: dart_earcut
+      sha256: e485001bfc05dcbc437d7bfb666316182e3522d4c3f9668048e004d0eb2ce43b
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   dart_style:
     dependency: transitive
     description:
@@ -266,18 +274,19 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_map
-      sha256: "87cc8349b8fa5dccda5af50018c7374b6645334a0d680931c1fe11bce88fa5bb"
+      sha256: "2ecb34619a4be19df6f40c2f8dce1591675b4eff7a6857bd8f533706977385da"
       url: "https://pub.dev"
     source: hosted
-    version: "6.2.1"
+    version: "7.0.2"
   flutter_map_animations:
     dependency: "direct main"
     description:
-      name: flutter_map_animations
-      sha256: e4b929632b43a7939ce07a7cdb05613abb25e1996c9767c16469d0cbb9e1c4a9
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.6.0"
+      path: "."
+      ref: "0.8.0+rotationfix"
+      resolved-ref: "0bb807b66617b1a2be03742a31477ca5bd18d5da"
+      url: "https://github.com/ligustah/flutter_map_animations.git"
+    source: git
+    version: "0.8.0"
   flutter_svg:
     dependency: "direct main"
     description:
@@ -860,18 +869,18 @@ packages:
     dependency: "direct main"
     description:
       name: vector_map_tiles
-      sha256: "79394902d04cefe6f93eb0a80afe48d8b76fec8d90cf6d6bd5a7e34abe577d1c"
+      sha256: "4dc9243195c1a49c7be82cc1caed0d300242bb94381752af5f6868d9d1404e25"
       url: "https://pub.dev"
     source: hosted
-    version: "7.3.1"
+    version: "8.0.0"
   vector_map_tiles_mbtiles:
     dependency: "direct main"
     description:
       name: vector_map_tiles_mbtiles
-      sha256: b6231c0c113f8f669265ec76ca77550d1e192027a450299f16507bf248855d92
+      sha256: "580b0504d80dbade645f91cc35a1092514f63b0c824cc85ee254f83c6ca63149"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.0"
+    version: "1.2.0"
   vector_math:
     dependency: transitive
     description:

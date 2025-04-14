@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:math';
 
 import 'package:flutter/material.dart'
     show
@@ -254,8 +255,7 @@ class _OfflineMapViewState extends State<OfflineMapView>
         MarkerLayer(markers: [
           Marker(
             rotate: true,
-            point:
-                _isReady ? widget.mapController.camera.center : widget.position,
+            point: widget.position,
             child: const Icon(
               Icons.navigation,
               color: Colors.blue,
