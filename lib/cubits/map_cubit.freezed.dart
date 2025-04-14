@@ -14,10 +14,217 @@ part of 'map_cubit.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
+mixin _$RouteInstruction {
+  double get distance;
+
+  /// Create a copy of RouteInstruction
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $RouteInstructionCopyWith<RouteInstruction> get copyWith =>
+      _$RouteInstructionCopyWithImpl<RouteInstruction>(
+          this as RouteInstruction, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is RouteInstruction &&
+            (identical(other.distance, distance) ||
+                other.distance == distance));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, distance);
+
+  @override
+  String toString() {
+    return 'RouteInstruction(distance: $distance)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $RouteInstructionCopyWith<$Res> {
+  factory $RouteInstructionCopyWith(
+          RouteInstruction value, $Res Function(RouteInstruction) _then) =
+      _$RouteInstructionCopyWithImpl;
+  @useResult
+  $Res call({double distance});
+}
+
+/// @nodoc
+class _$RouteInstructionCopyWithImpl<$Res>
+    implements $RouteInstructionCopyWith<$Res> {
+  _$RouteInstructionCopyWithImpl(this._self, this._then);
+
+  final RouteInstruction _self;
+  final $Res Function(RouteInstruction) _then;
+
+  /// Create a copy of RouteInstruction
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? distance = null,
+  }) {
+    return _then(_self.copyWith(
+      distance: null == distance
+          ? _self.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+
+class Straight extends RouteInstruction {
+  const Straight({required this.distance}) : super._();
+
+  @override
+  final double distance;
+
+  /// Create a copy of RouteInstruction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $StraightCopyWith<Straight> get copyWith =>
+      _$StraightCopyWithImpl<Straight>(this, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is Straight &&
+            (identical(other.distance, distance) ||
+                other.distance == distance));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, distance);
+
+  @override
+  String toString() {
+    return 'RouteInstruction.straight(distance: $distance)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $StraightCopyWith<$Res>
+    implements $RouteInstructionCopyWith<$Res> {
+  factory $StraightCopyWith(Straight value, $Res Function(Straight) _then) =
+      _$StraightCopyWithImpl;
+  @override
+  @useResult
+  $Res call({double distance});
+}
+
+/// @nodoc
+class _$StraightCopyWithImpl<$Res> implements $StraightCopyWith<$Res> {
+  _$StraightCopyWithImpl(this._self, this._then);
+
+  final Straight _self;
+  final $Res Function(Straight) _then;
+
+  /// Create a copy of RouteInstruction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? distance = null,
+  }) {
+    return _then(Straight(
+      distance: null == distance
+          ? _self.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+
+class Turn extends RouteInstruction {
+  const Turn({required this.distance, required this.direction}) : super._();
+
+  @override
+  final double distance;
+  final TurnDirection direction;
+
+  /// Create a copy of RouteInstruction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $TurnCopyWith<Turn> get copyWith =>
+      _$TurnCopyWithImpl<Turn>(this, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is Turn &&
+            (identical(other.distance, distance) ||
+                other.distance == distance) &&
+            (identical(other.direction, direction) ||
+                other.direction == direction));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, distance, direction);
+
+  @override
+  String toString() {
+    return 'RouteInstruction.turn(distance: $distance, direction: $direction)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $TurnCopyWith<$Res>
+    implements $RouteInstructionCopyWith<$Res> {
+  factory $TurnCopyWith(Turn value, $Res Function(Turn) _then) =
+      _$TurnCopyWithImpl;
+  @override
+  @useResult
+  $Res call({double distance, TurnDirection direction});
+}
+
+/// @nodoc
+class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
+  _$TurnCopyWithImpl(this._self, this._then);
+
+  final Turn _self;
+  final $Res Function(Turn) _then;
+
+  /// Create a copy of RouteInstruction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? distance = null,
+    Object? direction = null,
+  }) {
+    return _then(Turn(
+      distance: null == distance
+          ? _self.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as double,
+      direction: null == direction
+          ? _self.direction
+          : direction // ignore: cast_nullable_to_non_nullable
+              as TurnDirection,
+    ));
+  }
+}
+
+/// @nodoc
 mixin _$MapState {
   LatLng get position;
   double get orientation;
   MapController get controller;
+  Route? get route;
+  RouteInstruction? get nextInstruction;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -36,16 +243,19 @@ mixin _$MapState {
             (identical(other.orientation, orientation) ||
                 other.orientation == orientation) &&
             (identical(other.controller, controller) ||
-                other.controller == controller));
+                other.controller == controller) &&
+            (identical(other.route, route) || other.route == route) &&
+            (identical(other.nextInstruction, nextInstruction) ||
+                other.nextInstruction == nextInstruction));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, position, orientation, controller);
+  int get hashCode => Object.hash(
+      runtimeType, position, orientation, controller, route, nextInstruction);
 
   @override
   String toString() {
-    return 'MapState(position: $position, orientation: $orientation, controller: $controller)';
+    return 'MapState(position: $position, orientation: $orientation, controller: $controller, route: $route, nextInstruction: $nextInstruction)';
   }
 }
 
@@ -54,7 +264,14 @@ abstract mixin class $MapStateCopyWith<$Res> {
   factory $MapStateCopyWith(MapState value, $Res Function(MapState) _then) =
       _$MapStateCopyWithImpl;
   @useResult
-  $Res call({LatLng position, double orientation, MapController controller});
+  $Res call(
+      {LatLng position,
+      double orientation,
+      MapController controller,
+      Route? route,
+      RouteInstruction? nextInstruction});
+
+  $RouteInstructionCopyWith<$Res>? get nextInstruction;
 }
 
 /// @nodoc
@@ -72,6 +289,8 @@ class _$MapStateCopyWithImpl<$Res> implements $MapStateCopyWith<$Res> {
     Object? position = null,
     Object? orientation = null,
     Object? controller = null,
+    Object? route = freezed,
+    Object? nextInstruction = freezed,
   }) {
     return _then(_self.copyWith(
       position: null == position
@@ -86,7 +305,29 @@ class _$MapStateCopyWithImpl<$Res> implements $MapStateCopyWith<$Res> {
           ? _self.controller
           : controller // ignore: cast_nullable_to_non_nullable
               as MapController,
+      route: freezed == route
+          ? _self.route
+          : route // ignore: cast_nullable_to_non_nullable
+              as Route?,
+      nextInstruction: freezed == nextInstruction
+          ? _self.nextInstruction
+          : nextInstruction // ignore: cast_nullable_to_non_nullable
+              as RouteInstruction?,
     ));
+  }
+
+  /// Create a copy of MapState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $RouteInstructionCopyWith<$Res>? get nextInstruction {
+    if (_self.nextInstruction == null) {
+      return null;
+    }
+
+    return $RouteInstructionCopyWith<$Res>(_self.nextInstruction!, (value) {
+      return _then(_self.copyWith(nextInstruction: value));
+    });
   }
 }
 
@@ -94,7 +335,12 @@ class _$MapStateCopyWithImpl<$Res> implements $MapStateCopyWith<$Res> {
 
 class MapLoading implements MapState {
   const MapLoading(
-      {required this.position, this.orientation = 0, required this.controller});
+      {required this.position,
+      this.orientation = 0,
+      required this.controller,
+      this.route = null,
+      this.nextInstruction = null,
+      this.isWorking = false});
 
   @override
   final LatLng position;
@@ -103,6 +349,14 @@ class MapLoading implements MapState {
   final double orientation;
   @override
   final MapController controller;
+  @override
+  @JsonKey()
+  final Route? route;
+  @override
+  @JsonKey()
+  final RouteInstruction? nextInstruction;
+  @JsonKey()
+  final bool isWorking;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -122,16 +376,21 @@ class MapLoading implements MapState {
             (identical(other.orientation, orientation) ||
                 other.orientation == orientation) &&
             (identical(other.controller, controller) ||
-                other.controller == controller));
+                other.controller == controller) &&
+            (identical(other.route, route) || other.route == route) &&
+            (identical(other.nextInstruction, nextInstruction) ||
+                other.nextInstruction == nextInstruction) &&
+            (identical(other.isWorking, isWorking) ||
+                other.isWorking == isWorking));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, position, orientation, controller);
+  int get hashCode => Object.hash(runtimeType, position, orientation,
+      controller, route, nextInstruction, isWorking);
 
   @override
   String toString() {
-    return 'MapState.loading(position: $position, orientation: $orientation, controller: $controller)';
+    return 'MapState.loading(position: $position, orientation: $orientation, controller: $controller, route: $route, nextInstruction: $nextInstruction, isWorking: $isWorking)';
   }
 }
 
@@ -143,7 +402,16 @@ abstract mixin class $MapLoadingCopyWith<$Res>
       _$MapLoadingCopyWithImpl;
   @override
   @useResult
-  $Res call({LatLng position, double orientation, MapController controller});
+  $Res call(
+      {LatLng position,
+      double orientation,
+      MapController controller,
+      Route? route,
+      RouteInstruction? nextInstruction,
+      bool isWorking});
+
+  @override
+  $RouteInstructionCopyWith<$Res>? get nextInstruction;
 }
 
 /// @nodoc
@@ -161,6 +429,9 @@ class _$MapLoadingCopyWithImpl<$Res> implements $MapLoadingCopyWith<$Res> {
     Object? position = null,
     Object? orientation = null,
     Object? controller = null,
+    Object? route = freezed,
+    Object? nextInstruction = freezed,
+    Object? isWorking = null,
   }) {
     return _then(MapLoading(
       position: null == position
@@ -175,7 +446,33 @@ class _$MapLoadingCopyWithImpl<$Res> implements $MapLoadingCopyWith<$Res> {
           ? _self.controller
           : controller // ignore: cast_nullable_to_non_nullable
               as MapController,
+      route: freezed == route
+          ? _self.route
+          : route // ignore: cast_nullable_to_non_nullable
+              as Route?,
+      nextInstruction: freezed == nextInstruction
+          ? _self.nextInstruction
+          : nextInstruction // ignore: cast_nullable_to_non_nullable
+              as RouteInstruction?,
+      isWorking: null == isWorking
+          ? _self.isWorking
+          : isWorking // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
+  }
+
+  /// Create a copy of MapState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $RouteInstructionCopyWith<$Res>? get nextInstruction {
+    if (_self.nextInstruction == null) {
+      return null;
+    }
+
+    return $RouteInstructionCopyWith<$Res>(_self.nextInstruction!, (value) {
+      return _then(_self.copyWith(nextInstruction: value));
+    });
   }
 }
 
@@ -183,7 +480,11 @@ class _$MapLoadingCopyWithImpl<$Res> implements $MapLoadingCopyWith<$Res> {
 
 class MapUnavailable implements MapState {
   const MapUnavailable(this.error,
-      {required this.position, this.orientation = 0, required this.controller});
+      {required this.position,
+      this.orientation = 0,
+      required this.controller,
+      this.route = null,
+      this.nextInstruction = null});
 
   final String error;
   @override
@@ -193,6 +494,12 @@ class MapUnavailable implements MapState {
   final double orientation;
   @override
   final MapController controller;
+  @override
+  @JsonKey()
+  final Route? route;
+  @override
+  @JsonKey()
+  final RouteInstruction? nextInstruction;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -213,16 +520,19 @@ class MapUnavailable implements MapState {
             (identical(other.orientation, orientation) ||
                 other.orientation == orientation) &&
             (identical(other.controller, controller) ||
-                other.controller == controller));
+                other.controller == controller) &&
+            (identical(other.route, route) || other.route == route) &&
+            (identical(other.nextInstruction, nextInstruction) ||
+                other.nextInstruction == nextInstruction));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, error, position, orientation, controller);
+  int get hashCode => Object.hash(runtimeType, error, position, orientation,
+      controller, route, nextInstruction);
 
   @override
   String toString() {
-    return 'MapState.unavailable(error: $error, position: $position, orientation: $orientation, controller: $controller)';
+    return 'MapState.unavailable(error: $error, position: $position, orientation: $orientation, controller: $controller, route: $route, nextInstruction: $nextInstruction)';
   }
 }
 
@@ -238,7 +548,12 @@ abstract mixin class $MapUnavailableCopyWith<$Res>
       {String error,
       LatLng position,
       double orientation,
-      MapController controller});
+      MapController controller,
+      Route? route,
+      RouteInstruction? nextInstruction});
+
+  @override
+  $RouteInstructionCopyWith<$Res>? get nextInstruction;
 }
 
 /// @nodoc
@@ -258,6 +573,8 @@ class _$MapUnavailableCopyWithImpl<$Res>
     Object? position = null,
     Object? orientation = null,
     Object? controller = null,
+    Object? route = freezed,
+    Object? nextInstruction = freezed,
   }) {
     return _then(MapUnavailable(
       null == error
@@ -276,7 +593,29 @@ class _$MapUnavailableCopyWithImpl<$Res>
           ? _self.controller
           : controller // ignore: cast_nullable_to_non_nullable
               as MapController,
+      route: freezed == route
+          ? _self.route
+          : route // ignore: cast_nullable_to_non_nullable
+              as Route?,
+      nextInstruction: freezed == nextInstruction
+          ? _self.nextInstruction
+          : nextInstruction // ignore: cast_nullable_to_non_nullable
+              as RouteInstruction?,
     ));
+  }
+
+  /// Create a copy of MapState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $RouteInstructionCopyWith<$Res>? get nextInstruction {
+    if (_self.nextInstruction == null) {
+      return null;
+    }
+
+    return $RouteInstructionCopyWith<$Res>(_self.nextInstruction!, (value) {
+      return _then(_self.copyWith(nextInstruction: value));
+    });
   }
 }
 
@@ -290,7 +629,9 @@ class MapOffline implements MapState {
       required this.mbTiles,
       required this.theme,
       this.onReady,
-      this.isReady = false});
+      this.isReady = false,
+      this.route = null,
+      this.nextInstruction = null});
 
   @override
   final MapController controller;
@@ -300,9 +641,15 @@ class MapOffline implements MapState {
   final double orientation;
   final MbTiles mbTiles;
   final Theme theme;
-  final void Function()? onReady;
+  final void Function(TickerProvider)? onReady;
   @JsonKey()
   final bool isReady;
+  @override
+  @JsonKey()
+  final Route? route;
+  @override
+  @JsonKey()
+  final RouteInstruction? nextInstruction;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -326,16 +673,19 @@ class MapOffline implements MapState {
             (identical(other.mbTiles, mbTiles) || other.mbTiles == mbTiles) &&
             (identical(other.theme, theme) || other.theme == theme) &&
             (identical(other.onReady, onReady) || other.onReady == onReady) &&
-            (identical(other.isReady, isReady) || other.isReady == isReady));
+            (identical(other.isReady, isReady) || other.isReady == isReady) &&
+            (identical(other.route, route) || other.route == route) &&
+            (identical(other.nextInstruction, nextInstruction) ||
+                other.nextInstruction == nextInstruction));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, controller, position,
-      orientation, mbTiles, theme, onReady, isReady);
+      orientation, mbTiles, theme, onReady, isReady, route, nextInstruction);
 
   @override
   String toString() {
-    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, mbTiles: $mbTiles, theme: $theme, onReady: $onReady, isReady: $isReady)';
+    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, mbTiles: $mbTiles, theme: $theme, onReady: $onReady, isReady: $isReady, route: $route, nextInstruction: $nextInstruction)';
   }
 }
 
@@ -353,8 +703,13 @@ abstract mixin class $MapOfflineCopyWith<$Res>
       double orientation,
       MbTiles mbTiles,
       Theme theme,
-      void Function()? onReady,
-      bool isReady});
+      void Function(TickerProvider)? onReady,
+      bool isReady,
+      Route? route,
+      RouteInstruction? nextInstruction});
+
+  @override
+  $RouteInstructionCopyWith<$Res>? get nextInstruction;
 }
 
 /// @nodoc
@@ -376,6 +731,8 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
     Object? theme = null,
     Object? onReady = freezed,
     Object? isReady = null,
+    Object? route = freezed,
+    Object? nextInstruction = freezed,
   }) {
     return _then(MapOffline(
       controller: null == controller
@@ -401,12 +758,34 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
       onReady: freezed == onReady
           ? _self.onReady
           : onReady // ignore: cast_nullable_to_non_nullable
-              as void Function()?,
+              as void Function(TickerProvider)?,
       isReady: null == isReady
           ? _self.isReady
           : isReady // ignore: cast_nullable_to_non_nullable
               as bool,
+      route: freezed == route
+          ? _self.route
+          : route // ignore: cast_nullable_to_non_nullable
+              as Route?,
+      nextInstruction: freezed == nextInstruction
+          ? _self.nextInstruction
+          : nextInstruction // ignore: cast_nullable_to_non_nullable
+              as RouteInstruction?,
     ));
+  }
+
+  /// Create a copy of MapState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $RouteInstructionCopyWith<$Res>? get nextInstruction {
+    if (_self.nextInstruction == null) {
+      return null;
+    }
+
+    return $RouteInstructionCopyWith<$Res>(_self.nextInstruction!, (value) {
+      return _then(_self.copyWith(nextInstruction: value));
+    });
   }
 }
 
@@ -418,7 +797,9 @@ class MapOnline implements MapState {
       required this.orientation,
       required this.controller,
       this.onReady,
-      this.isReady = false});
+      this.isReady = false,
+      this.route = null,
+      this.nextInstruction = null});
 
   @override
   final LatLng position;
@@ -426,9 +807,15 @@ class MapOnline implements MapState {
   final double orientation;
   @override
   final MapController controller;
-  final void Function()? onReady;
+  final void Function(TickerProvider)? onReady;
   @JsonKey()
   final bool isReady;
+  @override
+  @JsonKey()
+  final Route? route;
+  @override
+  @JsonKey()
+  final RouteInstruction? nextInstruction;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -450,16 +837,19 @@ class MapOnline implements MapState {
             (identical(other.controller, controller) ||
                 other.controller == controller) &&
             (identical(other.onReady, onReady) || other.onReady == onReady) &&
-            (identical(other.isReady, isReady) || other.isReady == isReady));
+            (identical(other.isReady, isReady) || other.isReady == isReady) &&
+            (identical(other.route, route) || other.route == route) &&
+            (identical(other.nextInstruction, nextInstruction) ||
+                other.nextInstruction == nextInstruction));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, position, orientation, controller, onReady, isReady);
+  int get hashCode => Object.hash(runtimeType, position, orientation,
+      controller, onReady, isReady, route, nextInstruction);
 
   @override
   String toString() {
-    return 'MapState.online(position: $position, orientation: $orientation, controller: $controller, onReady: $onReady, isReady: $isReady)';
+    return 'MapState.online(position: $position, orientation: $orientation, controller: $controller, onReady: $onReady, isReady: $isReady, route: $route, nextInstruction: $nextInstruction)';
   }
 }
 
@@ -474,8 +864,13 @@ abstract mixin class $MapOnlineCopyWith<$Res>
       {LatLng position,
       double orientation,
       MapController controller,
-      void Function()? onReady,
-      bool isReady});
+      void Function(TickerProvider)? onReady,
+      bool isReady,
+      Route? route,
+      RouteInstruction? nextInstruction});
+
+  @override
+  $RouteInstructionCopyWith<$Res>? get nextInstruction;
 }
 
 /// @nodoc
@@ -495,6 +890,8 @@ class _$MapOnlineCopyWithImpl<$Res> implements $MapOnlineCopyWith<$Res> {
     Object? controller = null,
     Object? onReady = freezed,
     Object? isReady = null,
+    Object? route = freezed,
+    Object? nextInstruction = freezed,
   }) {
     return _then(MapOnline(
       position: null == position
@@ -512,12 +909,34 @@ class _$MapOnlineCopyWithImpl<$Res> implements $MapOnlineCopyWith<$Res> {
       onReady: freezed == onReady
           ? _self.onReady
           : onReady // ignore: cast_nullable_to_non_nullable
-              as void Function()?,
+              as void Function(TickerProvider)?,
       isReady: null == isReady
           ? _self.isReady
           : isReady // ignore: cast_nullable_to_non_nullable
               as bool,
+      route: freezed == route
+          ? _self.route
+          : route // ignore: cast_nullable_to_non_nullable
+              as Route?,
+      nextInstruction: freezed == nextInstruction
+          ? _self.nextInstruction
+          : nextInstruction // ignore: cast_nullable_to_non_nullable
+              as RouteInstruction?,
     ));
+  }
+
+  /// Create a copy of MapState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $RouteInstructionCopyWith<$Res>? get nextInstruction {
+    if (_self.nextInstruction == null) {
+      return null;
+    }
+
+    return $RouteInstructionCopyWith<$Res>(_self.nextInstruction!, (value) {
+      return _then(_self.copyWith(nextInstruction: value));
+    });
   }
 }
 

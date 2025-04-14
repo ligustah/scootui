@@ -27,6 +27,11 @@ dependencies:
   freezed_annotation: ^3.0.0
   nested: ^1.0.0
   simple_animations: ^5.1.0
+  routing_client_dart: ^1.0.7
+  dio: ^5.8.0+1
+  geojson_vi: ^2.2.5
+  json_annotation: ^4.9.0
+  flutter_map_animations: ^0.6.0
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +40,7 @@ dev_dependencies:
   build_runner: ^2.4.15
   source_gen: ^2.0.0
   analyzer: ^7.3.0
+  json_serializable:
 
 flutter:
   uses-material-design: true
