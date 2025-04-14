@@ -1,0 +1,12 @@
+{
+    "debug.internalConsoleOptions": "openOnSessionStart",
+    "editor.formatOnSave": true,
+    "[dart]": {
+        "editor.rulers": [
+            80
+        ],
+        "editor.selectionHighlight": false,
+        "editor.tabCompletion": "onlySnippets",
+        "editor.wordBasedSuggestions": "off",
+    }
+}
