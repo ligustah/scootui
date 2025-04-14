@@ -339,7 +339,8 @@ class MapLoading implements MapState {
       this.orientation = 0,
       required this.controller,
       this.route = null,
-      this.nextInstruction = null});
+      this.nextInstruction = null,
+      this.isWorking = false});
 
   @override
   final LatLng position;
@@ -354,6 +355,8 @@ class MapLoading implements MapState {
   @override
   @JsonKey()
   final RouteInstruction? nextInstruction;
+  @JsonKey()
+  final bool isWorking;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -376,16 +379,18 @@ class MapLoading implements MapState {
                 other.controller == controller) &&
             (identical(other.route, route) || other.route == route) &&
             (identical(other.nextInstruction, nextInstruction) ||
-                other.nextInstruction == nextInstruction));
+                other.nextInstruction == nextInstruction) &&
+            (identical(other.isWorking, isWorking) ||
+                other.isWorking == isWorking));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, position, orientation, controller, route, nextInstruction);
+  int get hashCode => Object.hash(runtimeType, position, orientation,
+      controller, route, nextInstruction, isWorking);
 
   @override
   String toString() {
-    return 'MapState.loading(position: $position, orientation: $orientation, controller: $controller, route: $route, nextInstruction: $nextInstruction)';
+    return 'MapState.loading(position: $position, orientation: $orientation, controller: $controller, route: $route, nextInstruction: $nextInstruction, isWorking: $isWorking)';
   }
 }
 
@@ -402,7 +407,8 @@ abstract mixin class $MapLoadingCopyWith<$Res>
       double orientation,
       MapController controller,
       Route? route,
-      RouteInstruction? nextInstruction});
+      RouteInstruction? nextInstruction,
+      bool isWorking});
 
   @override
   $RouteInstructionCopyWith<$Res>? get nextInstruction;
@@ -425,6 +431,7 @@ class _$MapLoadingCopyWithImpl<$Res> implements $MapLoadingCopyWith<$Res> {
     Object? controller = null,
     Object? route = freezed,
     Object? nextInstruction = freezed,
+    Object? isWorking = null,
   }) {
     return _then(MapLoading(
       position: null == position
@@ -447,6 +454,10 @@ class _$MapLoadingCopyWithImpl<$Res> implements $MapLoadingCopyWith<$Res> {
           ? _self.nextInstruction
           : nextInstruction // ignore: cast_nullable_to_non_nullable
               as RouteInstruction?,
+      isWorking: null == isWorking
+          ? _self.isWorking
+          : isWorking // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 
@@ -630,7 +641,7 @@ class MapOffline implements MapState {
   final double orientation;
   final MbTiles mbTiles;
   final Theme theme;
-  final void Function()? onReady;
+  final void Function(TickerProvider)? onReady;
   @JsonKey()
   final bool isReady;
   @override
@@ -692,7 +703,7 @@ abstract mixin class $MapOfflineCopyWith<$Res>
       double orientation,
       MbTiles mbTiles,
       Theme theme,
-      void Function()? onReady,
+      void Function(TickerProvider)? onReady,
       bool isReady,
       Route? route,
       RouteInstruction? nextInstruction});
@@ -747,7 +758,7 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
       onReady: freezed == onReady
           ? _self.onReady
           : onReady // ignore: cast_nullable_to_non_nullable
-              as void Function()?,
+              as void Function(TickerProvider)?,
       isReady: null == isReady
           ? _self.isReady
           : isReady // ignore: cast_nullable_to_non_nullable
@@ -796,7 +807,7 @@ class MapOnline implements MapState {
   final double orientation;
   @override
   final MapController controller;
-  final void Function()? onReady;
+  final void Function(TickerProvider)? onReady;
   @JsonKey()
   final bool isReady;
   @override
@@ -853,7 +864,7 @@ abstract mixin class $MapOnlineCopyWith<$Res>
       {LatLng position,
       double orientation,
       MapController controller,
-      void Function()? onReady,
+      void Function(TickerProvider)? onReady,
       bool isReady,
       Route? route,
       RouteInstruction? nextInstruction});
@@ -898,7 +909,7 @@ class _$MapOnlineCopyWithImpl<$Res> implements $MapOnlineCopyWith<$Res> {
       onReady: freezed == onReady
           ? _self.onReady
           : onReady // ignore: cast_nullable_to_non_nullable
-              as void Function()?,
+              as void Function(TickerProvider)?,
       isReady: null == isReady
           ? _self.isReady
           : isReady // ignore: cast_nullable_to_non_nullable

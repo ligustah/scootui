@@ -2,7 +2,15 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
-    show Alignment, BuildContext, Colors, Icon, Icons, StatelessWidget, Widget;
+    show
+        Alignment,
+        BuildContext,
+        Colors,
+        Icon,
+        Icons,
+        StatelessWidget,
+        Widget,
+        TickerProviderStateMixin;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_map/flutter_map.dart'
     show
@@ -14,6 +22,18 @@ import 'package:flutter_map/flutter_map.dart'
         Polyline,
         PolylineLayer,
         TileLayer;
+import 'package:flutter_map_animations/flutter_map_animations.dart'
+    show
+        AnimatedMap,
+        AnimatedMapController,
+        AnimatedMarker,
+        AnimatedMarkerLayer,
+        AnimatedPolyline,
+        AnimatedPolylineLayer,
+        AnimatedTileLayer,
+        AnimatedVectorTileLayer,
+        AnimatedWidgetBuilder,
+        MapAnimationMixin;
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:routing_client_dart/routing_client_dart.dart'
@@ -26,11 +46,11 @@ import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart'
     show MbTilesVectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
 
-class OnlineMapView extends StatelessWidget {
+class OnlineMapView extends StatefulWidget {
   final MapController mapController;
   final LatLng position;
   final double orientation;
-  final void Function()? mapReady;
+  final void Function(TickerProvider)? mapReady;
 
   const OnlineMapView({
     super.key,
@@ -39,51 +59,59 @@ class OnlineMapView extends StatelessWidget {
     required this.orientation,
     this.mapReady,
   });
+
+  @override
+  State<OnlineMapView> createState() => _OnlineMapViewState();
+}
+
+class _OnlineMapViewState extends State<OnlineMapView>
+    with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return FlutterMap(
       options: MapOptions(
-        onMapReady: mapReady,
+        onMapReady: () => widget.mapReady?.call(this),
         minZoom: 8,
         maxZoom: 18,
-        initialCenter: position,
+        initialCenter: widget.position,
         initialZoom: 17,
       ),
-      mapController: mapController,
+      mapController: widget.mapController,
       children: [
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'github.com/librescoot/scootui',
-          // Plenty of other options available!
         ),
-        MarkerLayer(markers: [
-          Marker(
-            width: 30.0,
-            height: 30.0,
-            point: position,
-            alignment: Alignment.center,
-            child: Transform.rotate(
-              angle: -orientation * (math.pi / 180),
-              child: const Icon(
-                Icons.navigation,
-                color: Colors.blue,
-                size: 30.0,
+        MarkerLayer(
+          markers: [
+            Marker(
+              point: widget.position,
+              width: 30.0,
+              height: 30.0,
+              alignment: Alignment.center,
+              child: Transform.rotate(
+                angle: -widget.orientation * (math.pi / 180),
+                child: const Icon(
+                  Icons.navigation,
+                  color: Colors.blue,
+                  size: 30.0,
+                ),
               ),
             ),
-          ),
-        ]),
+          ],
+        ),
       ],
     );
   }
 }
 
-class OfflineMapView extends StatelessWidget {
+class OfflineMapView extends StatefulWidget {
   final MapController mapController;
   final Theme theme;
   final MbTiles mbTiles;
   final LatLng position;
   final double orientation;
-  final void Function()? mapReady;
+  final void Function(TickerProvider)? mapReady;
   final FutureOr<void> Function(LatLng)? setDestination;
   final Route? route;
   final RouteInstruction? nextInstruction;
@@ -101,8 +129,16 @@ class OfflineMapView extends StatelessWidget {
     this.nextInstruction,
   });
 
+  @override
+  State<OfflineMapView> createState() => _OfflineMapViewState();
+}
+
+class _OfflineMapViewState extends State<OfflineMapView>
+    with TickerProviderStateMixin {
+  bool _isReady = false;
+
   Widget? _routeLayer() {
-    final line = route?.polyline;
+    final line = widget.route?.polyline;
     if (line == null || line.isEmpty) {
       return null;
     }
@@ -122,7 +158,7 @@ class OfflineMapView extends StatelessWidget {
   }
 
   Widget? _instructionLayer() {
-    final current = nextInstruction;
+    final current = widget.nextInstruction;
     if (current == null) {
       return null;
     }
@@ -154,9 +190,9 @@ class OfflineMapView extends StatelessWidget {
 
   List<Marker> _routeMarkers() {
     final markers = <Marker>[];
-    if (route == null) return markers;
+    if (widget.route == null) return markers;
 
-    for (final instruction in route!.instructions) {
+    for (final instruction in widget.route!.instructions) {
       markers.add(
         Marker(
           width: 50.0,
@@ -182,56 +218,51 @@ class OfflineMapView extends StatelessWidget {
 
     return FlutterMap(
       options: MapOptions(
-        onMapReady: mapReady,
+        onMapReady: () {
+          // no need to setState here, we don't need an immediate rebuild
+          _isReady = true;
+          widget.mapReady?.call(this);
+        },
         minZoom: 8,
-        maxZoom: 18,
-        initialCenter: position,
+        maxZoom: 20,
+        initialCenter: widget.position,
         initialZoom: 17,
         onSecondaryTap: (position, coordinates) {
-          if (setDestination != null) {
-            setDestination!(coordinates);
+          if (widget.setDestination != null) {
+            widget.setDestination!(coordinates);
           }
         },
       ),
-      mapController: mapController,
+      mapController: widget.mapController,
       children: [
         VectorTileLayer(
-          theme: theme,
+          theme: widget.theme,
           tileProviders: TileProviders({
             'versatiles-shortbread': MbTilesVectorTileProvider(
-              mbtiles: mbTiles,
+              mbtiles: widget.mbTiles,
               silenceTileNotFound: true,
             ),
           }),
-          maximumZoom: 18,
-          // Set minimal cache settings to prevent theme persistence
+          maximumZoom: 20,
           fileCacheTtl: const Duration(seconds: 1),
           memoryTileCacheMaxSize: 0,
-          // Disable memory tile cache
           memoryTileDataCacheMaxSize: 0,
-          // Disable memory tile data cache
           fileCacheMaximumSizeInBytes: 1024 * 1024,
-          // 1MB file cache
-          // Force immediate tile updates
           tileDelay: Duration.zero,
         ),
         if (routeLayer != null) routeLayer,
         MarkerLayer(markers: [
           Marker(
-            width: 30.0,
-            height: 30.0,
-            point: position,
-            alignment: Alignment.center,
-            child: Transform.rotate(
-              angle: -orientation * (math.pi / 180),
-              child: const Icon(
-                Icons.navigation,
-                color: Colors.blue,
-                size: 30.0,
-              ),
+            rotate: true,
+            point:
+                _isReady ? widget.mapController.camera.center : widget.position,
+            child: const Icon(
+              Icons.navigation,
+              color: Colors.blue,
+              size: 30.0,
             ),
           ),
-          ..._routeMarkers(),
+          ..._routeMarkers()
         ]),
         if (instructionLayer != null) instructionLayer,
       ],

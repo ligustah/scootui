@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
@@ -33,7 +35,12 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<ThemeState> _themeSub;
   final RoutingManager _routingManager;
   static const double _offRouteTolerance = 5.0; // 5 meters
+  static const double _maxZoom = 19.0;
+  static const double _minZoom = 16.5;
+  static const double _threshold = 130.0;
   DateTime? _lastReroute;
+  AnimatedMapController? _animatedController;
+  Future<void>? _currentAnimation;
 
   static MapCubit create(BuildContext context) => MapCubit(
         context.read<GpsSync>().stream,
@@ -107,58 +114,66 @@ class MapCubit extends Cubit<MapState> {
         nextInstruction: _nextInstruction(route, current.position)));
   }
 
-  void _moveAndRotate(LatLng center, double course) {
-    final ctrl = switch (state) {
-      MapOnline(:final controller, :final isReady) =>
-        isReady ? controller : null,
-      MapOffline(:final controller, :final isReady) =>
-        isReady ? controller : null,
-      _ => null,
-    };
+  void _moveAndRotate(LatLng center, double course,
+      [RouteInstruction? instruction]) {
+    final ctrl = _animatedController;
 
     if (ctrl == null) return;
 
     final route = state.route;
     double bearing = course;
+    double zoom = _minZoom;
 
     if (route != null && route.polyline != null && route.polyline!.isNotEmpty) {
       // Find the closest point and next point on route
-      final (_, segmentIndex, distance) = RouteHelpers.findClosestPointOnRoute(
+      final (point, segmentIndex, distance) =
+          RouteHelpers.findClosestPointOnRoute(
         center,
         route.polyline!,
       );
 
       // Only use route bearing if we're close enough to the route
-      if (distance < 5) { // 5 meters tolerance
+      if (distance < _offRouteTolerance) {
+        // 5 meters tolerance
         // Get next point to calculate bearing
-        final nextPointIndex = math.min(segmentIndex + 1, route.polyline!.length - 1);
+        final nextPointIndex =
+            math.min(segmentIndex + 1, route.polyline!.length - 1);
         if (nextPointIndex > segmentIndex) {
           final currentPoint = route.polyline![segmentIndex];
           final nextPoint = route.polyline![nextPointIndex];
 
           // Calculate bearing between points
-          final y = math.sin(nextPoint.lng - currentPoint.lng) * 
-                   math.cos(nextPoint.lat);
+          final y = math.sin(nextPoint.lng - currentPoint.lng) *
+              math.cos(nextPoint.lat);
           final x = math.cos(currentPoint.lat) * math.sin(nextPoint.lat) -
-                   math.sin(currentPoint.lat) * math.cos(nextPoint.lat) * 
-                   math.cos(nextPoint.lng - currentPoint.lng);
+              math.sin(currentPoint.lat) *
+                  math.cos(nextPoint.lat) *
+                  math.cos(nextPoint.lng - currentPoint.lng);
           final routeBearing = math.atan2(y, x) * (180 / math.pi);
-          
+
           // Normalize to 0-360
           bearing = (routeBearing + 360) % 360;
+        }
+
+        center = point;
+        if (instruction != null) {
+          zoom = instruction.distance >= _threshold
+              ? _minZoom
+              : _minZoom +
+                  (_maxZoom - _minZoom) *
+                      (1 - instruction.distance / _threshold);
         }
       }
     }
 
-    final offset = Offset(0, 100);
-    ctrl.move(center, ctrl.camera.zoom, offset: offset);
-    ctrl.rotateAroundPoint(bearing, offset: offset);
+    _animatedController?.animateTo(
+        dest: center, zoom: zoom, rotation: bearing, curve: Curves.easeInOut);
   }
 
   Future<void> _checkRouteDeviation(LatLng position) async {
     final current = state;
     final route = current.route;
-    
+
     if (route == null || route.polyline == null || route.polyline!.isEmpty) {
       return;
     }
@@ -169,24 +184,21 @@ class MapCubit extends Cubit<MapState> {
     );
 
     // If we're too far from the route and haven't rerouted recently
-    if (distance > _offRouteTolerance && 
-        (_lastReroute == null || 
-         DateTime.now().difference(_lastReroute!) > const Duration(seconds: 5))) {
+    if (distance > _offRouteTolerance &&
+        (_lastReroute == null ||
+            DateTime.now().difference(_lastReroute!) >
+                const Duration(seconds: 5))) {
       _lastReroute = DateTime.now();
-      
+
       // Find the last instruction point in the route
-      final destination = route.instructions.isNotEmpty 
-          ? LatLng(
-              route.instructions.last.location.lat,
-              route.instructions.last.location.lng,
-            )
-          : LatLng(
-              route.polyline!.last.lat,
-              route.polyline!.last.lng,
-            );
+      final destination = route.polyline?.last;
+      // if the current route does not have a polyline, do nothing
+      if (destination == null) {
+        return;
+      }
 
       // Recalculate route
-      await setDestination(destination);
+      await setDestination(destination.toLatLng());
     }
   }
 
@@ -199,13 +211,14 @@ class MapCubit extends Cubit<MapState> {
     final current = state;
     final course = (360 - data.course);
     final position = LatLng(data.latitude, data.longitude);
+    final instruction = _nextInstruction(current.route, position);
 
-    _moveAndRotate(position, course);
+    _moveAndRotate(position, course, instruction);
     _checkRouteDeviation(position);
     emit(current.copyWith(
       position: position,
       orientation: course,
-      nextInstruction: _nextInstruction(current.route, position),
+      nextInstruction: instruction,
     ));
   }
 
@@ -220,8 +233,16 @@ class MapCubit extends Cubit<MapState> {
         }));
   }
 
-  void _onMapReady() {
+  void _onMapReady(TickerProvider vsync) {
     final current = state;
+    // TODO: the animation shouldn't really be in here, because it's a purely
+    //  visual thing and not related to the map state. eventually this should
+    //  be moved back into the map widget.
+    _animatedController = AnimatedMapController(
+        vsync: vsync,
+        mapController: current.controller,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut);
 
     emit(switch (current) {
       MapOffline() => current.copyWith(isReady: true),
@@ -259,6 +280,7 @@ class MapCubit extends Cubit<MapState> {
   }
 
   Future<void> _loadMap(ThemeState themeState) async {
+    _animatedController = null;
     emit(MapState.loading(
         controller: state.controller, position: state.position));
     final theme = await _getTheme(themeState.isDark);

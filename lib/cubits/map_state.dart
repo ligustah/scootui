@@ -31,6 +31,7 @@ sealed class MapState with _$MapState {
     required MapController controller,
     @Default(null) Route? route,
     @Default(null) RouteInstruction? nextInstruction,
+    @Default(false) bool isWorking,
   }) = MapLoading;
 
   const factory MapState.unavailable(
@@ -48,7 +49,7 @@ sealed class MapState with _$MapState {
     required double orientation,
     required MbTiles mbTiles,
     required Theme theme,
-    void Function()? onReady,
+    void Function(TickerProvider)? onReady,
     @Default(false) bool isReady,
     @Default(null) Route? route,
     @Default(null) RouteInstruction? nextInstruction,
@@ -58,7 +59,7 @@ sealed class MapState with _$MapState {
     required LatLng position,
     required double orientation,
     required MapController controller,
-    void Function()? onReady,
+    void Function(TickerProvider)? onReady,
     @Default(false) bool isReady,
     @Default(null) Route? route,
     @Default(null) RouteInstruction? nextInstruction,
