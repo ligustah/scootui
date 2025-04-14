@@ -37,7 +37,9 @@ class MapCubit extends Cubit<MapState> {
   static const double _offRouteTolerance = 5.0; // 5 meters
   static const double _maxZoom = 19.0;
   static const double _minZoom = 16.5;
-  static const double _threshold = 130.0;
+  static const double _zoomInStart = 220.0;
+  static const double _zoomInEnd = 30.0;
+  static const Offset _navigationOffset = Offset(0, 120);
   DateTime? _lastReroute;
   AnimatedMapController? _animatedController;
   Future<void>? _currentAnimation;
@@ -157,17 +159,28 @@ class MapCubit extends Cubit<MapState> {
 
         center = point;
         if (instruction != null) {
-          zoom = instruction.distance >= _threshold
-              ? _minZoom
-              : _minZoom +
-                  (_maxZoom - _minZoom) *
-                      (1 - instruction.distance / _threshold);
+          if (instruction.distance >= _zoomInStart) {
+            zoom = _minZoom;
+          } else if (instruction.distance <= _zoomInEnd) {
+            zoom = _maxZoom;
+          } else {
+            zoom = _minZoom +
+                (_maxZoom - _minZoom) *
+                    (1 -
+                        (instruction.distance - _zoomInEnd) /
+                            (_zoomInStart - _zoomInEnd));
+          }
         }
       }
     }
 
     _animatedController?.animateTo(
-        dest: center, zoom: zoom, rotation: bearing, curve: Curves.easeInOut);
+        dest: center,
+        zoom: zoom,
+        rotation: bearing,
+        curve: Curves.easeInOut,
+        offset: _navigationOffset,
+        cancelPreviousAnimations: false);
   }
 
   Future<void> _checkRouteDeviation(LatLng position) async {
