@@ -177,14 +177,14 @@ class MapCubit extends Cubit<MapState> {
         nextInstruction: _nextInstruction(route, current.position)));
   }
 
-  void _moveAndRotate(LatLng center, double course,
-      {Duration? duration, RouteInstruction? instruction}) {
+  void _moveAndRotate(LatLng center, double course, {Duration? duration}) {
     if (_mapLocked) return;
     final ctrl = _animatedController;
 
     if (ctrl == null) return;
 
     final route = state.route;
+    final instruction = state.nextInstruction;
     double bearing = course;
     double zoom = _minZoom;
 
@@ -292,13 +292,13 @@ class MapCubit extends Cubit<MapState> {
     final position = LatLng(data.latitude, data.longitude);
     final instruction = _nextInstruction(current.route, position);
 
-    _moveAndRotate(position, course, instruction: instruction);
-    _checkRouteDeviation(position);
     emit(current.copyWith(
       position: position,
       orientation: course,
       nextInstruction: instruction,
     ));
+    _moveAndRotate(position, course);
+    _checkRouteDeviation(position);
   }
 
   void _onThemeUpdate(ThemeState event) {
