@@ -34,6 +34,9 @@ dependencies:
     git:
       url: https://github.com/ligustah/flutter_map_animations.git
       ref: 0.8.0+rotationfix
+  vector_tile: ^2.0.0
+  flutter_map_marker_cluster: ^1.4.0
+  rbush: ^1.1.1
 
 dev_dependencies:
   flutter_test:

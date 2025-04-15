@@ -13,6 +13,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:vector_tile/util/geometry.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import '../routing/brouter.dart';
@@ -27,6 +28,19 @@ part 'map_state.dart';
 
 const defaultCoordinates = LatLng(52.52437, 13.41053);
 
+class Address {
+  final String id;
+  final LatLng coordinates;
+  final double x;
+  final double y;
+
+  Address(
+      {required this.id,
+      required this.coordinates,
+      required this.x,
+      required this.y});
+}
+
 class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
@@ -39,6 +53,8 @@ class MapCubit extends Cubit<MapState> {
   DateTime? _lastReroute;
   AnimatedMapController? _animatedController;
   Future<void>? _currentAnimation;
+  final Map<String, Address> _addressCoordinates = {};
+  int _currentAddressId = 0;
 
   static MapCubit create(BuildContext context) => MapCubit(
         context.read<GpsSync>().stream,
@@ -77,6 +93,15 @@ class MapCubit extends Cubit<MapState> {
       MapOffline() => current.copyWith(route: route),
       _ => current,
     });
+  }
+
+  Future<void> setDestinationAddress(String addressId) async {
+    final address = _addressCoordinates[addressId];
+    if (address == null) {
+      return;
+    }
+
+    await setDestination(address.coordinates);
   }
 
   Future<void> setDestination(LatLng destination) async {
@@ -178,6 +203,8 @@ class MapCubit extends Cubit<MapState> {
         offset: _navigationOffset,
         cancelPreviousAnimations: false);
   }
+
+  Map<String, Address> getAddresses() => _addressCoordinates;
 
   Future<void> _checkRouteDeviation(LatLng position) async {
     final current = state;
@@ -288,6 +315,17 @@ class MapCubit extends Cubit<MapState> {
     return state.position;
   }
 
+  String _toBase32(int number) {
+    const chars = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    if (number == 0) return '0';
+    var result = '';
+    while (number > 0) {
+      result = chars[number % 32] + result;
+      number = number ~/ 32;
+    }
+    return result;
+  }
+
   Future<void> _loadMap(ThemeState themeState) async {
     _animatedController = null;
     emit(MapState.loading(
@@ -323,6 +361,8 @@ class MapCubit extends Cubit<MapState> {
       gzip: true,
     );
 
+    _processAddresses(mbTiles);
+
     emit(MapState.offline(
       mbTiles: mbTiles,
       position: _getInitialCoordinates(mbTiles),
@@ -332,4 +372,91 @@ class MapCubit extends Cubit<MapState> {
       onReady: _onMapReady,
     ));
   }
+
+  void _processAddresses(MbTiles mbTiles) {
+    final coordinates = getTileCoordinatesForBounds(mbTiles, 14);
+
+    for (var coordinate in coordinates) {
+      final tile = mbTiles.getTile(x: coordinate.x, y: coordinate.y, z: 14);
+      if (tile == null) {
+        continue;
+      }
+
+      final vectorTile = VectorTile.fromBytes(bytes: tile);
+      try {
+        final addressesLayer =
+            vectorTile.layers.firstWhere((layer) => layer.name == 'addresses');
+        final features = addressesLayer.features;
+        final extent = addressesLayer.extent;
+
+        for (var feature in features) {
+          final geometry = feature.decodeGeometry();
+          if (geometry is GeometryPoint) {
+            final coordinates = geometry.coordinates;
+            // Convert from tile coordinates to geographic coordinates
+            final n = math.pow(2.0, 14).toDouble();
+            final lon =
+                (coordinate.x + coordinates[0] / extent) / n * 360.0 - 180.0;
+            final y = 1 -
+                (coordinate.y + coordinates[1] / extent) / n; // Flip y for TMS
+            final z = math.pi * (1 - 2 * y);
+            final latRad = math.atan((math.exp(z) - math.exp(-z)) / 2);
+            final lat = latRad * 180.0 / math.pi;
+
+            // Assign ID and create mapping
+            final id = _currentAddressId++;
+            final base32Id = _toBase32(id);
+            _addressCoordinates[base32Id] = Address(
+                id: base32Id,
+                coordinates: LatLng(lat, lon),
+                x: coordinates[0],
+                y: coordinates[1]);
+          }
+        }
+      } on StateError {
+        continue;
+      }
+    }
+  }
+}
+
+List<Point<int>> getTileCoordinatesForBounds(MbTiles tiles, int zoom) {
+  final meta = tiles.getMetadata();
+  final bounds = meta.bounds;
+  if (bounds == null) {
+    throw Exception('No bounds found in MBTiles metadata');
+  }
+
+  final minTileX = _lonToTileX(bounds.left, zoom);
+  final maxTileX = _lonToTileX(bounds.right, zoom);
+  final minTileY = _latToTileYTMS(bounds.top, zoom);
+  final maxTileY = _latToTileYTMS(bounds.bottom, zoom);
+  final coordinates = <Point<int>>[];
+
+  for (var x = minTileX; x <= maxTileX; x++) {
+    final startY = math.min(minTileY, maxTileY);
+    final endY = math.max(minTileY, maxTileY);
+
+    for (var y = startY; y <= endY; y++) {
+      coordinates.add(Point(x, y));
+    }
+  }
+
+  return coordinates;
+}
+
+int _lonToTileX(double lon, int zoom) {
+  final x = ((lon + 180) / 360 * (1 << zoom)).floor();
+  return x;
+}
+
+int _latToTileYTMS(double lat, int zoom) {
+  final latRad = lat * (math.pi / 180);
+  final n = math.pow(2.0, zoom).toDouble();
+  final y =
+      (1.0 - math.log(math.tan(latRad) + 1.0 / math.cos(latRad)) / math.pi) /
+          2.0 *
+          n;
+  final tmsY = (n - 1 - y).floor();
+  return tmsY + 1;
 }
