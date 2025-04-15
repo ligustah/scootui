@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scooter_cluster/cubits/mdb_cubits.dart';
+import 'package:scooter_cluster/widgets/general/control_gestures_detector.dart';
 
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../state/vehicle.dart';
+import '../widgets/map/address_selection.dart';
 import '../widgets/map/map_view.dart';
 import '../widgets/status_bars/map_bottom_status_bar.dart';
 import '../widgets/status_bars/top_status_bar.dart';
 
-class MapScreen extends StatelessWidget {
+class MapScreen extends StatefulWidget {
   const MapScreen({
     super.key,
   });
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  bool _isSelectingDestination = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +31,30 @@ class MapScreen extends StatelessWidget {
       width: 480,
       height: 480,
       color: theme.scaffoldBackgroundColor,
+      child: _isSelectingDestination
+          ? _destinationSelector(theme, context.read<VehicleSync>().stream,
+              context.watch<MapCubit>().state)
+          : _mapView(theme, context.read<VehicleSync>().stream,
+              context.watch<MapCubit>().state),
+    );
+  }
+
+  Widget _destinationSelector(
+      ThemeData theme, Stream<VehicleData> vehicleStream, MapState mapState) {
+    return AddressSelection(
+      onSubmit: (code) {
+        context.read<MapCubit>().setDestinationAddress(code);
+        setState(() => _isSelectingDestination = false);
+      },
+      onCancel: () => setState(() => _isSelectingDestination = false),
+    );
+  }
+
+  Widget _mapView(
+      ThemeData theme, Stream<VehicleData> vehicleStream, MapState mapState) {
+    return ControlGestureDetector(
+      stream: vehicleStream,
+      onRightDoubleTap: () => setState(() => _isSelectingDestination = true),
       child: Column(
         children: [
           // Top status bar
@@ -27,7 +62,7 @@ class MapScreen extends StatelessWidget {
 
           // Map view
           Expanded(
-            child: _buildMap(context, context.watch<MapCubit>().state, theme),
+            child: _buildMap(context, mapState, theme),
           ),
 
           // Bottom status bar with speed
@@ -90,6 +125,7 @@ class MapScreen extends StatelessWidget {
           :final orientation,
           :final route,
           :final nextInstruction,
+          :final destination,
         ) =>
           OfflineMapView(
             mbTiles: mbTiles,
@@ -101,6 +137,7 @@ class MapScreen extends StatelessWidget {
             route: route,
             setDestination: context.read<MapCubit>().setDestination,
             nextInstruction: nextInstruction,
+            destination: destination,
           ),
       };
 }

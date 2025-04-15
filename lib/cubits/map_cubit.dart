@@ -26,6 +26,7 @@ import 'theme_cubit.dart';
 part 'map_cubit.freezed.dart';
 part 'map_state.dart';
 
+final distanceCalculator = Distance();
 const defaultCoordinates = LatLng(52.52437, 13.41053);
 
 class Address {
@@ -55,6 +56,8 @@ class MapCubit extends Cubit<MapState> {
   Future<void>? _currentAnimation;
   final Map<String, Address> _addressCoordinates = {};
   int _currentAddressId = 0;
+
+  bool _mapLocked = false;
 
   static MapCubit create(BuildContext context) => MapCubit(
         context.read<GpsSync>().stream,
@@ -102,6 +105,57 @@ class MapCubit extends Cubit<MapState> {
     }
 
     await setDestination(address.coordinates);
+
+    final current = state;
+    final route = current.route;
+    if (route == null) {
+      return;
+    }
+
+    // play an animation that first shows the destination, then the whole route,
+    // then the current position
+    _mapLocked = true;
+    final lastWaypoint = route.polyline!.last.toLatLng();
+    final destination = address.coordinates;
+
+    // if the destination is more than 10 meters away from the last waypoint,
+    // show both the destination and the last waypoint, otherwise just center
+    // on the destination
+    if (distanceCalculator.as(LengthUnit.Meter, lastWaypoint, destination) >
+        10) {
+      await _animatedController?.animatedFitCamera(
+        cameraFit: CameraFit.coordinates(
+            coordinates: [lastWaypoint, destination],
+            padding: const EdgeInsets.all(100)),
+        rotation: 0,
+        cancelPreviousAnimations: true,
+        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 2000),
+      );
+    } else {
+      await _animatedController?.animateTo(
+        dest: destination,
+        zoom: _minZoom,
+        rotation: 0,
+        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 2000),
+      );
+    }
+    await Future.delayed(const Duration(milliseconds: 5000));
+    await _animatedController?.animatedFitCamera(
+      cameraFit: CameraFit.coordinates(
+          coordinates: [current.position, destination],
+          padding: const EdgeInsets.all(50)),
+      rotation: 0,
+      cancelPreviousAnimations: true,
+      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 2000),
+    );
+    await Future.delayed(const Duration(milliseconds: 4000));
+    _mapLocked = false;
+
+    _moveAndRotate(current.position, current.orientation,
+        duration: const Duration(milliseconds: 2000));
   }
 
   Future<void> setDestination(LatLng destination) async {
@@ -117,27 +171,15 @@ class MapCubit extends Cubit<MapState> {
       ),
     );
 
-    // final waypoints = [
-    //   state.position,
-    //   destination,
-    // ]
-    //     .map((latlng) => LngLat(lng: latlng.longitude, lat: latlng.latitude))
-    //     .toList();
-    //
-    // final route = await _routingManager.getRoute(
-    //     request: OSRMRequest.route(
-    //   waypoints: waypoints,
-    //   geometries: Geometries.polyline,
-    //   routingType: RoutingType.car,
-    // ));
-
     emit(current.copyWith(
         route: route,
+        destination: destination,
         nextInstruction: _nextInstruction(route, current.position)));
   }
 
   void _moveAndRotate(LatLng center, double course,
-      [RouteInstruction? instruction]) {
+      {Duration? duration, RouteInstruction? instruction}) {
+    if (_mapLocked) return;
     final ctrl = _animatedController;
 
     if (ctrl == null) return;
@@ -201,6 +243,7 @@ class MapCubit extends Cubit<MapState> {
         rotation: bearing,
         curve: Curves.easeInOut,
         offset: _navigationOffset,
+        duration: duration,
         cancelPreviousAnimations: false);
   }
 
@@ -249,7 +292,7 @@ class MapCubit extends Cubit<MapState> {
     final position = LatLng(data.latitude, data.longitude);
     final instruction = _nextInstruction(current.route, position);
 
-    _moveAndRotate(position, course, instruction);
+    _moveAndRotate(position, course, instruction: instruction);
     _checkRouteDeviation(position);
     emit(current.copyWith(
       position: position,

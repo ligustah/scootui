@@ -32,6 +32,8 @@ import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
 
 import '../../routing/models.dart';
 
+final distanceCalculator = Distance();
+
 class OnlineMapView extends StatefulWidget {
   final MapController mapController;
   final LatLng position;
@@ -101,6 +103,7 @@ class OfflineMapView extends StatefulWidget {
   final FutureOr<void> Function(LatLng)? setDestination;
   final Route? route;
   final RouteInstruction? nextInstruction;
+  final LatLng? destination;
 
   const OfflineMapView({
     super.key,
@@ -113,6 +116,7 @@ class OfflineMapView extends StatefulWidget {
     this.route,
     this.mapReady,
     this.nextInstruction,
+    this.destination,
   });
 
   @override
@@ -201,7 +205,42 @@ class _OfflineMapViewState extends State<OfflineMapView>
   List<Marker> _routeMarkers() {
     final markers = <Marker>[];
     if (widget.route == null) return markers;
+    final destination = widget.destination;
+    final lastWaypoint = widget.route!.waypoints.last;
 
+    if (destination != null) {
+      if (distanceCalculator.as(LengthUnit.Meter, destination, lastWaypoint) >
+          3) {
+        markers.add(Marker(
+          rotate: true,
+          point: destination,
+          child: const Icon(Icons.flag, color: Colors.white, size: 30.0),
+        ));
+      }
+    }
+
+    markers.add(Marker(
+      rotate: true,
+      point: LatLng(lastWaypoint.latitude, lastWaypoint.longitude),
+      child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
+    ));
+
+    // for (final instruction in widget.route!.instructions) {
+    //   markers.add(
+    //     Marker(
+    //       width: 50.0,
+    //       height: 15.0,
+    //       point: LatLng(instruction.location.lat, instruction.location.lng),
+    //       alignment: Alignment.center,
+    //       child: ColoredBox(
+    //           color: Colors.white,
+    //           child: Text(
+    //             instruction.instruction,
+    //             style: TextStyle(color: Colors.black, fontSize: 9),
+    //           )),
+    //     ),
+    //   );
+    // }
     return markers;
   }
 
