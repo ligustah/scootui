@@ -13,13 +13,10 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:routing_client_dart/routing_client_dart.dart'
-    hide RouteInstruction;
-import 'package:routing_client_dart/src/routing_manager.dart'
-    show RoadManagerUtils;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import '../routing/brouter.dart';
+import '../routing/models.dart';
 import '../routing/route_helpers.dart';
 import '../state/gps.dart';
 import 'mdb_cubits.dart';
@@ -33,7 +30,6 @@ const defaultCoordinates = LatLng(52.52437, 13.41053);
 class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
-  final RoutingManager _routingManager;
   static const double _offRouteTolerance = 5.0; // 5 meters
   static const double _maxZoom = 19.0;
   static const double _minZoom = 16.5;
@@ -52,8 +48,7 @@ class MapCubit extends Cubit<MapState> {
         .._loadMap(context.read<ThemeCubit>().state);
 
   MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates)
-      : _routingManager = RoutingManager(),
-        super(MapLoading(
+      : super(MapLoading(
             controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = stream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
@@ -126,12 +121,12 @@ class MapCubit extends Cubit<MapState> {
     double bearing = course;
     double zoom = _minZoom;
 
-    if (route != null && route.polyline != null && route.polyline!.isNotEmpty) {
+    if (route != null && route.waypoints.isNotEmpty) {
       // Find the closest point and next point on route
       final (point, segmentIndex, distance) =
           RouteHelpers.findClosestPointOnRoute(
         center,
-        route.polyline!,
+        route.waypoints,
       );
 
       // Only use route bearing if we're close enough to the route
@@ -139,18 +134,19 @@ class MapCubit extends Cubit<MapState> {
         // 5 meters tolerance
         // Get next point to calculate bearing
         final nextPointIndex =
-            math.min(segmentIndex + 1, route.polyline!.length - 1);
+            math.min(segmentIndex + 1, route.waypoints.length - 1);
         if (nextPointIndex > segmentIndex) {
-          final currentPoint = route.polyline![segmentIndex];
-          final nextPoint = route.polyline![nextPointIndex];
+          final currentPoint = route.waypoints[segmentIndex];
+          final nextPoint = route.waypoints[nextPointIndex];
 
           // Calculate bearing between points
-          final y = math.sin(nextPoint.lng - currentPoint.lng) *
-              math.cos(nextPoint.lat);
-          final x = math.cos(currentPoint.lat) * math.sin(nextPoint.lat) -
-              math.sin(currentPoint.lat) *
-                  math.cos(nextPoint.lat) *
-                  math.cos(nextPoint.lng - currentPoint.lng);
+          final y = math.sin(nextPoint.longitude - currentPoint.longitude) *
+              math.cos(nextPoint.latitude);
+          final x =
+              math.cos(currentPoint.latitude) * math.sin(nextPoint.latitude) -
+                  math.sin(currentPoint.latitude) *
+                      math.cos(nextPoint.latitude) *
+                      math.cos(nextPoint.longitude - currentPoint.longitude);
           final routeBearing = math.atan2(y, x) * (180 / math.pi);
 
           // Normalize to 0-360
@@ -187,13 +183,13 @@ class MapCubit extends Cubit<MapState> {
     final current = state;
     final route = current.route;
 
-    if (route == null || route.polyline == null || route.polyline!.isEmpty) {
+    if (route == null || route.waypoints.isEmpty) {
       return;
     }
 
     final (_, _, distance) = RouteHelpers.findClosestPointOnRoute(
       position,
-      route.polyline!,
+      route.waypoints,
     );
 
     // If we're too far from the route and haven't rerouted recently
@@ -203,15 +199,15 @@ class MapCubit extends Cubit<MapState> {
                 const Duration(seconds: 5))) {
       _lastReroute = DateTime.now();
 
-      // Find the last instruction point in the route
-      final destination = route.polyline?.last;
-      // if the current route does not have a polyline, do nothing
-      if (destination == null) {
+      if (route.waypoints.isEmpty) {
         return;
       }
 
+      // Find the last instruction point in the route
+      final destination = route.waypoints.last;
+
       // Recalculate route
-      await setDestination(destination.toLatLng());
+      await setDestination(destination);
     }
   }
 
@@ -336,12 +332,4 @@ class MapCubit extends Cubit<MapState> {
       onReady: _onMapReady,
     ));
   }
-}
-
-extension ConvertLngLat on LatLng {
-  LngLat toLngLat() => LngLat(lng: longitude, lat: latitude);
-}
-
-extension ConvertLatLng on LngLat {
-  LatLng toLatLng() => LatLng(lat, lng);
 }

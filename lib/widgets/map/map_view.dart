@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:math';
 
 import 'package:flutter/material.dart'
     show
@@ -23,29 +22,15 @@ import 'package:flutter_map/flutter_map.dart'
         Polyline,
         PolylineLayer,
         TileLayer;
-import 'package:flutter_map_animations/flutter_map_animations.dart'
-    show
-        AnimatedMap,
-        AnimatedMapController,
-        AnimatedMarker,
-        AnimatedMarkerLayer,
-        AnimatedPolyline,
-        AnimatedPolylineLayer,
-        AnimatedTileLayer,
-        AnimatedVectorTileLayer,
-        AnimatedWidgetBuilder,
-        MapAnimationMixin;
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
-import 'package:routing_client_dart/routing_client_dart.dart'
-    hide RouteInstruction;
-import 'package:scooter_cluster/cubits/map_cubit.dart'
-    show RouteInstruction, Straight, Turn;
 import 'package:vector_map_tiles/vector_map_tiles.dart'
     show TileProviders, VectorTileLayer;
 import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart'
     show MbTilesVectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
+
+import '../../routing/models.dart';
 
 class OnlineMapView extends StatefulWidget {
   final MapController mapController;
@@ -139,13 +124,14 @@ class _OfflineMapViewState extends State<OfflineMapView>
   bool _isReady = false;
 
   Widget? _routeLayer() {
-    final line = widget.route?.polyline;
+    final line = widget.route?.waypoints;
     if (line == null || line.isEmpty) {
       return null;
     }
 
-    final points =
-        line.map((lnglat) => LatLng(lnglat.lat, lnglat.lng)).toList();
+    final points = line
+        .map((latlng) => LatLng(latlng.latitude, latlng.longitude))
+        .toList();
 
     return PolylineLayer(
       polylines: [
@@ -164,11 +150,34 @@ class _OfflineMapViewState extends State<OfflineMapView>
       return null;
     }
 
+    final distance = switch (current.distance) {
+      > 500 =>
+        '${((((current.distance + 99) ~/ 100) * 100) / 1000).toStringAsFixed(1)} km',
+      > 100 => '${(((current.distance + 99) ~/ 100) * 100)} m',
+      > 10 => '${(((current.distance + 9) ~/ 10) * 10)} m',
+      _ => '${current.distance.toInt()} m',
+    };
+
     final text = switch (current) {
-      Straight(distance: final distance) =>
-        'Continue for ${distance.toStringAsFixed(0)} m',
-      Turn(distance: final distance, direction: final direction) =>
-        'Turn ${direction.name} in ${distance.toStringAsFixed(0)} m',
+      Keep(direction: final direction) => switch (direction) {
+          KeepDirection.straight => 'Continue straight in $distance',
+          _ => 'Keep ${direction.name} in $distance',
+        },
+      Turn(direction: final direction) => switch (direction) {
+          TurnDirection.left => 'Turn left in $distance',
+          TurnDirection.right => 'Turn right in $distance',
+          TurnDirection.slightLeft => 'Turn slightly left in $distance',
+          TurnDirection.slightRight => 'Turn slightly right in $distance',
+          TurnDirection.sharpLeft => 'Turn sharply left in $distance',
+          TurnDirection.sharpRight => 'Turn sharply right in $distance',
+          TurnDirection.uTurn180 => 'Turn 180 degrees in $distance',
+          TurnDirection.rightUTurn => 'Perform right u-turn in $distance',
+          TurnDirection.uTurn => 'Perform u-turn in $distance',
+        },
+      Roundabout(side: final side, exitNumber: final exitNumber) =>
+        'In the roundabout, take the ${side.name} exit $exitNumber in $distance',
+      Other() => 'Do something in $distance',
+      Exit(side: final side) => 'Take the ${side.name} exit in $distance',
     };
 
     return Align(
@@ -193,22 +202,6 @@ class _OfflineMapViewState extends State<OfflineMapView>
     final markers = <Marker>[];
     if (widget.route == null) return markers;
 
-    for (final instruction in widget.route!.instructions) {
-      markers.add(
-        Marker(
-          width: 50.0,
-          height: 15.0,
-          point: LatLng(instruction.location.lat, instruction.location.lng),
-          alignment: Alignment.center,
-          child: ColoredBox(
-              color: Colors.white,
-              child: Text(
-                instruction.instruction,
-                style: TextStyle(color: Colors.black, fontSize: 9),
-              )),
-        ),
-      );
-    }
     return markers;
   }
 
