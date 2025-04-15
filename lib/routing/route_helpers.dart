@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'package:latlong2/latlong.dart';
-import 'package:routing_client_dart/routing_client_dart.dart' as routing;
 
 import '../cubits/map_cubit.dart';
 import 'brouter.dart';
+import 'models.dart';
 
 class RouteHelpers {
   static const double _coordinateMatchTolerance = 0.00001; // About 1 meter
@@ -48,26 +48,28 @@ class RouteHelpers {
   /// Finds the closest point on a route polyline to a given point
   static (LatLng, int, double) findClosestPointOnRoute(
     LatLng point,
-    List<routing.LngLat> polyline,
+    List<LatLng> polyline,
   ) {
     if (polyline.isEmpty) {
       throw ArgumentError('Polyline cannot be empty');
     }
 
-    var closestPoint = LatLng(polyline.first.lat, polyline.first.lng);
+    var closestPoint =
+        LatLng(polyline.first.latitude, polyline.first.longitude);
     var closestDistance = double.infinity;
     var closestSegmentIndex = 0;
 
     for (var i = 0; i < polyline.length - 1; i++) {
-      final segmentStart = LatLng(polyline[i].lat, polyline[i].lng);
-      final segmentEnd = LatLng(polyline[i + 1].lat, polyline[i + 1].lng);
-      
+      final segmentStart = LatLng(polyline[i].latitude, polyline[i].longitude);
+      final segmentEnd =
+          LatLng(polyline[i + 1].latitude, polyline[i + 1].longitude);
+
       final pointOnSegment = findClosestPointOnSegment(
         point,
         segmentStart,
         segmentEnd,
       );
-      
+
       final distance = const Distance().as(
         LengthUnit.Meter,
         point,
@@ -87,16 +89,17 @@ class RouteHelpers {
   /// Finds the next instruction based on the current position and route
   static RouteInstruction? findNextInstruction(
     LatLng currentPosition,
-    routing.Route route,
+    Route route,
   ) {
-    if (route.polyline == null || route.polyline!.isEmpty) {
+    if (route.waypoints.isEmpty) {
       return null;
     }
 
     // Find the closest point on the route
-    final (closestPoint, segmentIndex, distanceFromRoute) = findClosestPointOnRoute(
+    final (closestPoint, segmentIndex, distanceFromRoute) =
+        findClosestPointOnRoute(
       currentPosition,
-      route.polyline!,
+      route.waypoints,
     );
 
     // If we're too far from the route, don't show instructions
@@ -107,7 +110,7 @@ class RouteHelpers {
     // Find the next instruction after the current segment
     var nextInstruction = _findNextInstructionAfterSegment(
       route.instructions,
-      route.polyline!,
+      route.waypoints,
       segmentIndex,
       closestPoint,
     );
@@ -117,7 +120,7 @@ class RouteHelpers {
       // Try looking from the previous segment
       nextInstruction = _findNextInstructionAfterSegment(
         route.instructions,
-        route.polyline!,
+        route.waypoints,
         segmentIndex - 1,
         closestPoint,
       );
@@ -128,16 +131,13 @@ class RouteHelpers {
 
   /// Helper to find the next instruction after a given segment
   static RouteInstruction? _findNextInstructionAfterSegment(
-    List<routing.RouteInstruction> instructions,
-    List<routing.LngLat> polyline,
+    List<RouteInstruction> instructions,
+    List<LatLng> polyline,
     int segmentIndex,
     LatLng fromPoint,
   ) {
     for (final instruction in instructions) {
-      final instructionPoint = LatLng(
-        instruction.location.lat,
-        instruction.location.lng,
-      );
+      final instructionPoint = instruction.location;
 
       // Find the closest polyline point to this instruction
       var minDistance = double.infinity;
@@ -145,14 +145,14 @@ class RouteHelpers {
 
       for (var i = 0; i < polyline.length; i++) {
         final point = polyline[i];
-        final latDiff = (point.lat - instruction.location.lat).abs();
-        final lngDiff = (point.lng - instruction.location.lng).abs();
-        
-        if (latDiff < _coordinateMatchTolerance && 
+        final latDiff = (point.latitude - instructionPoint.latitude).abs();
+        final lngDiff = (point.longitude - instructionPoint.longitude).abs();
+
+        if (latDiff < _coordinateMatchTolerance &&
             lngDiff < _coordinateMatchTolerance) {
           final dist = const Distance().as(
             LengthUnit.Meter,
-            LatLng(point.lat, point.lng),
+            LatLng(point.latitude, point.longitude),
             instructionPoint,
           );
           if (dist < minDistance) {
@@ -170,34 +170,10 @@ class RouteHelpers {
           instructionPoint,
         );
 
-        // Convert the instruction to our format
-        final hint = VoiceHints.fromAction(instruction.instruction);
-        return switch (hint) {
-          VoiceHints.turnLeft ||
-          VoiceHints.slightTurnLeft ||
-          VoiceHints.sharpTurnLeft ||
-          VoiceHints.turnRight ||
-          VoiceHints.slightTurnRight ||
-          VoiceHints.sharpTurnRight =>
-            RouteInstruction.turn(
-              distance: distance,
-              direction: switch (hint) {
-                VoiceHints.turnLeft => TurnDirection.left,
-                VoiceHints.slightTurnRight => TurnDirection.slightRight,
-                VoiceHints.sharpTurnRight => TurnDirection.sharpRight,
-                VoiceHints.slightTurnLeft => TurnDirection.slightLeft,
-                VoiceHints.sharpTurnLeft => TurnDirection.sharpLeft,
-                _ => TurnDirection.right,
-              },
-            ),
-          VoiceHints.straight => RouteInstruction.straight(
-              distance: distance,
-            ),
-          _ => null,
-        };
+        return instruction.copyWith(distance: distance);
       }
     }
 
     return null;
   }
-} 
+}

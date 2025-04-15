@@ -1,28 +1,5 @@
 part of 'map_cubit.dart';
 
-enum TurnDirection {
-  left,
-  right,
-  slightLeft,
-  slightRight,
-  sharpLeft,
-  sharpRight,
-}
-
-@freezed
-sealed class RouteInstruction with _$RouteInstruction {
-  const RouteInstruction._();
-
-  const factory RouteInstruction.straight({
-    required double distance,
-  }) = Straight;
-
-  const factory RouteInstruction.turn({
-    required double distance,
-    required TurnDirection direction,
-  }) = Turn;
-}
-
 @freezed
 sealed class MapState with _$MapState {
   const factory MapState.loading({
