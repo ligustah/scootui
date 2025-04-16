@@ -115,7 +115,7 @@ class MapCubit extends Cubit<MapState> {
     // play an animation that first shows the destination, then the whole route,
     // then the current position
     _mapLocked = true;
-    final lastWaypoint = route.polyline!.last.toLatLng();
+    final lastWaypoint = route.waypoints.last;
     final destination = address.coordinates;
 
     // if the destination is more than 10 meters away from the last waypoint,
