@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:scooter_cluster/widgets/indicators/connectivity_indicators.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/system_cubit.dart';
 import '../../cubits/theme_cubit.dart';
+import '../indicators/connectivity_indicators.dart';
 import 'battery_display.dart';
 
 class StatusBar extends StatelessWidget {

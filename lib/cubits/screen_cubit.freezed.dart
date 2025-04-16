@@ -75,4 +75,24 @@ class ScreenMap implements ScreenState {
   }
 }
 
+/// @nodoc
+
+class ScreenAddressSelection implements ScreenState {
+  const ScreenAddressSelection();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is ScreenAddressSelection);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() {
+    return 'ScreenState.addressSelection()';
+  }
+}
+
 // dart format on

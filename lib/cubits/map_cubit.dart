@@ -122,23 +122,18 @@ class MapCubit extends Cubit<MapState> {
     // show both the destination and the last waypoint, otherwise just center
     // on the destination
     if (distanceCalculator.as(LengthUnit.Meter, lastWaypoint, destination) >
-        10) {
-      await _animatedController?.animatedFitCamera(
-        cameraFit: CameraFit.coordinates(
-            coordinates: [lastWaypoint, destination],
-            padding: const EdgeInsets.all(100)),
-        rotation: 0,
-        cancelPreviousAnimations: true,
-        curve: Curves.easeInOut,
-        duration: const Duration(milliseconds: 2000),
+        15) {
+      _animatedController?.mapController.fitCamera(
+        CameraFit.coordinates(
+          coordinates: [lastWaypoint, destination],
+          padding: const EdgeInsets.all(100),
+        ),
       );
     } else {
-      await _animatedController?.animateTo(
-        dest: destination,
-        zoom: _minZoom,
-        rotation: 0,
-        curve: Curves.easeInOut,
-        duration: const Duration(milliseconds: 2000),
+      _animatedController?.mapController.moveAndRotate(
+        destination,
+        _minZoom,
+        0,
       );
     }
     await Future.delayed(const Duration(milliseconds: 5000));

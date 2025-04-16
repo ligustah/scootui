@@ -116,7 +116,7 @@ class _MenuOverlayState extends State<MenuOverlay>
     final isDark = theme.state.themeMode == ThemeMode.dark;
 
     final items = [
-      if (_showMapView)
+      if (_showMapView) ...[
         MenuItem(
           title: 'Show Cluster View',
           type: MenuItemType.action,
@@ -125,6 +125,15 @@ class _MenuOverlayState extends State<MenuOverlay>
             menu.hideMenu();
           },
         ),
+        MenuItem(
+          title: "Set Destination",
+          type: MenuItemType.action,
+          onChanged: (_) {
+            screen.showAddressSelection();
+            menu.hideMenu();
+          },
+        ),
+      ],
       if (!_showMapView)
         MenuItem(
           title: 'Show Map View',

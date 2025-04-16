@@ -8,9 +8,9 @@ part 'screen_cubit.freezed.dart';
 class ScreenCubit extends Cubit<ScreenState> {
   void showCluster() => emit(const ScreenState.cluster());
   void showMap() => emit(const ScreenState.map());
+  void showAddressSelection() => emit(const ScreenState.addressSelection());
 
   ScreenCubit() : super(const ScreenState.cluster());
 
-  static ScreenCubit create(BuildContext context) =>
-      ScreenCubit();
+  static ScreenCubit create(BuildContext context) => ScreenCubit();
 }

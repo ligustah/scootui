@@ -4,24 +4,20 @@ import 'dart:async';
 class LocationDialController {
   final _scrollController = StreamController<ScrollAction>.broadcast();
   final _nextController = StreamController<void>.broadcast();
-  final _codeController = StreamController<String>.broadcast();
   final _stopScrollController = StreamController<void>.broadcast();
 
   Stream<ScrollAction> get scrollEvents => _scrollController.stream;
   Stream<void> get nextEvents => _nextController.stream;
-  Stream<String> get codeEvents => _codeController.stream;
   Stream<void> get stopScrollEvents => _stopScrollController.stream;
 
   void scroll({bool isLongPress = false}) =>
       _scrollController.add(ScrollAction(isLongPress));
   void next() => _nextController.add(null);
-  void submitCode(String code) => _codeController.add(code);
   void stopScroll() => _stopScrollController.add(null);
 
   void dispose() {
     _scrollController.close();
     _nextController.close();
-    _codeController.close();
     _stopScrollController.close();
   }
 }
@@ -34,11 +30,15 @@ class ScrollAction {
 class LocationDialInput extends StatefulWidget {
   final int length;
   final LocationDialController controller;
+  final void Function(String) onSubmit;
+  final void Function()? onCancel;
 
   const LocationDialInput({
     super.key,
     required this.length,
     required this.controller,
+    required this.onSubmit,
+    this.onCancel,
   }) : assert(length >= 4 && length <= 6, 'Length must be between 4 and 6');
 
   @override
@@ -128,7 +128,7 @@ class LocationDialInputState extends State<LocationDialInput>
 
   void _submitCode() {
     final code = _currentValues.map((value) => _base32Chars[value]).join();
-    widget.controller.submitCode(code);
+    widget.onSubmit(code);
   }
 
   @override
@@ -141,42 +141,14 @@ class LocationDialInputState extends State<LocationDialInput>
           ? Colors.black.withOpacity(0.9)
           : Colors.white.withOpacity(0.9),
       padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 20),
-          _DialTitle(isDark: isDark),
-          const SizedBox(height: 40),
-          _DialRow(
-            length: widget.length,
-            currentValues: _currentValues,
-            currentDialIndex: _currentDialIndex,
-            theme: theme,
-            isDark: isDark,
-            controllers: _controllers,
-            animations: _animations,
-          ),
-          const SizedBox(height: 40),
-          _ControlHints(isDark: isDark),
-        ],
-      ),
-    );
-  }
-}
-
-class _DialTitle extends StatelessWidget {
-  final bool isDark;
-
-  const _DialTitle({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'ENTER CODE',
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: isDark ? Colors.white : Colors.black,
+      child: _DialRow(
+        length: widget.length,
+        currentValues: _currentValues,
+        currentDialIndex: _currentDialIndex,
+        theme: theme,
+        isDark: isDark,
+        controllers: _controllers,
+        animations: _animations,
       ),
     );
   }
@@ -346,71 +318,6 @@ class _DialBox extends StatelessWidget {
           },
         ),
       ),
-    );
-  }
-}
-
-class _ControlHints extends StatelessWidget {
-  final bool isDark;
-
-  const _ControlHints({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _ControlHint(
-            control: 'Button 1',
-            action: 'Scroll',
-            isDark: isDark,
-          ),
-          _ControlHint(
-            control: 'Button 2',
-            action: 'Next',
-            isDark: isDark,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ControlHint extends StatelessWidget {
-  final String control;
-  final String action;
-  final bool isDark;
-
-  const _ControlHint({
-    required this.control,
-    required this.action,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          control,
-          style: TextStyle(
-            fontSize: 12,
-            color: isDark ? Colors.white70 : Colors.black54,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          action,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
-      ],
     );
   }
 }
