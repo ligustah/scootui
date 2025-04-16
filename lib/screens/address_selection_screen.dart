@@ -61,15 +61,18 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     final child = switch (addressCubit.state) {
       AddressStateLoaded(:final addresses) =>
         _buildDialInput(mapCubit, screenCubit, addresses),
-      AddressStateLoading() => const Center(
+      AddressStateLoading(:final message) => Center(
             child: Column(
           children: [
-            Text('Loading address database...'),
-            SizedBox(height: 16),
-            CircularProgressIndicator(),
+            Text(message),
+            const SizedBox(height: 16),
+            const CircularProgressIndicator(),
           ],
         )),
-      AddressStateError(:final message) => Center(child: Text(message)),
+      AddressStateError(:final message) => ControlGestureDetector(
+          stream: context.read<VehicleSync>().stream,
+          onRightPress: () => screenCubit.showMap(),
+          child: Center(child: Text(message))),
     };
 
     return Container(
@@ -91,8 +94,15 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
             ),
           ),
           ControlHints(
-            leftAction: 'Scroll',
-            rightAction: 'Next',
+            leftAction: switch (addressCubit.state) {
+              AddressStateLoaded() => 'Scroll',
+              _ => null,
+            },
+            rightAction: switch (addressCubit.state) {
+              AddressStateLoaded() => 'Next',
+              AddressStateError() => 'Close',
+              _ => null,
+            },
           ),
         ],
       ),

@@ -16,12 +16,12 @@ class AddressCubit extends Cubit<AddressState> {
   AddressCubit({
     required this.addressRepository,
     required this.tilesRepository,
-  }) : super(const AddressState.loading());
+  }) : super(const AddressState.loading('Loading address database...'));
 
   Future<void> _load() async {
     final mapHash = await tilesRepository.getMapHash();
     if (mapHash == null) {
-      emit(const AddressState.error('Map file not found'));
+      emit(const AddressState.error('Map file not found.'));
       return;
     }
 
@@ -35,24 +35,27 @@ class AddressCubit extends Cubit<AddressState> {
       case addresses.Success(:final database):
         if (database.mapHash != mapHash) {
           if (rebuild) {
+            emit(const AddressState.loading(
+                'Rebuilding address database due to hash mismatch...'));
             return _unpackDb(
                 await addressRepository.buildDatabase(tilesRepository),
                 mapHash,
                 false);
           } else {
-            return AddressState.error('Map hash mismatch after rebuild');
+            return AddressState.error('Map hash mismatch after rebuild.');
           }
         } else {
           return AddressState.loaded(database.addresses);
         }
       case addresses.NotFound():
         if (rebuild) {
+          emit(const AddressState.loading('Creating address database...'));
           return _unpackDb(
               await addressRepository.buildDatabase(tilesRepository),
               mapHash,
               false);
         }
-        return const AddressState.error('Failed to build address database');
+        return const AddressState.error('Failed to build address database.');
       case addresses.Error(:final message):
         return AddressState.error(message);
     }

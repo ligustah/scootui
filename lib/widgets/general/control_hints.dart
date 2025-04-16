@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../cubits/theme_cubit.dart';
 
 class ControlHints extends StatelessWidget {
-  final String leftAction;
-  final String rightAction;
+  final String? leftAction;
+  final String? rightAction;
 
   const ControlHints({
     required this.leftAction,
@@ -39,7 +39,7 @@ class ControlHints extends StatelessWidget {
 
 class _ControlHint extends StatelessWidget {
   final String control;
-  final String action;
+  final String? action;
   final bool isDark;
 
   const _ControlHint({
@@ -50,6 +50,11 @@ class _ControlHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final action = this.action;
+    if (action == null) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

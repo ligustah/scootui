@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
@@ -59,7 +61,7 @@ class AddressRepository {
     }
   }
 
-  Future<void> saveDatabase(AddressDatabase database) async {
+  Future<void> _saveDatabase(AddressDatabase database) async {
     final file = await _getFile();
     if (file == null) {
       // TODO: actually handle this
@@ -71,33 +73,44 @@ class AddressRepository {
   }
 
   Future<Addresses> loadDatabase() async {
-    final file = await _getFile();
-    if (file == null) {
-      return const Addresses.error('File not found');
-    }
+    final token = RootIsolateToken.instance;
 
-    if (!file.existsSync()) {
-      return const Addresses.notFound();
-    }
+    return await Isolate.run(() async {
+      BackgroundIsolateBinaryMessenger.ensureInitialized(token!);
 
-    final json = await _loadDatabaseInIsolate(file);
+      final file = await _getFile();
+      if (file == null) {
+        return const Addresses.error('File not found');
+      }
 
-    return Addresses.success(json);
+      if (!await file.exists()) {
+        return const Addresses.notFound();
+      }
+
+      final json = await file.readAsString();
+      return Addresses.success(AddressDatabase.fromJson(jsonDecode(json)));
+    });
   }
 
   Future<Addresses> buildDatabase(tiles.TilesRepository tilesRepository) async {
-    final addresses = await _processAddressesInIsolate(tilesRepository);
+    final token = RootIsolateToken.instance;
 
-    Future<Addresses> saveAndReturnDatabase(AddressDatabase database) async {
-      await saveDatabase(database);
-      return Addresses.success(database);
-    }
+    return await Isolate.run(() async {
+      BackgroundIsolateBinaryMessenger.ensureInitialized(token!);
 
-    return switch (addresses) {
-      Success(:final database) => await saveAndReturnDatabase(database),
-      NotFound() => const Addresses.error('Map hash not found'),
-      Error(:final message) => Addresses.error(message),
-    };
+      final addresses = await _processTiles(tilesRepository);
+
+      Future<Addresses> saveAndReturnDatabase(AddressDatabase database) async {
+        await _saveDatabase(database);
+        return Addresses.success(database);
+      }
+
+      return switch (addresses) {
+        Success(:final database) => await saveAndReturnDatabase(database),
+        NotFound() => const Addresses.error('Map hash not found'),
+        Error(:final message) => Addresses.error(message),
+      };
+    });
   }
 }
 
@@ -112,15 +125,9 @@ String _toBase32(int number) {
   return result;
 }
 
-Future<AddressDatabase> _loadDatabaseInIsolate(File file) async {
-  final json = await file.readAsString();
-  return AddressDatabase.fromJson(jsonDecode(json));
-}
-
-Future<Addresses> _processAddressesInIsolate(
-    tiles.TilesRepository tilesRepository) async {
-  final mapPath = await tilesRepository.getMapHash();
-  if (mapPath == null) {
+Future<Addresses> _processTiles(tiles.TilesRepository tilesRepository) async {
+  final mapHash = await tilesRepository.getMapHash();
+  if (mapHash == null) {
     return const Addresses.error('Map hash not found');
   }
 
@@ -130,7 +137,7 @@ Future<Addresses> _processAddressesInIsolate(
       final addresses = _extractAddresses(mbTiles);
       mbTiles.dispose();
       return Addresses.success(
-          AddressDatabase(mapHash: mapPath, addresses: addresses));
+          AddressDatabase(mapHash: mapHash, addresses: addresses));
     case tiles.NotFound():
       return const Addresses.error('Map not found');
     case tiles.Error(:final message):
@@ -140,7 +147,7 @@ Future<Addresses> _processAddressesInIsolate(
 
 Map<String, Address> _extractAddresses(MbTiles mbTiles) {
   final addresses = <String, Address>{};
-  final coordinates = getTileCoordinatesForBounds(mbTiles, 14);
+  final coordinates = _getTileCoordinatesForBounds(mbTiles, 14);
   var currentAddressId = 0;
 
   for (var coordinate in coordinates) {
@@ -188,7 +195,7 @@ Map<String, Address> _extractAddresses(MbTiles mbTiles) {
   return addresses;
 }
 
-List<math.Point<int>> getTileCoordinatesForBounds(MbTiles tiles, int zoom) {
+List<math.Point<int>> _getTileCoordinatesForBounds(MbTiles tiles, int zoom) {
   final meta = tiles.getMetadata();
   final bounds = meta.bounds;
   if (bounds == null) {

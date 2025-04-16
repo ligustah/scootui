@@ -38,20 +38,64 @@ class $AddressStateCopyWith<$Res> {
 /// @nodoc
 
 class AddressStateLoading implements AddressState {
-  const AddressStateLoading();
+  const AddressStateLoading(this.message);
+
+  final String message;
+
+  /// Create a copy of AddressState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $AddressStateLoadingCopyWith<AddressStateLoading> get copyWith =>
+      _$AddressStateLoadingCopyWithImpl<AddressStateLoading>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is AddressStateLoading);
+        (other.runtimeType == runtimeType &&
+            other is AddressStateLoading &&
+            (identical(other.message, message) || other.message == message));
   }
 
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode => Object.hash(runtimeType, message);
 
   @override
   String toString() {
-    return 'AddressState.loading()';
+    return 'AddressState.loading(message: $message)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $AddressStateLoadingCopyWith<$Res>
+    implements $AddressStateCopyWith<$Res> {
+  factory $AddressStateLoadingCopyWith(
+          AddressStateLoading value, $Res Function(AddressStateLoading) _then) =
+      _$AddressStateLoadingCopyWithImpl;
+  @useResult
+  $Res call({String message});
+}
+
+/// @nodoc
+class _$AddressStateLoadingCopyWithImpl<$Res>
+    implements $AddressStateLoadingCopyWith<$Res> {
+  _$AddressStateLoadingCopyWithImpl(this._self, this._then);
+
+  final AddressStateLoading _self;
+  final $Res Function(AddressStateLoading) _then;
+
+  /// Create a copy of AddressState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? message = null,
+  }) {
+    return _then(AddressStateLoading(
+      null == message
+          ? _self.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
   }
 }
 
