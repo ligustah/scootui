@@ -7,10 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/all.dart';
 import 'cubits/theme_cubit.dart';
-import 'repositories/mdb_repository.dart';
-import 'repositories/redis_mdb_repository.dart';
+import 'repositories/all.dart';
 import 'screens/destination_screen.dart';
-import 'theme_config.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,9 +43,8 @@ class DestinationApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      // use InMemoryMDBRepository for web and RedisMDBRepository for other platforms
-      create: kIsWeb ? InMemoryMDBRepository.create : RedisMDBRepository.create,
+    return MultiRepositoryProvider(
+      providers: allRepositories,
       child: MultiBlocProvider(
         providers: allCubits,
         child: BlocBuilder<ThemeCubit, ThemeState>(

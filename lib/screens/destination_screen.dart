@@ -7,8 +7,10 @@ import 'package:vector_map_tiles/vector_map_tiles.dart'
     show TileProviders, VectorTileLayer;
 import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart';
 
+import '../cubits/address_cubit.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../repositories/address_repository.dart';
 
 class DestinationScreen extends StatefulWidget {
   const DestinationScreen({super.key});
@@ -25,16 +27,18 @@ class _DestinationScreenState extends State<DestinationScreen>
   Widget build(BuildContext context) {
     final ThemeState(:theme) = ThemeCubit.watch(context);
     final mapCubit = context.watch<MapCubit>();
+    final addressCubit = context.watch<AddressCubit>();
 
     return Container(
       color: theme.scaffoldBackgroundColor,
-      child: _buildMap(context, mapCubit, theme),
+      child: _buildMap(context, mapCubit, addressCubit, theme),
     );
   }
 
-  Widget _buildMap(BuildContext context, MapCubit map, ThemeData themeData) {
-    final state = map.state;
-    if (state is! MapOffline) {
+  Widget _buildMap(BuildContext context, MapCubit map, AddressCubit address,
+      ThemeData themeData) {
+    final mapState = map.state;
+    if (mapState is! MapOffline) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -66,6 +70,18 @@ class _DestinationScreenState extends State<DestinationScreen>
       );
     }
 
+    final addressState = address.state;
+    late final Map<String, Address> addrs;
+    switch (addressState) {
+      case AddressStateLoading():
+        return const Center(child: CircularProgressIndicator());
+      case AddressStateError(:final message):
+        return Center(child: Text(message));
+      case AddressStateLoaded(:final addresses):
+        addrs = addresses;
+        break;
+    }
+
     final MapOffline(
       :mbTiles,
       :position,
@@ -75,9 +91,7 @@ class _DestinationScreenState extends State<DestinationScreen>
       :orientation,
       :route,
       :nextInstruction
-    ) = state;
-
-    final addresses = map.getAddresses();
+    ) = mapState;
 
     return FlutterMap(
       options: MapOptions(
@@ -148,7 +162,7 @@ class _DestinationScreenState extends State<DestinationScreen>
         // ),
         CameraFilteredMarkerLayer(
           minZoom: 18,
-          markers: addresses.values
+          markers: addrs.values
               .map((e) => Marker(
                     point: e.coordinates,
                     child: GestureDetector(

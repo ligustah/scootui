@@ -1,0 +1,9 @@
+part of 'address_cubit.dart';
+
+@freezed
+sealed class AddressState with _$AddressState {
+  const factory AddressState.loading() = AddressStateLoading;
+  const factory AddressState.error(String message) = AddressStateError;
+  const factory AddressState.loaded(Map<String, Address> addresses) =
+      AddressStateLoaded;
+}

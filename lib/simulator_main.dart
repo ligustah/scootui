@@ -4,10 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scooter_cluster/repositories/redis_mdb_repository.dart';
 
 import 'cubits/all.dart';
+import 'repositories/all.dart';
 import 'repositories/mdb_repository.dart';
-import 'repositories/redis_mdb_repository.dart';
 import 'screens/simulator_screen.dart';
 import 'theme_config.dart';
 
@@ -44,9 +45,8 @@ class SimulatorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      // use InMemoryMDBRepository for web and RedisMDBRepository for other platforms
-      create: kIsWeb ? InMemoryMDBRepository.create : RedisMDBRepository.create,
+    return MultiRepositoryProvider(
+      providers: allRepositories,
       child: MultiBlocProvider(
         providers: allCubits,
         child: MaterialApp(

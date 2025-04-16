@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:math';
 
@@ -16,6 +17,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:vector_tile/util/geometry.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
+import '../repositories/tiles_repository.dart';
 import '../routing/brouter.dart';
 import '../routing/models.dart';
 import '../routing/route_helpers.dart';
@@ -29,22 +31,10 @@ part 'map_state.dart';
 final distanceCalculator = Distance();
 const defaultCoordinates = LatLng(52.52437, 13.41053);
 
-class Address {
-  final String id;
-  final LatLng coordinates;
-  final double x;
-  final double y;
-
-  Address(
-      {required this.id,
-      required this.coordinates,
-      required this.x,
-      required this.y});
-}
-
 class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
+  final TilesRepository _tilesRepository;
   static const double _offRouteTolerance = 5.0; // 5 meters
   static const double _maxZoom = 19.0;
   static const double _minZoom = 16.5;
@@ -54,20 +44,21 @@ class MapCubit extends Cubit<MapState> {
   DateTime? _lastReroute;
   AnimatedMapController? _animatedController;
   Future<void>? _currentAnimation;
-  final Map<String, Address> _addressCoordinates = {};
-  int _currentAddressId = 0;
 
   bool _mapLocked = false;
 
   static MapCubit create(BuildContext context) => MapCubit(
         context.read<GpsSync>().stream,
         context.read<ThemeCubit>().stream,
+        context.read<TilesRepository>(),
       )
         .._onGpsData(context.read<GpsSync>().state)
         .._loadMap(context.read<ThemeCubit>().state);
 
-  MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates)
-      : super(MapLoading(
+  MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates,
+      TilesRepository tilesRepository)
+      : _tilesRepository = tilesRepository,
+        super(MapLoading(
             controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = stream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
@@ -98,13 +89,8 @@ class MapCubit extends Cubit<MapState> {
     });
   }
 
-  Future<void> setDestinationAddress(String addressId) async {
-    final address = _addressCoordinates[addressId];
-    if (address == null) {
-      return;
-    }
-
-    await setDestination(address.coordinates);
+  Future<void> startNavigation(LatLng destination) async {
+    await setDestination(destination);
 
     final current = state;
     final route = current.route;
@@ -116,7 +102,6 @@ class MapCubit extends Cubit<MapState> {
     // then the current position
     _mapLocked = true;
     final lastWaypoint = route.waypoints.last;
-    final destination = address.coordinates;
 
     // if the destination is more than 10 meters away from the last waypoint,
     // show both the destination and the last waypoint, otherwise just center
@@ -242,8 +227,6 @@ class MapCubit extends Cubit<MapState> {
         cancelPreviousAnimations: false);
   }
 
-  Map<String, Address> getAddresses() => _addressCoordinates;
-
   Future<void> _checkRouteDeviation(LatLng position) async {
     final current = state;
     final route = current.route;
@@ -353,17 +336,6 @@ class MapCubit extends Cubit<MapState> {
     return state.position;
   }
 
-  String _toBase32(int number) {
-    const chars = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-    if (number == 0) return '0';
-    var result = '';
-    while (number > 0) {
-      result = chars[number % 32] + result;
-      number = number ~/ 32;
-    }
-    return result;
-  }
-
   Future<void> _loadMap(ThemeState themeState) async {
     _animatedController = null;
     emit(MapState.loading(
@@ -371,130 +343,23 @@ class MapCubit extends Cubit<MapState> {
     final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
-    late final Directory appDir;
-
-    try {
-      appDir = await getApplicationDocumentsDirectory();
-    } catch (e) {
-      emit(MapState.online(
-          position: state.position,
-          orientation: state.orientation,
-          controller: state.controller));
-      return;
-    }
-
-    final mapPath = '${appDir.path}/maps/map.mbtiles';
-
-    // check if map file exists
-    final exists = await File(mapPath).exists();
-    if (!exists) {
-      emit(MapState.unavailable('Map file not found',
-          controller: state.controller, position: state.position));
-      return;
-    }
-
-    // Initialize MBTiles
-    final mbTiles = MbTiles(
-      mbtilesPath: mapPath,
-      gzip: true,
-    );
-
-    _processAddresses(mbTiles);
-
-    emit(MapState.offline(
-      mbTiles: mbTiles,
-      position: _getInitialCoordinates(mbTiles),
-      orientation: 0,
-      controller: ctrl,
-      theme: theme,
-      onReady: _onMapReady,
-    ));
-  }
-
-  void _processAddresses(MbTiles mbTiles) {
-    final coordinates = getTileCoordinatesForBounds(mbTiles, 14);
-
-    for (var coordinate in coordinates) {
-      final tile = mbTiles.getTile(x: coordinate.x, y: coordinate.y, z: 14);
-      if (tile == null) {
-        continue;
-      }
-
-      final vectorTile = VectorTile.fromBytes(bytes: tile);
-      try {
-        final addressesLayer =
-            vectorTile.layers.firstWhere((layer) => layer.name == 'addresses');
-        final features = addressesLayer.features;
-        final extent = addressesLayer.extent;
-
-        for (var feature in features) {
-          final geometry = feature.decodeGeometry();
-          if (geometry is GeometryPoint) {
-            final coordinates = geometry.coordinates;
-            // Convert from tile coordinates to geographic coordinates
-            final n = math.pow(2.0, 14).toDouble();
-            final lon =
-                (coordinate.x + coordinates[0] / extent) / n * 360.0 - 180.0;
-            final y = 1 -
-                (coordinate.y + coordinates[1] / extent) / n; // Flip y for TMS
-            final z = math.pi * (1 - 2 * y);
-            final latRad = math.atan((math.exp(z) - math.exp(-z)) / 2);
-            final lat = latRad * 180.0 / math.pi;
-
-            // Assign ID and create mapping
-            final id = _currentAddressId++;
-            final base32Id = _toBase32(id);
-            _addressCoordinates[base32Id] = Address(
-                id: base32Id,
-                coordinates: LatLng(lat, lon),
-                x: coordinates[0],
-                y: coordinates[1]);
-          }
-        }
-      } on StateError {
-        continue;
-      }
+    final tiles = await _tilesRepository.getMbTiles();
+    switch (tiles) {
+      case Success(:final mbTiles):
+        emit(MapState.offline(
+          mbTiles: mbTiles,
+          position: _getInitialCoordinates(mbTiles),
+          orientation: 0,
+          controller: ctrl,
+          theme: theme,
+          onReady: _onMapReady,
+        ));
+      case NotFound():
+        emit(MapState.unavailable('Map file not found',
+            controller: ctrl, position: state.position));
+      case Error(:final message):
+        emit(MapState.unavailable(message,
+            controller: ctrl, position: state.position));
     }
   }
-}
-
-List<Point<int>> getTileCoordinatesForBounds(MbTiles tiles, int zoom) {
-  final meta = tiles.getMetadata();
-  final bounds = meta.bounds;
-  if (bounds == null) {
-    throw Exception('No bounds found in MBTiles metadata');
-  }
-
-  final minTileX = _lonToTileX(bounds.left, zoom);
-  final maxTileX = _lonToTileX(bounds.right, zoom);
-  final minTileY = _latToTileYTMS(bounds.top, zoom);
-  final maxTileY = _latToTileYTMS(bounds.bottom, zoom);
-  final coordinates = <Point<int>>[];
-
-  for (var x = minTileX; x <= maxTileX; x++) {
-    final startY = math.min(minTileY, maxTileY);
-    final endY = math.max(minTileY, maxTileY);
-
-    for (var y = startY; y <= endY; y++) {
-      coordinates.add(Point(x, y));
-    }
-  }
-
-  return coordinates;
-}
-
-int _lonToTileX(double lon, int zoom) {
-  final x = ((lon + 180) / 360 * (1 << zoom)).floor();
-  return x;
-}
-
-int _latToTileYTMS(double lat, int zoom) {
-  final latRad = lat * (math.pi / 180);
-  final n = math.pow(2.0, zoom).toDouble();
-  final y =
-      (1.0 - math.log(math.tan(latRad) + 1.0 / math.cos(latRad)) / math.pi) /
-          2.0 *
-          n;
-  final tmsY = (n - 1 - y).floor();
-  return tmsY + 1;
 }
