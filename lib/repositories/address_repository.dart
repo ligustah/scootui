@@ -52,26 +52,6 @@ const _addressDatabaseFilename = 'address_database.json';
 class AddressRepository {
   static AddressRepository create(BuildContext context) => AddressRepository();
 
-  Future<File?> _getFile() async {
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      return File('${appDir.path}/scootui/$_addressDatabaseFilename');
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Future<void> _saveDatabase(AddressDatabase database) async {
-    final file = await _getFile();
-    if (file == null) {
-      // TODO: actually handle this
-      return;
-    }
-
-    await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode(database.toJson()));
-  }
-
   Future<Addresses> loadDatabase() async {
     final token = RootIsolateToken.instance;
 
@@ -111,6 +91,26 @@ class AddressRepository {
         Error(:final message) => Addresses.error(message),
       };
     });
+  }
+
+  Future<File?> _getFile() async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      return File('${appDir.path}/scootui/$_addressDatabaseFilename');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _saveDatabase(AddressDatabase database) async {
+    final file = await _getFile();
+    if (file == null) {
+      // TODO: actually handle this
+      return;
+    }
+
+    await file.parent.create(recursive: true);
+    await file.writeAsString(jsonEncode(database.toJson()));
   }
 }
 
