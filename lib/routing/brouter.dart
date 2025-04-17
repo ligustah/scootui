@@ -58,31 +58,6 @@ class BRouterRequest {
 
 const String _publicBRouterServer = 'https://brouter.de/';
 
-void check(Map<String, dynamic> json) {
-  final map = {
-    "creator": json['creator'] as String,
-    "name": json['name'] as String,
-    "trackLength": json['track-length'] as String,
-    "filteredAscend": json['filtered ascend'] as String,
-    "plainAscend": json['plain-ascend'] as String,
-    "totalTime": json['total-time'] as String,
-    "totalEnergy": json['total-energy'] as String,
-    "voiceHints": (json['voicehints'] as List<dynamic>)
-        .map(
-            (e) => (e as List<dynamic>).map((e) => (e as num).toInt()).toList())
-        .toList(),
-    "cost": json['cost'] as String,
-    "messages": (json['messages'] as List<dynamic>)
-        .map((e) => (e as List<dynamic>).map((e) => e as String).toList())
-        .toList(),
-    "times": (json['times'] as List<dynamic>)
-        .map((e) => (e as num).toDouble())
-        .toList()
-  };
-
-  print("check: $map");
-}
-
 class BRouterService {
   final Dio _dio;
 
@@ -105,7 +80,6 @@ class BRouterService {
       throw Exception("No properties found in the response");
     }
 
-    check(props);
     final brouterProperties = BRouterProperties.fromJson(props);
 
     List<String>? labels;

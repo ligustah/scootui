@@ -21,6 +21,7 @@ import 'package:flutter_map/flutter_map.dart'
         MarkerLayer,
         Polyline,
         PolylineLayer,
+        StrokePattern,
         TileLayer;
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
@@ -31,6 +32,8 @@ import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart'
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
 
 import '../../routing/models.dart';
+
+final distanceCalculator = Distance();
 
 class OnlineMapView extends StatefulWidget {
   final MapController mapController;
@@ -101,6 +104,7 @@ class OfflineMapView extends StatefulWidget {
   final FutureOr<void> Function(LatLng)? setDestination;
   final Route? route;
   final RouteInstruction? nextInstruction;
+  final LatLng? destination;
 
   const OfflineMapView({
     super.key,
@@ -113,6 +117,7 @@ class OfflineMapView extends StatefulWidget {
     this.route,
     this.mapReady,
     this.nextInstruction,
+    this.destination,
   });
 
   @override
@@ -125,6 +130,7 @@ class _OfflineMapViewState extends State<OfflineMapView>
 
   Widget? _routeLayer() {
     final line = widget.route?.waypoints;
+    final destination = widget.destination;
     if (line == null || line.isEmpty) {
       return null;
     }
@@ -140,6 +146,16 @@ class _OfflineMapViewState extends State<OfflineMapView>
           strokeWidth: 4.0,
           color: Colors.lightBlue,
         ),
+        if (destination != null && !_isDestinationNearWaypoint())
+          Polyline(
+            points: [
+              LatLng(destination.latitude, destination.longitude),
+              LatLng(points.last.latitude, points.last.longitude),
+            ],
+            strokeWidth: 4.0,
+            pattern: StrokePattern.dashed(segments: [8, 10]),
+            color: Colors.blue,
+          ),
       ],
     );
   }
@@ -198,10 +214,56 @@ class _OfflineMapViewState extends State<OfflineMapView>
         ));
   }
 
+  bool _isDestinationNearWaypoint() {
+    // determine if the selected destionatin is not directly next to the
+    // last waypoint on the road.
+    final destination = widget.destination;
+    final lastWaypoint = widget.route!.waypoints.last;
+    return destination == null ||
+        distanceCalculator.as(LengthUnit.Meter, destination, lastWaypoint) < 15;
+  }
+
   List<Marker> _routeMarkers() {
     final markers = <Marker>[];
     if (widget.route == null) return markers;
+    final destination = widget.destination;
+    final lastWaypoint = widget.route!.waypoints.last;
+    final flagIcon = const Icon(Icons.flag, color: Colors.white, size: 30.0);
+    final mapPinIcon =
+        const Icon(Icons.location_pin, color: Colors.red, size: 30.0);
 
+    final destinationNearWaypoint = _isDestinationNearWaypoint();
+
+    if (destination != null && !destinationNearWaypoint) {
+      markers.add(Marker(
+        rotate: true,
+        point: destination,
+        child: mapPinIcon,
+      ));
+    }
+
+    markers.add(Marker(
+      rotate: true,
+      point: LatLng(lastWaypoint.latitude, lastWaypoint.longitude),
+      child: destinationNearWaypoint ? mapPinIcon : flagIcon,
+    ));
+
+    // for (final instruction in widget.route!.instructions) {
+    //   markers.add(
+    //     Marker(
+    //       width: 50.0,
+    //       height: 15.0,
+    //       point: LatLng(instruction.location.lat, instruction.location.lng),
+    //       alignment: Alignment.center,
+    //       child: ColoredBox(
+    //           color: Colors.white,
+    //           child: Text(
+    //             instruction.instruction,
+    //             style: TextStyle(color: Colors.black, fontSize: 9),
+    //           )),
+    //     ),
+    //   );
+    // }
     return markers;
   }
 

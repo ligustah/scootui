@@ -9,6 +9,7 @@ enum ControlKey { left, right }
 class ControlGestureDetector extends StatefulWidget {
   final Widget child;
   final Stream<VehicleData> stream;
+  final Duration? cooldown;
 
   final VoidCallback? onLeftPress;
   final VoidCallback? onLeftRelease;
@@ -41,6 +42,7 @@ class ControlGestureDetector extends StatefulWidget {
     this.onRightHold,
     this.doubleTapDelay = const Duration(milliseconds: 300),
     this.holdDelay = const Duration(milliseconds: 500),
+    this.cooldown = const Duration(milliseconds: 100),
   });
 
   @override
@@ -49,6 +51,7 @@ class ControlGestureDetector extends StatefulWidget {
 
 class _ControlGestureDetectorState extends State<ControlGestureDetector> {
   late final StreamSubscription<VehicleData> _sub;
+  late final DateTime _activationTime;
 
   final Map<ControlKey, Toggle> _prev = {
     ControlKey.left: Toggle.off,
@@ -70,10 +73,19 @@ class _ControlGestureDetectorState extends State<ControlGestureDetector> {
   @override
   void initState() {
     super.initState();
+    _activationTime = widget.cooldown != null
+        ? DateTime.now().add(widget.cooldown!)
+        : DateTime.now();
     _sub = widget.stream.listen(_handleUpdate);
   }
 
   void _handleUpdate(VehicleData data) {
+    // ignore controls when the scooter is not parked
+    if (data.state != ScooterState.parked) return;
+
+    // ignore controls if the cooldown period has not elapsed
+    if (DateTime.now().isBefore(_activationTime)) return;
+
     _handleKey(
       key: ControlKey.left,
       prev: _prev[ControlKey.left]!,
@@ -129,7 +141,7 @@ class _ControlGestureDetectorState extends State<ControlGestureDetector> {
       onRelease?.call();
 
       final duration =
-      DateTime.now().difference(_pressStart[key] ?? DateTime.now());
+          DateTime.now().difference(_pressStart[key] ?? DateTime.now());
 
       if (duration < widget.holdDelay) {
         if (_waitingSecondTap[key] == true) {

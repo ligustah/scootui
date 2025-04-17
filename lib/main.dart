@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/all.dart';
 import 'cubits/theme_cubit.dart';
-import 'repositories/redis_mdb_repository.dart';
+import 'repositories/all.dart';
 import 'screens/main_screen.dart';
 
 void main() {
@@ -47,8 +47,8 @@ class ScooterClusterApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      create: RedisMDBRepository.create,
+    return MultiRepositoryProvider(
+      providers: allRepositories,
       child: MultiBlocProvider(
         providers: allCubits,
         child: BlocBuilder<ThemeCubit, ThemeState>(

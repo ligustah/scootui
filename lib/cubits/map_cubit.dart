@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:math';
 
@@ -13,8 +14,10 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:vector_tile/util/geometry.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
+import '../repositories/tiles_repository.dart';
 import '../routing/brouter.dart';
 import '../routing/models.dart';
 import '../routing/route_helpers.dart';
@@ -25,11 +28,13 @@ import 'theme_cubit.dart';
 part 'map_cubit.freezed.dart';
 part 'map_state.dart';
 
+final distanceCalculator = Distance();
 const defaultCoordinates = LatLng(52.52437, 13.41053);
 
 class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
+  final TilesRepository _tilesRepository;
   static const double _offRouteTolerance = 5.0; // 5 meters
   static const double _maxZoom = 19.0;
   static const double _minZoom = 16.5;
@@ -40,15 +45,20 @@ class MapCubit extends Cubit<MapState> {
   AnimatedMapController? _animatedController;
   Future<void>? _currentAnimation;
 
+  bool _mapLocked = false;
+
   static MapCubit create(BuildContext context) => MapCubit(
         context.read<GpsSync>().stream,
         context.read<ThemeCubit>().stream,
+        context.read<TilesRepository>(),
       )
         .._onGpsData(context.read<GpsSync>().state)
         .._loadMap(context.read<ThemeCubit>().state);
 
-  MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates)
-      : super(MapLoading(
+  MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates,
+      TilesRepository tilesRepository)
+      : _tilesRepository = tilesRepository,
+        super(MapLoading(
             controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = stream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
@@ -79,6 +89,55 @@ class MapCubit extends Cubit<MapState> {
     });
   }
 
+  Future<void> startNavigation(LatLng destination) async {
+    await setDestination(destination);
+
+    final current = state;
+    final route = current.route;
+    if (route == null) {
+      return;
+    }
+
+    // play an animation that first shows the destination, then the whole route,
+    // then the current position
+    _mapLocked = true;
+    final lastWaypoint = route.waypoints.last;
+
+    // if the destination is more than 10 meters away from the last waypoint,
+    // show both the destination and the last waypoint, otherwise just center
+    // on the destination
+    if (distanceCalculator.as(LengthUnit.Meter, lastWaypoint, destination) >
+        15) {
+      _animatedController?.mapController.fitCamera(
+        CameraFit.coordinates(
+          coordinates: [lastWaypoint, destination],
+          padding: const EdgeInsets.all(100),
+        ),
+      );
+    } else {
+      _animatedController?.mapController.moveAndRotate(
+        destination,
+        _minZoom,
+        0,
+      );
+    }
+    await Future.delayed(const Duration(milliseconds: 5000));
+    await _animatedController?.animatedFitCamera(
+      cameraFit: CameraFit.coordinates(
+          coordinates: [current.position, destination],
+          padding: const EdgeInsets.all(50)),
+      rotation: 0,
+      cancelPreviousAnimations: true,
+      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 2000),
+    );
+    await Future.delayed(const Duration(milliseconds: 4000));
+    _mapLocked = false;
+
+    _moveAndRotate(current.position, current.orientation,
+        duration: const Duration(milliseconds: 2000));
+  }
+
   Future<void> setDestination(LatLng destination) async {
     final current = state;
     if (current is! MapOffline && current is! MapOnline) {
@@ -92,32 +151,20 @@ class MapCubit extends Cubit<MapState> {
       ),
     );
 
-    // final waypoints = [
-    //   state.position,
-    //   destination,
-    // ]
-    //     .map((latlng) => LngLat(lng: latlng.longitude, lat: latlng.latitude))
-    //     .toList();
-    //
-    // final route = await _routingManager.getRoute(
-    //     request: OSRMRequest.route(
-    //   waypoints: waypoints,
-    //   geometries: Geometries.polyline,
-    //   routingType: RoutingType.car,
-    // ));
-
     emit(current.copyWith(
         route: route,
+        destination: destination,
         nextInstruction: _nextInstruction(route, current.position)));
   }
 
-  void _moveAndRotate(LatLng center, double course,
-      [RouteInstruction? instruction]) {
+  void _moveAndRotate(LatLng center, double course, {Duration? duration}) {
+    if (_mapLocked) return;
     final ctrl = _animatedController;
 
     if (ctrl == null) return;
 
     final route = state.route;
+    final instruction = state.nextInstruction;
     double bearing = course;
     double zoom = _minZoom;
 
@@ -176,6 +223,7 @@ class MapCubit extends Cubit<MapState> {
         rotation: bearing,
         curve: Curves.easeInOut,
         offset: _navigationOffset,
+        duration: duration,
         cancelPreviousAnimations: false);
   }
 
@@ -222,13 +270,13 @@ class MapCubit extends Cubit<MapState> {
     final position = LatLng(data.latitude, data.longitude);
     final instruction = _nextInstruction(current.route, position);
 
-    _moveAndRotate(position, course, instruction);
-    _checkRouteDeviation(position);
     emit(current.copyWith(
       position: position,
       orientation: course,
       nextInstruction: instruction,
     ));
+    _moveAndRotate(position, course);
+    _checkRouteDeviation(position);
   }
 
   void _onThemeUpdate(ThemeState event) {
@@ -295,41 +343,23 @@ class MapCubit extends Cubit<MapState> {
     final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
-    late final Directory appDir;
-
-    try {
-      appDir = await getApplicationDocumentsDirectory();
-    } catch (e) {
-      emit(MapState.online(
-          position: state.position,
-          orientation: state.orientation,
-          controller: state.controller));
-      return;
+    final tiles = await _tilesRepository.getMbTiles();
+    switch (tiles) {
+      case Success(:final mbTiles):
+        emit(MapState.offline(
+          mbTiles: mbTiles,
+          position: _getInitialCoordinates(mbTiles),
+          orientation: 0,
+          controller: ctrl,
+          theme: theme,
+          onReady: _onMapReady,
+        ));
+      case NotFound():
+        emit(MapState.unavailable('Map file not found',
+            controller: ctrl, position: state.position));
+      case Error(:final message):
+        emit(MapState.unavailable(message,
+            controller: ctrl, position: state.position));
     }
-
-    final mapPath = '${appDir.path}/maps/map.mbtiles';
-
-    // check if map file exists
-    final exists = await File(mapPath).exists();
-    if (!exists) {
-      emit(MapState.unavailable('Map file not found',
-          controller: state.controller, position: state.position));
-      return;
-    }
-
-    // Initialize MBTiles
-    final mbTiles = MbTiles(
-      mbtilesPath: mapPath,
-      gzip: true,
-    );
-
-    emit(MapState.offline(
-      mbTiles: mbTiles,
-      position: _getInitialCoordinates(mbTiles),
-      orientation: 0,
-      controller: ctrl,
-      theme: theme,
-      onReady: _onMapReady,
-    ));
   }
 }

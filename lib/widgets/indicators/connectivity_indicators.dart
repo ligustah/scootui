@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:scooter_cluster/cubits/theme_cubit.dart';
-import 'package:scooter_cluster/widgets/indicators/indicator_light.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../cubits/theme_cubit.dart';
 import '../../state/bluetooth.dart';
 import '../../state/enums.dart';
 import '../../state/gps.dart';
 import '../../state/internet.dart';
+import 'indicator_light.dart';
 
 class _Icons {
   static const String connected0 = 'librescoot-internet-modem-connected-0.svg';

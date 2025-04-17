@@ -15,6 +15,7 @@ class MapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeState(:theme) = ThemeCubit.watch(context);
+    final MapCubit(:state) = context.watch<MapCubit>();
 
     return Container(
       width: 480,
@@ -27,7 +28,7 @@ class MapScreen extends StatelessWidget {
 
           // Map view
           Expanded(
-            child: _buildMap(context, context.watch<MapCubit>().state, theme),
+            child: _buildMap(context, state, theme),
           ),
 
           // Bottom status bar with speed
@@ -90,6 +91,7 @@ class MapScreen extends StatelessWidget {
           :final orientation,
           :final route,
           :final nextInstruction,
+          :final destination,
         ) =>
           OfflineMapView(
             mbTiles: mbTiles,
@@ -101,6 +103,7 @@ class MapScreen extends StatelessWidget {
             route: route,
             setDestination: context.read<MapCubit>().setDestination,
             nextInstruction: nextInstruction,
+            destination: destination,
           ),
       };
 }

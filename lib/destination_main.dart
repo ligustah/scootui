@@ -6,17 +6,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/all.dart';
+import 'cubits/theme_cubit.dart';
 import 'repositories/all.dart';
-import 'repositories/mdb_repository.dart';
-import 'screens/simulator_screen.dart';
-import 'theme_config.dart';
+import 'screens/destination_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   _setupPlatformConfigurations();
 
-  runApp(const SimulatorApp());
+  runApp(const DestinationApp());
 }
 
 void _setupPlatformConfigurations() {
@@ -39,8 +38,8 @@ void _setupPlatformConfigurations() {
   }
 }
 
-class SimulatorApp extends StatelessWidget {
-  const SimulatorApp({super.key});
+class DestinationApp extends StatelessWidget {
+  const DestinationApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,17 +47,19 @@ class SimulatorApp extends StatelessWidget {
       providers: allRepositories,
       child: MultiBlocProvider(
         providers: allCubits,
-        child: MaterialApp(
-          title: 'Cluster Simulator',
-          theme: AppThemes.lightTheme,
-          darkTheme: AppThemes.darkTheme,
-          themeMode: ThemeMode.dark,
-          debugShowCheckedModeBanner: false,
-          home: Builder(
-            builder: (context) => SimulatorScreen(
-              repository: context.read<MDBRepository>(),
-            ),
-          ),
+        child: BlocBuilder<ThemeCubit, ThemeState>(
+          builder: (context, state) {
+            return MaterialApp(
+              title: 'Destination Selector',
+              theme: state.lightTheme,
+              darkTheme: state.darkTheme,
+              themeMode: state.themeMode,
+              debugShowCheckedModeBanner: false,
+              home: Scaffold(
+                body: DestinationScreen(),
+              ),
+            );
+          },
         ),
       ),
     );

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -17,19 +16,19 @@ class MenuCubit extends Cubit<MenuState> {
   VehicleData _vehicleData = VehicleData();
 
   void showMenu() {
-    if(state is MenuHidden && _vehicleData.state == ScooterState.parked) {
+    if (state is MenuHidden && _vehicleData.state == ScooterState.parked) {
       emit(const MenuState.visible());
     }
   }
 
-  void hideMenu() => emit(MenuState.hidden());
+  void hideMenu() => emit(const MenuState.hidden());
 
   void _onVehicleData(VehicleData event) {
     _vehicleData = event;
 
     // just emit a hidden state, cubit will deduplicate
-    if(_vehicleData.state != ScooterState.parked) {
-      emit(const MenuState.hidden());
+    if (_vehicleData.state != ScooterState.parked) {
+      hideMenu();
     }
   }
 
