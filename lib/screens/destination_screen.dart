@@ -161,7 +161,7 @@ class _DestinationScreenState extends State<DestinationScreen>
         //   ),
         // ),
         CameraFilteredMarkerLayer(
-          minZoom: 18,
+          minZoom: 17.5,
           markers: addrs.values
               .map((e) => Marker(
                     point: e.coordinates,

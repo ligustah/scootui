@@ -41,10 +41,9 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
         controller: _controller,
         onSubmit: (code) {
           final address = addresses[code];
-          if (address == null) {
-            return;
+          if (address != null) {
+            mapCubit.startNavigation(address.coordinates);
           }
-          mapCubit.startNavigation(address.coordinates);
           screenCubit.showMap();
         },
       ),
