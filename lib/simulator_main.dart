@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scooter_cluster/repositories/redis_mdb_repository.dart';
 
 import 'cubits/all.dart';
 import 'repositories/all.dart';
