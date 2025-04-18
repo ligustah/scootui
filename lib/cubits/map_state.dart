@@ -26,7 +26,7 @@ sealed class MapState with _$MapState {
     required MapController controller,
     required LatLng position,
     required double orientation,
-    required MbTiles mbTiles,
+    required VectorTileProvider tiles,
     required Theme theme,
     void Function(TickerProvider)? onReady,
     @Default(false) bool isReady,

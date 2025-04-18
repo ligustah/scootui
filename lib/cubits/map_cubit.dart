@@ -1,9 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-import 'dart:isolate';
 import 'dart:math' as math;
-import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Route;
@@ -13,10 +10,10 @@ import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:vector_tile/util/geometry.dart';
+import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
+import '../map/mbtiles_provider.dart';
 import '../repositories/tiles_repository.dart';
 import '../routing/brouter.dart';
 import '../routing/models.dart';
@@ -70,7 +67,10 @@ class MapCubit extends Cubit<MapState> {
     current.controller.dispose();
     switch (current) {
       case MapOffline():
-        current.mbTiles.dispose();
+        final tiles = current.tiles;
+        if (tiles is AsyncMbTilesProvider) {
+          tiles.dispose();
+        }
         break;
       default:
     }
@@ -316,8 +316,7 @@ class MapCubit extends Cubit<MapState> {
     return ThemeReader().read(jsonDecode(themeStr));
   }
 
-  LatLng _getInitialCoordinates(MbTiles tiles) {
-    final meta = tiles.getMetadata();
+  LatLng _getInitialCoordinates(MbTilesMetadata meta) {
     final bounds = meta.bounds;
     if (bounds != null &&
         (bounds.left > state.position.longitude ||
@@ -343,21 +342,21 @@ class MapCubit extends Cubit<MapState> {
     final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
-    final tiles = await _tilesRepository.getMbTiles();
-    switch (tiles) {
-      case Success(:final mbTiles):
+    final provider = AsyncMbTilesProvider(_tilesRepository);
+    final tilesInit = await provider.init();
+
+    switch (tilesInit) {
+      case InitSuccess(:final metadata):
         emit(MapState.offline(
-          mbTiles: mbTiles,
-          position: _getInitialCoordinates(mbTiles),
+          tiles: provider,
+          position: _getInitialCoordinates(metadata),
           orientation: 0,
           controller: ctrl,
           theme: theme,
           onReady: _onMapReady,
         ));
-      case NotFound():
-        emit(MapState.unavailable('Map file not found',
-            controller: ctrl, position: state.position));
-      case Error(:final message):
+
+      case InitError(:final message):
         emit(MapState.unavailable(message,
             controller: ctrl, position: state.position));
     }
