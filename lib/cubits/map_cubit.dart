@@ -158,7 +158,7 @@ class MapCubit extends Cubit<MapState> {
 
     emit(state.copyWith(destination: destination));
 
-    final brouter = BRouterService();
+    final brouter = BRouterService(serverURL: "http://localhost:17777");
     final route = await brouter.getRoute(
       BRouterRequest(
         waypoints: [state.position, destination],
