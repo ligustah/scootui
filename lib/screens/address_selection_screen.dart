@@ -8,6 +8,7 @@ import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../repositories/address_repository.dart';
+import '../repositories/mdb_repository.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/general/control_hints.dart';
 import '../widgets/location_dial/location_dial.dart';
@@ -42,6 +43,10 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
         onSubmit: (code) {
           final address = addresses[code];
           if (address != null) {
+            final mdbRepo = context.read<MDBRepository>();
+            final coordinates =
+                "${address.coordinates.latitude},${address.coordinates.longitude}";
+            mdbRepo.set("navigation", "destination", coordinates);
             mapCubit.startNavigation(address.coordinates);
           }
           screenCubit.showMap();
@@ -55,6 +60,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     final screenCubit = context.read<ScreenCubit>();
     final mapCubit = context.read<MapCubit>();
     final addressCubit = context.watch<AddressCubit>();
+
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
     final child = switch (addressCubit.state) {

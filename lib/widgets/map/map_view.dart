@@ -26,7 +26,7 @@ import 'package:flutter_map/flutter_map.dart'
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart'
-    show TileProviders, VectorTileLayer;
+    show TileProviders, VectorTileLayer, VectorTileProvider;
 import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart'
     show MbTilesVectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
@@ -97,7 +97,7 @@ class _OnlineMapViewState extends State<OnlineMapView>
 class OfflineMapView extends StatefulWidget {
   final MapController mapController;
   final Theme theme;
-  final MbTiles mbTiles;
+  final VectorTileProvider tiles;
   final LatLng position;
   final double orientation;
   final void Function(TickerProvider)? mapReady;
@@ -110,7 +110,7 @@ class OfflineMapView extends StatefulWidget {
     super.key,
     required this.mapController,
     required this.theme,
-    required this.mbTiles,
+    required this.tiles,
     required this.position,
     required this.orientation,
     this.setDestination,
@@ -294,10 +294,7 @@ class _OfflineMapViewState extends State<OfflineMapView>
         VectorTileLayer(
           theme: widget.theme,
           tileProviders: TileProviders({
-            'versatiles-shortbread': MbTilesVectorTileProvider(
-              mbtiles: widget.mbTiles,
-              silenceTileNotFound: true,
-            ),
+            'versatiles-shortbread': widget.tiles,
           }),
           maximumZoom: 20,
           fileCacheTtl: const Duration(seconds: 1),

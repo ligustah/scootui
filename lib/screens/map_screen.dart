@@ -83,7 +83,7 @@ class MapScreen extends StatelessWidget {
             orientation: orientation,
           ),
         MapOffline(
-          :final mbTiles,
+          :final tiles,
           :final position,
           :final controller,
           :final theme,
@@ -94,7 +94,7 @@ class MapScreen extends StatelessWidget {
           :final destination,
         ) =>
           OfflineMapView(
-            mbTiles: mbTiles,
+            tiles: tiles,
             mapController: controller,
             theme: theme,
             position: position,

@@ -501,7 +501,7 @@ class MapOffline implements MapState {
       {required this.controller,
       required this.position,
       required this.orientation,
-      required this.mbTiles,
+      required this.tiles,
       required this.theme,
       this.onReady,
       this.isReady = false,
@@ -515,7 +515,7 @@ class MapOffline implements MapState {
   final LatLng position;
   @override
   final double orientation;
-  final MbTiles mbTiles;
+  final VectorTileProvider tiles;
   final Theme theme;
   final void Function(TickerProvider)? onReady;
   @JsonKey()
@@ -549,7 +549,7 @@ class MapOffline implements MapState {
                 other.position == position) &&
             (identical(other.orientation, orientation) ||
                 other.orientation == orientation) &&
-            (identical(other.mbTiles, mbTiles) || other.mbTiles == mbTiles) &&
+            (identical(other.tiles, tiles) || other.tiles == tiles) &&
             (identical(other.theme, theme) || other.theme == theme) &&
             (identical(other.onReady, onReady) || other.onReady == onReady) &&
             (identical(other.isReady, isReady) || other.isReady == isReady) &&
@@ -566,7 +566,7 @@ class MapOffline implements MapState {
       controller,
       position,
       orientation,
-      mbTiles,
+      tiles,
       theme,
       onReady,
       isReady,
@@ -576,7 +576,7 @@ class MapOffline implements MapState {
 
   @override
   String toString() {
-    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, mbTiles: $mbTiles, theme: $theme, onReady: $onReady, isReady: $isReady, route: $route, nextInstruction: $nextInstruction, destination: $destination)';
+    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, tiles: $tiles, theme: $theme, onReady: $onReady, isReady: $isReady, route: $route, nextInstruction: $nextInstruction, destination: $destination)';
   }
 }
 
@@ -592,7 +592,7 @@ abstract mixin class $MapOfflineCopyWith<$Res>
       {MapController controller,
       LatLng position,
       double orientation,
-      MbTiles mbTiles,
+      VectorTileProvider tiles,
       Theme theme,
       void Function(TickerProvider)? onReady,
       bool isReady,
@@ -621,7 +621,7 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
     Object? controller = null,
     Object? position = null,
     Object? orientation = null,
-    Object? mbTiles = null,
+    Object? tiles = null,
     Object? theme = null,
     Object? onReady = freezed,
     Object? isReady = null,
@@ -642,10 +642,10 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
           ? _self.orientation
           : orientation // ignore: cast_nullable_to_non_nullable
               as double,
-      mbTiles: null == mbTiles
-          ? _self.mbTiles
-          : mbTiles // ignore: cast_nullable_to_non_nullable
-              as MbTiles,
+      tiles: null == tiles
+          ? _self.tiles
+          : tiles // ignore: cast_nullable_to_non_nullable
+              as VectorTileProvider,
       theme: null == theme
           ? _self.theme
           : theme // ignore: cast_nullable_to_non_nullable
