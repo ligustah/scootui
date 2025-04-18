@@ -19,6 +19,7 @@ import '../routing/brouter.dart';
 import '../routing/models.dart';
 import '../routing/route_helpers.dart';
 import '../state/gps.dart';
+import '../state/navigation.dart';
 import 'mdb_cubits.dart';
 import 'theme_cubit.dart';
 
@@ -31,6 +32,7 @@ const defaultCoordinates = LatLng(52.52437, 13.41053);
 class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
+  late final StreamSubscription<NavigationData> _navigationSub;
   final TilesRepository _tilesRepository;
   static const double _offRouteTolerance = 5.0; // 5 meters
   static const double _maxZoom = 19.0;
@@ -47,18 +49,21 @@ class MapCubit extends Cubit<MapState> {
   static MapCubit create(BuildContext context) => MapCubit(
         context.read<GpsSync>().stream,
         context.read<ThemeCubit>().stream,
+        context.read<NavigationSync>().stream,
         context.read<TilesRepository>(),
       )
         .._onGpsData(context.read<GpsSync>().state)
-        .._loadMap(context.read<ThemeCubit>().state);
+        .._loadMap(context.read<ThemeCubit>().state)
+        .._onNavigationData(context.read<NavigationSync>().state);
 
   MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates,
-      TilesRepository tilesRepository)
+      Stream<NavigationData> navigationUpdates, TilesRepository tilesRepository)
       : _tilesRepository = tilesRepository,
         super(MapLoading(
             controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = stream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
+    _navigationSub = navigationUpdates.listen(_onNavigationData);
   }
 
   @override
@@ -76,6 +81,7 @@ class MapCubit extends Cubit<MapState> {
     }
     _themeSub.cancel();
     _gpsSub.cancel();
+    _navigationSub.cancel();
     return super.close();
   }
 
@@ -90,6 +96,13 @@ class MapCubit extends Cubit<MapState> {
   }
 
   Future<void> startNavigation(LatLng destination) async {
+    // if the map is locked during animation, don't do anything
+    if (_mapLocked) return;
+
+    if (state.destination == destination) {
+      return;
+    }
+
     await setDestination(destination);
 
     final current = state;
@@ -139,22 +152,22 @@ class MapCubit extends Cubit<MapState> {
   }
 
   Future<void> setDestination(LatLng destination) async {
-    final current = state;
-    if (current is! MapOffline && current is! MapOnline) {
+    if (state is! MapOffline && state is! MapOnline) {
       return;
     }
+
+    emit(state.copyWith(destination: destination));
 
     final brouter = BRouterService();
     final route = await brouter.getRoute(
       BRouterRequest(
-        waypoints: [current.position, destination],
+        waypoints: [state.position, destination],
       ),
     );
 
-    emit(current.copyWith(
+    emit(state.copyWith(
         route: route,
-        destination: destination,
-        nextInstruction: _nextInstruction(route, current.position)));
+        nextInstruction: _nextInstruction(route, state.position)));
   }
 
   void _moveAndRotate(LatLng center, double course, {Duration? duration}) {
@@ -262,6 +275,19 @@ class MapCubit extends Cubit<MapState> {
   RouteInstruction? _nextInstruction(Route? route, LatLng position) {
     if (route == null) return null;
     return RouteHelpers.findNextInstruction(position, route);
+  }
+
+  void _onNavigationData(NavigationData data) {
+    try {
+      final coordinates =
+          data.destination.split(",").map(double.parse).toList();
+      final destination = LatLng(coordinates[0], coordinates[1]);
+
+      startNavigation(destination);
+    } catch (e) {
+      print(e);
+      // TODO: show error
+    }
   }
 
   void _onGpsData(GpsData data) {
