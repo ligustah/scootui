@@ -107,19 +107,16 @@ class RedisMDBRepository implements MDBRepository {
   final ConnectionPool _pool;
 
   static String getRedisHost() {
-    if (Platform.isMacOS || Platform.isWindows) {
-      return '127.0.0.1'; // Local development
-    }
-    return '192.168.7.1'; // Target system
+    // Use an environment variable to determine the Redis host, defaulting to the target system address
+    const redisHost = String.fromEnvironment('SCOOTUI_REDIS_HOST', defaultValue: '192.168.7.1');
+    return redisHost;
   }
 
   static MDBRepository create(BuildContext context) {
-    return RedisMDBRepository(host: getRedisHost(), port: 6379)
-      ..dashboardReady();
+    return RedisMDBRepository(host: getRedisHost(), port: 6379)..dashboardReady();
   }
 
-  RedisMDBRepository({required String host, required int port})
-      : _pool = ConnectionPool(host: host, port: port);
+  RedisMDBRepository({required String host, required int port}) : _pool = ConnectionPool(host: host, port: port);
 
   Future<T> _withConnection<T>(Future<T> Function(Command) action) async {
     Command? cmd;
@@ -133,8 +130,7 @@ class RedisMDBRepository implements MDBRepository {
     }
   }
 
-  Stream<T> _withConnectionStream<T>(
-      Stream<T> Function(Command) action) async* {
+  Stream<T> _withConnectionStream<T>(Stream<T> Function(Command) action) async* {
     Command? cmd;
     try {
       cmd = await _pool.getConnection();
@@ -149,8 +145,7 @@ class RedisMDBRepository implements MDBRepository {
   Future<void> dashboardReady() => set("dashboard", "ready", "true");
 
   @override
-  Future<void> set(String cluster, String variable, String value,
-      {bool publish = true}) {
+  Future<void> set(String cluster, String variable, String value, {bool publish = true}) {
     return _withConnection((cmd) async {
       await cmd.send_object(["HSET", cluster, variable, value]);
       if (publish) {
@@ -214,7 +209,6 @@ class RedisMDBRepository implements MDBRepository {
 
   @override
   Future<void> push(String channel, String command) {
-    return _withConnection(
-        (cmd) => cmd.send_object(["LPUSH", channel, command]));
+    return _withConnection((cmd) => cmd.send_object(["LPUSH", channel, command]));
   }
 }
