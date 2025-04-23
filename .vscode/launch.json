@@ -6,20 +6,27 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/simulator_main.dart",
-            "args": []
+            "args": [
+                "--dart-define=SCOOTUI_REDIS_HOST=127.0.0.1"
+            ]
         },
         {
             "name": "scootui standalone",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "args": []
+            "args": [
+                "--dart-define=SCOOTUI_REDIS_HOST=127.0.0.1"
+            ]
         },
         {
             "name": "scootui destination",
             "request": "launch",
             "type": "dart",
             "program": "lib/destination_main.dart",
+            "args": [
+                "--dart-define=SCOOTUI_REDIS_HOST=127.0.0.1"
+            ]
         }
     ]
 }
