@@ -45,6 +45,6 @@ app.*.map.json
 /android/app/release
 
 # native project folders (can ignore until customisations are made)
-windows
-linux
-macos
+/windows
+/linux
+/macos
