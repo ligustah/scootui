@@ -8,6 +8,7 @@ import 'package:vector_map_tiles/vector_map_tiles.dart'
 import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart';
 
 import '../cubits/address_cubit.dart';
+import '../map/mbtiles_provider.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../repositories/address_repository.dart';
@@ -83,7 +84,7 @@ class _DestinationScreenState extends State<DestinationScreen>
     }
 
     final MapOffline(
-      :mbTiles,
+      :tiles,
       :position,
       :controller,
       :theme,
@@ -111,9 +112,8 @@ class _DestinationScreenState extends State<DestinationScreen>
         VectorTileLayer(
           theme: theme,
           tileProviders: TileProviders({
-            'versatiles-shortbread': MbTilesVectorTileProvider(
-              mbtiles: mbTiles,
-            ),
+            // Use the provider directly from the state
+            'versatiles-shortbread': tiles,
           }),
           maximumZoom: 20,
           fileCacheTtl: const Duration(seconds: 1),

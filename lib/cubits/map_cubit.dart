@@ -33,6 +33,7 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
   late final StreamSubscription<NavigationData> _navigationSub;
+  final NavigationSync _navigationSync;
   final TilesRepository _tilesRepository;
   static const double _offRouteTolerance = 5.0; // 5 meters
   static const double _maxZoom = 19.0;
@@ -43,27 +44,28 @@ class MapCubit extends Cubit<MapState> {
   DateTime? _lastReroute;
   AnimatedMapController? _animatedController;
   Future<void>? _currentAnimation;
+  LatLng? _pendingDestination;
 
   bool _mapLocked = false;
 
   static MapCubit create(BuildContext context) => MapCubit(
         context.read<GpsSync>().stream,
         context.read<ThemeCubit>().stream,
-        context.read<NavigationSync>().stream,
+        context.read<NavigationSync>(),
         context.read<TilesRepository>(),
       )
         .._onGpsData(context.read<GpsSync>().state)
-        .._loadMap(context.read<ThemeCubit>().state)
-        .._onNavigationData(context.read<NavigationSync>().state);
+        .._loadMap(context.read<ThemeCubit>().state);
 
-  MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates,
-      Stream<NavigationData> navigationUpdates, TilesRepository tilesRepository)
+  MapCubit(Stream<GpsData> gpsStream, Stream<ThemeState> themeUpdates,
+      NavigationSync navigationSync, TilesRepository tilesRepository)
       : _tilesRepository = tilesRepository,
+        _navigationSync = navigationSync,
         super(MapLoading(
             controller: MapController(), position: defaultCoordinates)) {
-    _gpsSub = stream.listen(_onGpsData);
+    _gpsSub = gpsStream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
-    _navigationSub = navigationUpdates.listen(_onNavigationData);
+    _navigationSub = navigationSync.stream.listen(_onNavigationData);
   }
 
   @override
@@ -279,14 +281,30 @@ class MapCubit extends Cubit<MapState> {
 
   void _onNavigationData(NavigationData data) {
     try {
+      if (data.destination.isEmpty) {
+        print("Skipping empty navigation data");
+        _pendingDestination = null; // Clear pending if destination is cleared
+        // Optionally, cancel existing navigation if needed
+        return;
+      }
+
       final coordinates =
           data.destination.split(",").map(double.parse).toList();
       final destination = LatLng(coordinates[0], coordinates[1]);
 
-      startNavigation(destination);
+      // Check if map is ready before starting navigation
+      if (state is MapOffline || state is MapOnline) {
+        print("Map ready, starting navigation to $destination");
+        startNavigation(destination);
+        _pendingDestination = null; // Clear pending once processed
+      } else {
+        print("Map not ready, pending destination set to $destination");
+        _pendingDestination = destination; // Store for later
+      }
     } catch (e) {
-      print(e);
-      // TODO: show error
+      print("Error processing navigation data: $e");
+      _pendingDestination = null; // Clear pending on error
+      // TODO: show error UI
     }
   }
 
@@ -316,7 +334,7 @@ class MapCubit extends Cubit<MapState> {
         }));
   }
 
-  void _onMapReady(TickerProvider vsync) {
+  Future<void> _onMapReady(TickerProvider vsync) async {
     final current = state;
     // TODO: the animation shouldn't really be in here, because it's a purely
     //  visual thing and not related to the map state. eventually this should
@@ -327,12 +345,68 @@ class MapCubit extends Cubit<MapState> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut);
 
+    // Ensure the state is updated correctly even if it was MapLoading
+    // when the callback was triggered. Assume offline context based on _loadMap logic.
     emit(switch (current) {
       MapOffline() => current.copyWith(isReady: true),
       MapOnline() => current.copyWith(isReady: true),
-      _ => current,
+      // If it was loading, transition to offline ready state
+      MapLoading(
+        :final position,
+        :final controller,
+        :final route,
+        :final nextInstruction,
+        :final destination
+      ) =>
+        MapOffline(
+          position: position,
+          orientation: 0, // Assuming default orientation initially
+          controller: controller,
+          tiles: state is MapOffline
+              ? (state as MapOffline).tiles
+              : AsyncMbTilesProvider(
+                  _tilesRepository), // Need to handle this better if online is possible
+          theme: state is MapOffline
+              ? (state as MapOffline).theme
+              : await _getTheme(false), // Need to handle this better
+          onReady: _onMapReady,
+          isReady: true,
+          route: route,
+          nextInstruction: nextInstruction,
+          destination: destination,
+        ),
+      MapUnavailable() => current, // Stay unavailable if it was unavailable
     });
-    _moveAndRotate(current.position, current.orientation);
+
+    // Only move if the map is actually ready now
+    final mapIsReady = state is MapOffline || state is MapOnline;
+    if (mapIsReady) {
+      _moveAndRotate(state.position, state.orientation);
+
+      // Check if there was a pending destination and process it now
+      if (_pendingDestination != null) {
+        print(
+            "Map is ready, processing pending destination: $_pendingDestination");
+        startNavigation(_pendingDestination!);
+        _pendingDestination = null; // Clear pending once processed
+      } else {
+        // No pending destination from recent PUBLISH, check initial state
+        final initialData = _navigationSync.state;
+        if (initialData.destination.isNotEmpty) {
+          try {
+            final coordinates =
+                initialData.destination.split(",").map(double.parse).toList();
+            final initialDestination = LatLng(coordinates[0], coordinates[1]);
+            print(
+                "Map is ready, processing initial destination from Redis: $initialDestination");
+            startNavigation(initialDestination);
+          } catch (e) {
+            print("Error processing initial navigation data: $e");
+            // Optionally handle error
+          }
+        }
+      }
+    }
   }
 
   Future<Theme> _getTheme(bool isDark) async {
