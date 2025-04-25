@@ -6,6 +6,7 @@ import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/menu/menu_overlay.dart';
+import '../widgets/shutdown/shutdown_overlay.dart';
 import 'address_selection_screen.dart';
 import 'cluster_screen.dart';
 import 'map_screen.dart';
@@ -37,6 +38,9 @@ class MainScreen extends StatelessWidget {
 
           // Menu overlay
           MenuOverlay(),
+
+          // Shutdown animation overlay
+          ShutdownOverlay(),
         ],
       ),
     );
