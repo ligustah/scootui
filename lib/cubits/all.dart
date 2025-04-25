@@ -6,6 +6,7 @@ import 'map_cubit.dart';
 import 'mdb_cubits.dart';
 import 'menu_cubit.dart';
 import 'screen_cubit.dart';
+import 'shutdown_cubit.dart';
 import 'system_cubit.dart';
 import 'theme_cubit.dart';
 import 'trip_cubit.dart';
@@ -26,4 +27,5 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: ScreenCubit.create),
   BlocProvider(create: MenuCubit.create),
   BlocProvider(create: AddressCubit.create),
+  BlocProvider(create: ShutdownCubit.create),
 ];
