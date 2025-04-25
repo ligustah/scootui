@@ -43,8 +43,3 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-
-# native project folders (can ignore until customisations are made)
-/windows
-/linux
-/macos

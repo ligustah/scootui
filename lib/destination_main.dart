@@ -7,11 +7,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/all.dart';
 import 'cubits/theme_cubit.dart';
+import 'env_config.dart';
 import 'repositories/all.dart';
 import 'screens/destination_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize environment configuration
+  EnvConfig.initialize();
 
   _setupPlatformConfigurations();
 
