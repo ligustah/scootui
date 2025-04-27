@@ -33,8 +33,6 @@ class ClusterScreen extends StatefulWidget {
 
 class _ClusterScreenState extends State<ClusterScreen> {
   String? _errorMessage;
-  Timer? _reconnectTimer;
-  String? _bluetoothPinCode;
 
   // Track previous odometer values for animation
   double _previousTrip = 0.0;
@@ -59,7 +57,6 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
   @override
   void dispose() {
-    _reconnectTimer?.cancel();
     super.dispose();
   }
 
@@ -67,8 +64,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
   Widget build(BuildContext context) {
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
-    final (odometer, powerOutput) =
-        EngineSync.select(context, (data) => (data.odometer, data.powerOutput));
+    final (odometer, powerOutput) = EngineSync.select(context, (data) => (data.odometer, data.powerOutput));
     final trip = TripCubit.watch(context);
 
     // Store current odometer values before update
@@ -144,32 +140,10 @@ class _ClusterScreenState extends State<ClusterScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.red.withOpacity(0.8),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-
-          // Bluetooth pin code notification
-          if (_bluetoothPinCode != null)
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Colors.blue.withOpacity(0.8),
-                child: Text(
-                  'Bluetooth Pin Code: $_bluetoothPinCode',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
