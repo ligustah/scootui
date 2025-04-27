@@ -5,6 +5,7 @@ import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
+import '../widgets/ota_update_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/menu/menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
@@ -45,6 +46,9 @@ class MainScreen extends StatelessWidget {
 
           // Bluetooth pin code overlay
           BluetoothPinCodeOverlay(),
+
+          // OTA update overlay
+          OtaUpdateOverlay(),
         ],
       ),
     );

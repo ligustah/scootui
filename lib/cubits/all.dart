@@ -28,4 +28,5 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: MenuCubit.create),
   BlocProvider(create: AddressCubit.create),
   BlocProvider(create: ShutdownCubit.create),
+  BlocProvider(create: OtaSync.create),
 ];
