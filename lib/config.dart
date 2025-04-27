@@ -11,4 +11,10 @@ class AppConfig {
 
   /// Redis mode setting key
   static const String modeSettingKey = 'mode';
+
+  /// Default BRouter endpoint URL
+  static String routerEndpoint = 'http://localhost:17777';
+
+  /// Redis brouter endpoint setting key
+  static const String routerEndpointKey = 'brouter-url';
 }

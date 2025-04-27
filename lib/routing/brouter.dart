@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:geojson_vi/geojson_vi.dart';
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'models.dart';
@@ -26,8 +27,7 @@ abstract class BRouterProperties with _$BRouterProperties {
     required List<double> times,
   }) = _BRouterProperties;
 
-  factory BRouterProperties.fromJson(Map<String, dynamic> json) =>
-      _$BRouterPropertiesFromJson(json);
+  factory BRouterProperties.fromJson(Map<String, dynamic> json) => _$BRouterPropertiesFromJson(json);
 }
 
 enum BRouterProfile { moped }
@@ -36,8 +36,7 @@ class BRouterRequest {
   final List<LatLng> waypoints;
   final BRouterProfile profile;
 
-  BRouterRequest(
-      {required this.waypoints, this.profile = BRouterProfile.moped});
+  BRouterRequest({required this.waypoints, this.profile = BRouterProfile.moped});
 
   Map<String, dynamic> encode() {
     final lonlats = waypoints.map((point) {
@@ -56,19 +55,20 @@ class BRouterRequest {
   }
 }
 
-const String _publicBRouterServer = 'https://brouter.de/';
+const String _publicBRouterServer = 'https://brouter.de';
 
 class BRouterService {
   final Dio _dio;
 
-  BRouterService({String? serverURL})
-      : _dio = Dio(BaseOptions(baseUrl: serverURL ?? _publicBRouterServer));
+  BRouterService({String? serverURL}) : _dio = Dio(BaseOptions(baseUrl: serverURL ?? _publicBRouterServer));
 
   Future<Route> getRoute(BRouterRequest request) async {
-    final response =
-        await _dio.get("/brouter", queryParameters: request.encode());
-    if (response.statusCode != null && response.statusCode! > 299 ||
-        response.statusCode! < 200) {
+    final params = request.encode();
+    debugPrint('BRouter Request URL: ${_dio.options.baseUrl}/brouter');
+    debugPrint('BRouter Request Parameters: $params');
+
+    final response = await _dio.get("/brouter", queryParameters: params);
+    if (response.statusCode != null && response.statusCode! > 299 || response.statusCode! < 200) {
       throw Exception("Cannot get route");
     }
 
@@ -88,22 +88,16 @@ class BRouterService {
       if (labels == null) {
         labels = message;
       } else {
-        messages.add({
-          for (var element in message) labels[message.indexOf(element)]: element
-        });
+        messages.add({for (var element in message) labels[message.indexOf(element)]: element});
       }
     }
 
     final List<LatLng> waypoints = geoRoute.geometry is GeoJSONLineString
-        ? (geoRoute.geometry as GeoJSONLineString)
-            .coordinates
-            .map((e) => LatLng(e[1], e[0]))
-            .toList()
+        ? (geoRoute.geometry as GeoJSONLineString).coordinates.map((e) => LatLng(e[1], e[0])).toList()
         : [];
 
-    final instructions = brouterProperties.voiceHints
-        .map((hint) => RouteInstruction.fromHint(hint, waypoints))
-        .toList();
+    final instructions =
+        brouterProperties.voiceHints.map((hint) => RouteInstruction.fromHint(hint, waypoints)).toList();
 
     return Route(
       distance: double.parse(brouterProperties.trackLength),
