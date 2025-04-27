@@ -151,9 +151,9 @@ class OtaUpdateOverlay extends StatelessWidget {
         ),
       );
     } else {
-      // Full-screen overlay with spinner for standby mode
+      // Full-screen overlay with spinner for non-ready-to-drive modes
       return Container(
-        color: Colors.black.withOpacity(0.8), // Dark semi-transparent background
+        color: isParked ? Colors.black.withOpacity(0.8) : Colors.black, // 80% opacity in parked, 100% otherwise
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
