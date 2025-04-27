@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
+import '../widgets/bluetooth_pin_code_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/menu/menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
@@ -41,6 +42,9 @@ class MainScreen extends StatelessWidget {
 
           // Shutdown animation overlay
           ShutdownOverlay(),
+
+          // Bluetooth pin code overlay
+          BluetoothPinCodeOverlay(),
         ],
       ),
     );
