@@ -100,6 +100,11 @@ class OtaUpdateOverlay extends StatelessWidget {
     final otaStatusString = OtaSync.watch(context).otaStatus;
     final otaStatus = mapOtaStatus(otaStatusString);
 
+    // Always hide the overlay if OTA status is none, null, or empty
+    if (otaStatus == OtaStatus.none || otaStatusString == null || otaStatusString.trim().isEmpty) {
+      return Container(); // Don't show anything
+    }
+
     // Determine if the overlay should be shown based on scooter mode and status
     bool showOverlay = false;
     final isParked = vehicleState.state == ScooterState.parked;
@@ -116,8 +121,8 @@ class OtaUpdateOverlay extends StatelessWidget {
           otaStatus == OtaStatus.initializing ||
           otaStatus == OtaStatus.checkingUpdates);
     } else {
-      // In other non-ready-to-drive modes (like standby and off), show for all statuses except deviceUpdated and none
-      showOverlay = otaStatus != OtaStatus.deviceUpdated && otaStatus != OtaStatus.none;
+      // In other non-ready-to-drive modes (like standby and off), show for all statuses except deviceUpdated
+      showOverlay = otaStatus != OtaStatus.deviceUpdated;
     }
 
     if (!showOverlay) {
