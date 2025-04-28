@@ -8,6 +8,7 @@ import '../state/engine.dart';
 import '../state/gps.dart';
 import '../state/internet.dart';
 import '../state/navigation.dart';
+import '../state/ota.dart';
 import '../state/vehicle.dart';
 import 'syncable_cubit.dart';
 
