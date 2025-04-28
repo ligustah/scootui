@@ -65,6 +65,12 @@ class SettingsService {
 
   /// Returns the default path for the config file
   Future<String> _getDefaultConfigPath() async {
+    if (kIsWeb) {
+      // For web platform, we don't use the file system
+      debugPrint('🔧 SettingsService: Web platform detected - using in-memory settings');
+      return '';
+    }
+
     final directory = await getApplicationSupportDirectory();
     debugPrint('🔧 SettingsService: App support directory - ${directory.path}');
     return '${directory.path}/settings.json';
@@ -72,7 +78,10 @@ class SettingsService {
 
   /// Loads settings from the config file
   Future<void> _loadFromFile() async {
-    if (_configFilePath == null) return;
+    if (_configFilePath == null || _configFilePath!.isEmpty || kIsWeb) {
+      debugPrint('🔧 SettingsService: Skipping file load for web platform or null path');
+      return;
+    }
 
     try {
       final file = File(_configFilePath!);
@@ -216,7 +225,10 @@ class SettingsService {
 
   /// Saves the current settings to the config file
   Future<void> _saveToFile() async {
-    if (_configFilePath == null) return;
+    if (_configFilePath == null || _configFilePath!.isEmpty || kIsWeb) {
+      debugPrint('🔧 SettingsService: Skipping file save for web platform or null path');
+      return;
+    }
 
     try {
       debugPrint('🔧 SettingsService: Saving settings to file: $_settings');
