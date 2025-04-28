@@ -55,6 +55,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     await Future.wait([
       _publishEvent('ble', 'status', 'disconnected'),
       _publishEvent('internet', 'modem-state', 'disconnected'),
+      _publishEvent('ota', 'status', 'unknown'),
     ]);
   }
 
@@ -70,12 +71,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     final futures = [
       _publishEvent('battery:0', 'present', _battery0Present.toString()),
       _publishEvent('battery:1', 'present', _battery1Present.toString()),
-      if (_battery0Present)
-        _publishEvent(
-            'battery:0', 'charge', _simulatedBatteryCharge0.toString()),
-      if (_battery1Present)
-        _publishEvent(
-            'battery:1', 'charge', _simulatedBatteryCharge1.toString()),
+      if (_battery0Present) _publishEvent('battery:0', 'charge', _simulatedBatteryCharge0.toString()),
+      if (_battery1Present) _publishEvent('battery:1', 'charge', _simulatedBatteryCharge1.toString()),
     ];
     await Future.wait(futures);
   }
@@ -153,8 +150,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                 0,
                                 100,
                                 (value) {
-                                  setState(
-                                      () => _simulatedSpeed = value.toInt());
+                                  setState(() => _simulatedSpeed = value.toInt());
                                   _updateEngineValues();
                                 },
                               ),
@@ -178,8 +174,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
@@ -188,9 +183,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                             Checkbox(
                                               value: _battery0Present,
                                               onChanged: (value) {
-                                                setState(() =>
-                                                    _battery0Present =
-                                                        value ?? false);
+                                                setState(() => _battery0Present = value ?? false);
                                                 _updateBatteryValues();
                                               },
                                             ),
@@ -203,22 +196,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                             0,
                                             100,
                                             (value) {
-                                              setState(() =>
-                                                  _simulatedBatteryCharge0 =
-                                                      value.toInt());
+                                              setState(() => _simulatedBatteryCharge0 = value.toInt());
                                               _updateBatteryValues();
                                             },
                                           ),
                                         _buildButtonGroup(
                                           'State',
-                                          [
-                                            'unknown',
-                                            'asleep',
-                                            'active',
-                                            'idle'
-                                          ],
-                                          (value) => _publishEvent(
-                                              'battery:0', 'state', value),
+                                          ['unknown', 'asleep', 'active', 'idle'],
+                                          (value) => _publishEvent('battery:0', 'state', value),
                                         ),
                                       ],
                                     ),
@@ -226,8 +211,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
@@ -236,9 +220,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                             Checkbox(
                                               value: _battery1Present,
                                               onChanged: (value) {
-                                                setState(() =>
-                                                    _battery1Present =
-                                                        value ?? false);
+                                                setState(() => _battery1Present = value ?? false);
                                                 _updateBatteryValues();
                                               },
                                             ),
@@ -251,22 +233,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                             0,
                                             100,
                                             (value) {
-                                              setState(() =>
-                                                  _simulatedBatteryCharge1 =
-                                                      value.toInt());
+                                              setState(() => _simulatedBatteryCharge1 = value.toInt());
                                               _updateBatteryValues();
                                             },
                                           ),
                                         _buildButtonGroup(
                                           'State',
-                                          [
-                                            'unknown',
-                                            'asleep',
-                                            'active',
-                                            'idle'
-                                          ],
-                                          (value) => _publishEvent(
-                                              'battery:1', 'state', value),
+                                          ['unknown', 'asleep', 'active', 'idle'],
+                                          (value) => _publishEvent('battery:1', 'state', value),
                                         ),
                                       ],
                                     ),
@@ -292,20 +266,17 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                           _buildButtonGroup(
                             'Blinker State',
                             ['off', 'left', 'right', 'both'],
-                            (value) => _publishEvent(
-                                'vehicle', 'blinker:state', value),
+                            (value) => _publishEvent('vehicle', 'blinker:state', value),
                           ),
                           _buildButtonGroup(
                             'Handlebar Position',
                             ['unlocked', 'locked'],
-                            (value) => _publishEvent(
-                                'vehicle', 'handlebar:position', value),
+                            (value) => _publishEvent('vehicle', 'handlebar:position', value),
                           ),
                           _buildButtonGroup(
                             'Kickstand State',
                             ['up', 'down'],
-                            (value) =>
-                                _publishEvent('vehicle', 'kickstand', value),
+                            (value) => _publishEvent('vehicle', 'kickstand', value),
                           ),
                           _buildButtonGroup(
                             'Vehicle State',
@@ -335,8 +306,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                       _simulateBrakeTap('left');
                                       break;
                                     default:
-                                      _publishEvent(
-                                          'vehicle', 'brake:left', value);
+                                      _publishEvent('vehicle', 'brake:left', value);
                                   }
                                 },
                               ),
@@ -354,8 +324,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                                   _simulateBrakeTap('right');
                                   break;
                                 default:
-                                  _publishEvent(
-                                      'vehicle', 'brake:right', value);
+                                  _publishEvent('vehicle', 'brake:right', value);
                               }
                             },
                           ),
@@ -375,24 +344,37 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                           _buildButtonGroup(
                             'Internet status',
                             ['disconnected', 'connected'],
-                            (value) =>
-                                _publishEvent('internet', 'status', value),
+                            (value) => _publishEvent('internet', 'status', value),
                           ),
-                          _buildSlider('Signal Quality', _signalQuality, 0, 100,
-                              (value) {
+                          _buildSlider('Signal Quality', _signalQuality, 0, 100, (value) {
                             setState(() => _signalQuality = value.toInt());
-                            _publishEvent('internet', 'signal-quality',
-                                value.toInt().toString());
+                            _publishEvent('internet', 'signal-quality', value.toInt().toString());
                           }),
+                          _buildButtonGroup('Cloud Status', ['disconnected', 'connected'],
+                              (value) => _publishEvent('internet', 'unu-cloud', value)),
+                          _buildButtonGroup('GPS Status', ['off', 'searching', 'fix-established', 'error'],
+                              (value) => _publishEvent('gps', 'state', value)),
+
+                          // OTA Update Status Controls
                           _buildButtonGroup(
-                              'Cloud Status',
-                              ['disconnected', 'connected'],
-                              (value) => _publishEvent(
-                                  'internet', 'unu-cloud', value)),
-                          _buildButtonGroup(
-                              'GPS Status',
-                              ['off', 'searching', 'fix-established', 'error'],
-                              (value) => _publishEvent('gps', 'state', value))
+                            'OTA Status',
+                            [
+                              'none',
+                              'initializing',
+                              'checking-updates',
+                              'checking-update-error',
+                              'device-updated',
+                              'waiting-dashboard',
+                              'downloading-updates',
+                              'downloading-update-error',
+                              'installing-updates',
+                              'installing-update-error',
+                              'installation-complete-waiting-dashboard-reboot',
+                              'installation-complete-waiting-reboot',
+                              'unknown'
+                            ],
+                            (value) => _publishEvent('ota', 'status', value),
+                          )
                         ],
                       ),
                     ),
@@ -407,8 +389,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.red.withOpacity(0.8),
                 child: Text(
                   _errorMessage!,

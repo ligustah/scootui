@@ -24,7 +24,14 @@ void main() {
 }
 
 void _setupPlatformConfigurations() {
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+  if (kIsWeb) {
+    // Web-specific setup
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    // Desktop-specific setup
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -40,6 +47,13 @@ void _setupPlatformConfigurations() {
       });
       SystemChannels.platform.invokeMethod('Window.center');
     });
+  } else {
+    // Mobile/embedded setup
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
   }
 }
 
