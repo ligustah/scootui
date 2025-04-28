@@ -6,13 +6,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/all.dart';
+import 'cubits/theme_cubit.dart';
+import 'env_config.dart';
 import 'repositories/all.dart';
 import 'repositories/mdb_repository.dart';
 import 'screens/simulator_screen.dart';
-import 'theme_config.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize environment configuration
+  EnvConfig.initialize();
 
   _setupPlatformConfigurations();
 
@@ -48,17 +52,21 @@ class SimulatorApp extends StatelessWidget {
       providers: allRepositories,
       child: MultiBlocProvider(
         providers: allCubits,
-        child: MaterialApp(
-          title: 'Cluster Simulator',
-          theme: AppThemes.lightTheme,
-          darkTheme: AppThemes.darkTheme,
-          themeMode: ThemeMode.dark,
-          debugShowCheckedModeBanner: false,
-          home: Builder(
-            builder: (context) => SimulatorScreen(
-              repository: context.read<MDBRepository>(),
-            ),
-          ),
+        child: BlocBuilder<ThemeCubit, ThemeState>(
+          builder: (context, state) {
+            return MaterialApp(
+              title: 'Cluster Simulator',
+              theme: state.lightTheme,
+              darkTheme: state.darkTheme,
+              themeMode: state.themeMode,
+              debugShowCheckedModeBanner: false,
+              home: Builder(
+                builder: (context) => SimulatorScreen(
+                  repository: context.read<MDBRepository>(),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
