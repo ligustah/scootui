@@ -20,7 +20,7 @@ dependencies:
   latlong2: ^0.9.0
   path_provider: ^2.1.5
   bloc: ^9.0.0
-  flutter_bloc: ^9.1.0
+  flutter_bloc: ^9.1.1
   equatable: ^2.0.7
   sqlite3_flutter_libs: ^0.5.32
   freezed: ^3.0.4
