@@ -34,6 +34,13 @@ final $_ScooterStateMap = {
   "ready-to-drive": ScooterState.readyToDrive,
   "off": ScooterState.off,
   "parked": ScooterState.parked,
+  "booting": ScooterState.booting,
+  "shutting-down": ScooterState.shuttingDown,
+  "hibernating": ScooterState.hibernating,
+  "hibernating-imminent": ScooterState.hibernatingImminent,
+  "suspending": ScooterState.suspending,
+  "suspending-imminent": ScooterState.suspendingImminent,
+  "updating": ScooterState.updating,
 };
 
 final $_HandleBarLockSensorMap = {

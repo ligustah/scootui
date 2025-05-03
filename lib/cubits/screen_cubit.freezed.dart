@@ -95,4 +95,24 @@ class ScreenAddressSelection implements ScreenState {
   }
 }
 
+/// @nodoc
+
+class ScreenOtaBackground implements ScreenState {
+  const ScreenOtaBackground();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is ScreenOtaBackground);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() {
+    return 'ScreenState.otaBackground()';
+  }
+}
+
 // dart format on

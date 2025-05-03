@@ -14,7 +14,7 @@ part of 'brouter.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$BRouterProperties {
+mixin _$BRouterProperties implements DiagnosticableTreeMixin {
   String get creator;
   String get name;
   @JsonKey(name: 'track-length')
@@ -43,6 +43,23 @@ mixin _$BRouterProperties {
 
   /// Serializes this BRouterProperties to a JSON map.
   Map<String, dynamic> toJson();
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    properties
+      ..add(DiagnosticsProperty('type', 'BRouterProperties'))
+      ..add(DiagnosticsProperty('creator', creator))
+      ..add(DiagnosticsProperty('name', name))
+      ..add(DiagnosticsProperty('trackLength', trackLength))
+      ..add(DiagnosticsProperty('filteredAscend', filteredAscend))
+      ..add(DiagnosticsProperty('plainAscend', plainAscend))
+      ..add(DiagnosticsProperty('totalTime', totalTime))
+      ..add(DiagnosticsProperty('totalEnergy', totalEnergy))
+      ..add(DiagnosticsProperty('voiceHints', voiceHints))
+      ..add(DiagnosticsProperty('cost', cost))
+      ..add(DiagnosticsProperty('messages', messages))
+      ..add(DiagnosticsProperty('times', times));
+  }
 
   @override
   bool operator ==(Object other) {
@@ -85,7 +102,7 @@ mixin _$BRouterProperties {
       const DeepCollectionEquality().hash(times));
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'BRouterProperties(creator: $creator, name: $name, trackLength: $trackLength, filteredAscend: $filteredAscend, plainAscend: $plainAscend, totalTime: $totalTime, totalEnergy: $totalEnergy, voiceHints: $voiceHints, cost: $cost, messages: $messages, times: $times)';
   }
 }
@@ -186,7 +203,8 @@ class _$BRouterPropertiesCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _BRouterProperties extends BRouterProperties {
+class _BRouterProperties extends BRouterProperties
+    with DiagnosticableTreeMixin {
   const _BRouterProperties(
       {required this.creator,
       required this.name,
@@ -268,6 +286,23 @@ class _BRouterProperties extends BRouterProperties {
   }
 
   @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    properties
+      ..add(DiagnosticsProperty('type', 'BRouterProperties'))
+      ..add(DiagnosticsProperty('creator', creator))
+      ..add(DiagnosticsProperty('name', name))
+      ..add(DiagnosticsProperty('trackLength', trackLength))
+      ..add(DiagnosticsProperty('filteredAscend', filteredAscend))
+      ..add(DiagnosticsProperty('plainAscend', plainAscend))
+      ..add(DiagnosticsProperty('totalTime', totalTime))
+      ..add(DiagnosticsProperty('totalEnergy', totalEnergy))
+      ..add(DiagnosticsProperty('voiceHints', voiceHints))
+      ..add(DiagnosticsProperty('cost', cost))
+      ..add(DiagnosticsProperty('messages', messages))
+      ..add(DiagnosticsProperty('times', times));
+  }
+
+  @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
@@ -308,7 +343,7 @@ class _BRouterProperties extends BRouterProperties {
       const DeepCollectionEquality().hash(_times));
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'BRouterProperties(creator: $creator, name: $name, trackLength: $trackLength, filteredAscend: $filteredAscend, plainAscend: $plainAscend, totalTime: $totalTime, totalEnergy: $totalEnergy, voiceHints: $voiceHints, cost: $cost, messages: $messages, times: $times)';
   }
 }

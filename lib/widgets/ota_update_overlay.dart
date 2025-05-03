@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubits/mdb_cubits.dart'; // Assuming OTA status comes from MDB
-import '../state/vehicle.dart'; // Assuming scooter state comes from Vehicle state
-import '../state/enums.dart'; // Assuming scooter state enum is here
-import '../state/ota.dart'; // Import OtaData from its new location
-import '../state/vehicle.dart'; // Import VehicleData
+
+import '../cubits/mdb_cubits.dart';
+import '../state/vehicle.dart';
 
 // Define possible OTA update states
 enum OtaStatus {
@@ -81,7 +78,6 @@ String getOtaStatusText(OtaStatus status) {
     case OtaStatus.installationCompleteWaitingReboot:
       return 'Installation complete, waiting for reboot...';
     case OtaStatus.unknown:
-      return 'Unknown update status.';
     case OtaStatus.none:
       return ''; // Should not be displayed
   }
@@ -94,34 +90,48 @@ class OtaUpdateOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     // Watch the vehicle state to determine scooter mode
     final vehicleState = VehicleSync.watch(context);
-    final isReadyToDrive = vehicleState.state == ScooterState.readyToDrive; // Corrected access
+    final isReadyToDrive = vehicleState.state == ScooterState.readyToDrive;
+    final isParked = vehicleState.state == ScooterState.parked;
+    final isStandby = vehicleState.state == ScooterState.standBy;
 
     // Watch the OTA status from MDB data
     final otaStatusString = OtaSync.watch(context).otaStatus;
     final otaStatus = mapOtaStatus(otaStatusString);
 
-    // Always hide the overlay if OTA status is none, null, or empty
-    if (otaStatus == OtaStatus.none || otaStatusString == null || otaStatusString.trim().isEmpty) {
+    // Check if the scooter is in a special state where we don't want to show OTA overlay
+    final isSpecialState = vehicleState.state == ScooterState.booting ||
+        vehicleState.state == ScooterState.shuttingDown ||
+        vehicleState.state == ScooterState.hibernating ||
+        vehicleState.state == ScooterState.hibernatingImminent ||
+        vehicleState.state == ScooterState.suspending ||
+        vehicleState.state == ScooterState.suspendingImminent;
+
+    // Always hide the overlay if:
+    // 1. OTA status is none or empty
+    // 2. The scooter is in a special state
+    if (otaStatus == OtaStatus.none || otaStatusString.trim().isEmpty || isSpecialState) {
       return Container(); // Don't show anything
     }
 
     // Determine if the overlay should be shown based on scooter mode and status
     bool showOverlay = false;
-    final isParked = vehicleState.state == ScooterState.parked;
 
     if (isReadyToDrive) {
       // In ready-to-drive mode, show only for downloading, installing, and their errors
+      // This shows a minimal overlay at the bottom
       showOverlay = otaStatus == OtaStatus.downloadingUpdates ||
           otaStatus == OtaStatus.downloadingUpdateError ||
           otaStatus == OtaStatus.installingUpdates ||
           otaStatus == OtaStatus.installingUpdateError;
     } else if (isParked) {
-      // In parked mode, hide for specific statuses
+      // In parked mode (unlocked scooter), hide for specific statuses
+      // Otherwise shows full overlay on top of the user's selected screen
       showOverlay = !(otaStatus == OtaStatus.unknown ||
           otaStatus == OtaStatus.initializing ||
           otaStatus == OtaStatus.checkingUpdates);
     } else {
-      // In other non-ready-to-drive modes (like standby and off), show for all statuses except deviceUpdated
+      // In other modes (like standby/locked and off), show for all statuses except deviceUpdated
+      // The MainScreen component will handle showing the black background in standby mode
       showOverlay = otaStatus != OtaStatus.deviceUpdated;
     }
 
@@ -158,7 +168,7 @@ class OtaUpdateOverlay extends StatelessWidget {
     } else {
       // Full-screen overlay with spinner for non-ready-to-drive modes
       return Container(
-        color: isParked ? Colors.black.withOpacity(0.8) : Colors.black, // 80% opacity in parked, 100% otherwise
+        color: isParked ? Colors.black.withOpacity(0.7) : Colors.black, // 70% opacity in parked, 100% otherwise
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -12,7 +12,19 @@ enum HandleBarLockSensor { locked, unlocked }
 
 enum SeatboxLock { open, closed }
 
-enum ScooterState { standBy, readyToDrive, off, parked }
+enum ScooterState {
+  standBy,
+  readyToDrive,
+  off,
+  parked,
+  booting,
+  shuttingDown,
+  hibernating,
+  hibernatingImminent,
+  suspending,
+  suspendingImminent,
+  updating
+}
 
 enum Kickstand { up, down }
 
