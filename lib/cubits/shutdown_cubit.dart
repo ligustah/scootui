@@ -4,11 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../state/engine.dart';
-import '../state/enums.dart';
 import '../state/vehicle.dart';
 import 'mdb_cubits.dart';
 
-enum ShutdownStatus { hidden, visible }
+enum ShutdownStatus {
+  hidden,
+  shuttingDown,
+  suspending,
+  hibernatingImminent,
+  suspendingImminent
+}
 
 class ShutdownState {
   final ShutdownStatus status;
@@ -30,21 +35,30 @@ class ShutdownCubit extends Cubit<ShutdownState> {
   }
 
   void _onVehicleData(VehicleData data) {
-    // Detect scooter state change to standBy or off
-    if (data.state == ScooterState.standBy || data.state == ScooterState.off) {
-      if (state.status == ShutdownStatus.hidden) {
-        _startShutdownAnimation();
-      }
-    } else {
-      // If state changes away from standBy or off, hide animation
-      if (state.status != ShutdownStatus.hidden) {
-        emit(const ShutdownState(status: ShutdownStatus.hidden));
-      }
-    }
-  }
+    // Map scooter state to shutdown status
+    ShutdownStatus newStatus;
 
-  void _startShutdownAnimation() {
-    emit(const ShutdownState(status: ShutdownStatus.visible));
+    switch (data.state) {
+      case ScooterState.shuttingDown:
+        newStatus = ShutdownStatus.shuttingDown;
+        break;
+      case ScooterState.suspending:
+        newStatus = ShutdownStatus.suspending;
+        break;
+      case ScooterState.hibernatingImminent:
+        newStatus = ShutdownStatus.hibernatingImminent;
+        break;
+      case ScooterState.suspendingImminent:
+        newStatus = ShutdownStatus.suspendingImminent;
+        break;
+      default:
+        newStatus = ShutdownStatus.hidden;
+    }
+
+    // Only emit if status changed
+    if (state.status != newStatus) {
+      emit(ShutdownState(status: newStatus));
+    }
   }
 
   @override
@@ -54,7 +68,8 @@ class ShutdownCubit extends Cubit<ShutdownState> {
     return super.close();
   }
 
-  static ShutdownState watch(BuildContext context) => context.watch<ShutdownCubit>().state;
+  static ShutdownState watch(BuildContext context) =>
+      context.watch<ShutdownCubit>().state;
 
   static ShutdownCubit create(BuildContext context) => ShutdownCubit(
         engineStream: context.read<EngineSync>().stream,
