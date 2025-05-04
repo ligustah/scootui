@@ -5,6 +5,7 @@ import 'address_cubit.dart';
 import 'map_cubit.dart';
 import 'mdb_cubits.dart';
 import 'menu_cubit.dart';
+import 'ota_cubit.dart';
 import 'screen_cubit.dart';
 import 'shutdown_cubit.dart';
 import 'system_cubit.dart';
@@ -29,4 +30,5 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: AddressCubit.create),
   BlocProvider(create: ShutdownCubit.create),
   BlocProvider(create: OtaSync.create),
+  BlocProvider(create: OtaCubit.create),
 ];

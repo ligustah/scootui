@@ -115,4 +115,24 @@ class ScreenOtaBackground implements ScreenState {
   }
 }
 
+/// @nodoc
+
+class ScreenOta implements ScreenState {
+  const ScreenOta();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is ScreenOta);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() {
+    return 'ScreenState.ota()';
+  }
+}
+
 // dart format on

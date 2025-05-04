@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/theme_cubit.dart';
 import '../cubits/trip_cubit.dart';
+import '../widgets/ota_info_widget.dart';
 import '../widgets/general/odometer_display.dart';
 import '../widgets/indicators/warning_indicators.dart';
 import '../widgets/power/power_display.dart';
@@ -152,6 +153,9 @@ class _ClusterScreenState extends State<ClusterScreen> {
                 ),
               ),
             ),
+
+          // OTA info widget (will only show when in minimal mode)
+          const OtaInfoWidget(),
         ],
       ),
     );

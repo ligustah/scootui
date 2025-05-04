@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../widgets/map/map_view.dart';
+import '../widgets/ota_info_widget.dart';
 import '../widgets/status_bars/map_bottom_status_bar.dart';
 import '../widgets/status_bars/top_status_bar.dart';
 
@@ -21,25 +22,31 @@ class MapScreen extends StatelessWidget {
       width: 480,
       height: 480,
       color: theme.scaffoldBackgroundColor,
-      child: Column(
+      child: Stack(
         children: [
-          // Top status bar
-          StatusBar(),
+          Column(
+            children: [
+              // Top status bar
+              StatusBar(),
 
-          // Map view
-          Expanded(
-            child: _buildMap(context, state, theme),
+              // Map view
+              Expanded(
+                child: _buildMap(context, state, theme),
+              ),
+
+              // Bottom status bar with speed
+              MapBottomStatusBar(),
+            ],
           ),
 
-          // Bottom status bar with speed
-          MapBottomStatusBar(),
+          // OTA info widget (will only show when in minimal mode)
+          const OtaInfoWidget(),
         ],
       ),
     );
   }
 
-  Widget _buildMap(BuildContext context, MapState mapState, ThemeData theme) =>
-      switch (mapState) {
+  Widget _buildMap(BuildContext context, MapState mapState, ThemeData theme) => switch (mapState) {
         MapLoading() => const Center(child: CircularProgressIndicator()),
         MapUnavailable(:final error) => Center(
             child: Padding(

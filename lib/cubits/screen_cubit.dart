@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../cubits/ota_cubit.dart';
 import '../services/settings_service.dart';
 
 part 'screen_cubit.freezed.dart';
@@ -11,14 +12,29 @@ part 'screen_state.dart';
 
 class ScreenCubit extends Cubit<ScreenState> {
   final SettingsService _settingsService;
+  final OtaCubit? _otaCubit;
   late StreamSubscription _settingsSubscription; // Add subscription
+  StreamSubscription? _otaSubscription;
 
-  ScreenCubit(this._settingsService) : super(_getInitialState(_settingsService.getScreenSetting())) {
+  ScreenCubit(this._settingsService, [this._otaCubit]) : super(_getInitialState(_settingsService.getScreenSetting())) {
     // Subscribe to settings updates
     _settingsSubscription = _settingsService.settingsStream.listen((settings) {
       final screenMode = _settingsService.getScreenSetting(); // Get updated screen mode
       emit(_getInitialState(screenMode)); // Emit new state based on updated mode
     });
+
+    // Subscribe to OTA state updates if OtaCubit is provided
+    if (_otaCubit != null) {
+      _otaSubscription = _otaCubit!.stream.listen((otaState) {
+        // When OTA enters full screen mode, switch to OTA screen
+        if (otaState is OtaFullScreen) {
+          emit(const ScreenState.ota());
+        } else if (state is ScreenOta && otaState is! OtaFullScreen) {
+          // When OTA exits full screen mode, switch back to cluster
+          emit(const ScreenState.cluster());
+        }
+      });
+    }
   }
 
   static ScreenState _getInitialState(String mode) {
@@ -55,12 +71,14 @@ class ScreenCubit extends Cubit<ScreenState> {
 
   static ScreenCubit create(BuildContext context) {
     final settingsService = context.read<SettingsService>();
-    return ScreenCubit(settingsService);
+    final otaCubit = context.read<OtaCubit>();
+    return ScreenCubit(settingsService, otaCubit);
   }
 
   @override
   Future<void> close() {
     _settingsSubscription.cancel(); // Cancel subscription on close
+    _otaSubscription?.cancel(); // Cancel OTA subscription if it exists
     return super.close();
   }
 }
