@@ -25,10 +25,10 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: SystemCubit.create),
   BlocProvider(create: TripCubit.create),
   BlocProvider(create: MapCubit.create),
+  BlocProvider(create: OtaSync.create),
+  BlocProvider(create: OtaCubit.create),
   BlocProvider(create: ScreenCubit.create),
   BlocProvider(create: MenuCubit.create),
   BlocProvider(create: AddressCubit.create),
   BlocProvider(create: ShutdownCubit.create),
-  BlocProvider(create: OtaSync.create),
-  BlocProvider(create: OtaCubit.create),
 ];
