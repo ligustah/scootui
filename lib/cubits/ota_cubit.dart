@@ -96,7 +96,8 @@ class OtaCubit extends Cubit<OtaState> {
   late StreamSubscription _otaSubscription;
   late StreamSubscription _vehicleSubscription;
 
-  OtaCubit(this._otaSync, this._vehicleSync) : super(const OtaState.inactive()) {
+  OtaCubit(this._otaSync, this._vehicleSync)
+      : super(const OtaState.inactive()) {
     _initialize();
   }
 
@@ -119,6 +120,7 @@ class OtaCubit extends Cubit<OtaState> {
     final isReadyToDrive = vehicleState == ScooterState.readyToDrive;
     final isParked = vehicleState == ScooterState.parked;
     final isStandby = vehicleState == ScooterState.standBy;
+    final isUpdating = vehicleState == ScooterState.updating;
 
     // Check if the scooter is in a special state where we don't want to show OTA
     final isSpecialState = vehicleState == ScooterState.booting ||
@@ -129,8 +131,20 @@ class OtaCubit extends Cubit<OtaState> {
         vehicleState == ScooterState.suspendingImminent;
 
     // Always hide if OTA status is none/empty or in special states
-    if (otaStatus == OtaStatus.none || otaStatusString?.trim().isEmpty == true || isSpecialState) {
+    if (otaStatus == OtaStatus.none ||
+        otaStatusString?.trim().isEmpty == true ||
+        isSpecialState) {
       emit(const OtaState.inactive());
+      return;
+    }
+
+    // If the vehicle is in updating state, show the full screen OTA
+    if (isUpdating) {
+      emit(OtaState.fullScreen(
+        status: otaStatus,
+        statusText: getOtaStatusText(otaStatus),
+        isParked: false, // Fully opaque background in updating mode
+      ));
       return;
     }
 
@@ -143,7 +157,8 @@ class OtaCubit extends Cubit<OtaState> {
           otaStatus == OtaStatus.installingUpdateError;
 
       if (showMinimal) {
-        emit(OtaState.minimal(status: otaStatus, statusText: getOtaStatusText(otaStatus)));
+        emit(OtaState.minimal(
+            status: otaStatus, statusText: getOtaStatusText(otaStatus)));
       } else {
         emit(const OtaState.inactive());
       }
