@@ -1,14 +1,13 @@
 import 'dart:async'; // Import dart:async for StreamSubscription
-import 'package:bloc/bloc.dart';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../repositories/mdb_repository.dart';
 import '../services/settings_service.dart';
 
-part 'screen_state.dart';
 part 'screen_cubit.freezed.dart';
+part 'screen_state.dart';
 
 class ScreenCubit extends Cubit<ScreenState> {
   final SettingsService _settingsService;
@@ -26,8 +25,8 @@ class ScreenCubit extends Cubit<ScreenState> {
     switch (mode) {
       case 'navigation': // Map OEM 'navigation' to our 'map'
         return const ScreenState.map();
-      case 'address_selection': // Keep our custom mode
-        return const ScreenState.addressSelection();
+      case 'address_selection': // Default to cluster if address_selection is persisted
+        return const ScreenState.cluster();
       case 'speedometer': // Map OEM 'speedometer' to our 'cluster'
       default:
         return const ScreenState.cluster();
@@ -45,8 +44,9 @@ class ScreenCubit extends Cubit<ScreenState> {
   }
 
   void showAddressSelection() {
-    // No need to emit here, the stream listener will handle it
-    _persistScreenMode('address_selection'); // Persist our custom mode
+    // Directly emit the state without persisting
+    emit(const ScreenState.addressSelection());
+    // Do not persist address_selection mode as it can cause hanging
   }
 
   void _persistScreenMode(String mode) {
