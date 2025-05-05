@@ -18,19 +18,140 @@ class SimulatorScreen extends StatefulWidget {
 }
 
 class _SimulatorScreenState extends State<SimulatorScreen> {
+  // Engine values
   int _simulatedSpeed = 0;
   int _simulatedRpm = 0;
+  int _simulatedMotorCurrent = 0;
+  double _simulatedOdometer = 0.0;
+  double _simulatedTripDistance = 0.0;
+
+  // Battery values
   int _simulatedBatteryCharge0 = 100;
   int _simulatedBatteryCharge1 = 100;
-  int _signalQuality = 0;
-  String? _errorMessage;
   bool _battery0Present = true;
   bool _battery1Present = true;
+
+  // System values
+  int _signalQuality = 0;
+  String? _errorMessage;
+
+  // Current states
+  String _blinkerState = 'off';
+  String _handlebarPosition = 'unlocked';
+  String _kickstandState = 'up';
+  String _vehicleState = 'parked';
+  String _leftBrakeState = 'off';
+  String _rightBrakeState = 'off';
+  String _bluetoothStatus = 'disconnected';
+  String _internetStatus = 'disconnected';
+  String _cloudStatus = 'disconnected';
+  String _gpsState = 'off';
+  String _otaStatus = 'none';
+
+  // Battery states
+  String _battery0State = 'unknown';
+  String _battery1State = 'unknown';
+
+  // Expanded sections
+  bool _vehicleStateExpanded = false;
+  bool _otaStatusExpanded = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeValues();
+    _loadInitialValues();
+  }
+
+  Future<void> _loadInitialValues() async {
+    // Load current values from Redis
+    await _loadCurrentValues();
+
+    // Initialize values if not already set
+    await _initializeValues();
+  }
+
+  Future<void> _loadCurrentValues() async {
+    try {
+      // Load vehicle states
+      final blinkerState =
+          await widget.repository.get('vehicle', 'blinker:state');
+      final handlebarPosition =
+          await widget.repository.get('vehicle', 'handlebar:position');
+      final kickstandState =
+          await widget.repository.get('vehicle', 'kickstand');
+      final vehicleState = await widget.repository.get('vehicle', 'state');
+      final leftBrakeState =
+          await widget.repository.get('vehicle', 'brake:left');
+      final rightBrakeState =
+          await widget.repository.get('vehicle', 'brake:right');
+
+      // Load system states
+      final bluetoothStatus = await widget.repository.get('ble', 'status');
+      final internetStatus = await widget.repository.get('internet', 'status');
+      final signalQuality =
+          await widget.repository.get('internet', 'signal-quality');
+      final cloudStatus = await widget.repository.get('internet', 'unu-cloud');
+      final gpsState = await widget.repository.get('gps', 'state');
+      final otaStatus = await widget.repository.get('ota', 'status');
+
+      // Load battery states
+      final battery0Present =
+          await widget.repository.get('battery:0', 'present');
+      final battery0Charge = await widget.repository.get('battery:0', 'charge');
+      final battery0State = await widget.repository.get('battery:0', 'state');
+
+      final battery1Present =
+          await widget.repository.get('battery:1', 'present');
+      final battery1Charge = await widget.repository.get('battery:1', 'charge');
+      final battery1State = await widget.repository.get('battery:1', 'state');
+
+      // Load engine values
+      final speed = await widget.repository.get('engine-ecu', 'speed');
+      final rpm = await widget.repository.get('engine-ecu', 'rpm');
+      final odometer = await widget.repository.get('engine-ecu', 'odometer');
+
+      // Update state with loaded values
+      setState(() {
+        if (blinkerState != null) _blinkerState = blinkerState;
+        if (handlebarPosition != null) _handlebarPosition = handlebarPosition;
+        if (kickstandState != null) _kickstandState = kickstandState;
+        if (vehicleState != null) _vehicleState = vehicleState;
+        if (leftBrakeState != null) _leftBrakeState = leftBrakeState;
+        if (rightBrakeState != null) _rightBrakeState = rightBrakeState;
+
+        if (bluetoothStatus != null) _bluetoothStatus = bluetoothStatus;
+        if (internetStatus != null) _internetStatus = internetStatus;
+        if (signalQuality != null)
+          _signalQuality = int.tryParse(signalQuality) ?? 0;
+        if (cloudStatus != null) _cloudStatus = cloudStatus;
+        if (gpsState != null) _gpsState = gpsState;
+        if (otaStatus != null) _otaStatus = otaStatus;
+
+        if (battery0Present != null)
+          _battery0Present = battery0Present.toLowerCase() == 'true';
+        if (battery0Charge != null)
+          _simulatedBatteryCharge0 = int.tryParse(battery0Charge) ?? 100;
+        if (battery0State != null) _battery0State = battery0State;
+
+        if (battery1Present != null)
+          _battery1Present = battery1Present.toLowerCase() == 'true';
+        if (battery1Charge != null)
+          _simulatedBatteryCharge1 = int.tryParse(battery1Charge) ?? 100;
+        if (battery1State != null) _battery1State = battery1State;
+
+        if (speed != null) _simulatedSpeed = int.tryParse(speed) ?? 0;
+        if (rpm != null) _simulatedRpm = int.tryParse(rpm) ?? 0;
+        if (odometer != null) {
+          final odometerValue = double.tryParse(odometer) ?? 0.0;
+          _simulatedOdometer =
+              odometerValue / 1000.0; // Convert from meters to km
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading values: $e';
+      });
+    }
   }
 
   Future<void> _initializeValues() async {
@@ -40,22 +161,26 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     // Initialize battery values
     await _updateBatteryValues();
 
-    // Initialize vehicle states
+    // Initialize vehicle states if not already set
     await Future.wait([
-      _publishEvent('vehicle', 'blinker:state', 'off'),
-      _publishEvent('vehicle', 'handlebar:position', 'unlocked'),
-      _publishEvent('vehicle', 'handlebar:lock-sensor', 'unlocked'),
-      _publishEvent('vehicle', 'kickstand', 'up'),
-      _publishEvent('vehicle', 'state', 'parked'),
-      _publishEvent('vehicle', 'brake:left', 'off'),
-      _publishEvent('vehicle', 'brake:right', 'off'),
+      _publishEvent('vehicle', 'blinker:state', _blinkerState),
+      _publishEvent('vehicle', 'handlebar:position', _handlebarPosition),
+      _publishEvent('vehicle', 'handlebar:lock-sensor', _handlebarPosition),
+      _publishEvent('vehicle', 'kickstand', _kickstandState),
+      _publishEvent('vehicle', 'state', _vehicleState),
+      _publishEvent('vehicle', 'brake:left', _leftBrakeState),
+      _publishEvent('vehicle', 'brake:right', _rightBrakeState),
     ]);
 
-    // Initialize system states
+    // Initialize system states if not already set
     await Future.wait([
-      _publishEvent('ble', 'status', 'disconnected'),
-      _publishEvent('internet', 'modem-state', 'disconnected'),
-      _publishEvent('ota', 'status', 'unknown'),
+      _publishEvent('ble', 'status', _bluetoothStatus),
+      _publishEvent('internet', 'modem-state', _internetStatus),
+      _publishEvent('internet', 'status', _internetStatus),
+      _publishEvent('internet', 'signal-quality', _signalQuality.toString()),
+      _publishEvent('internet', 'unu-cloud', _cloudStatus),
+      _publishEvent('gps', 'state', _gpsState),
+      _publishEvent('ota', 'status', _otaStatus),
     ]);
   }
 
@@ -63,6 +188,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     final futures = [
       _publishEvent('engine-ecu', 'speed', _simulatedSpeed.toString()),
       _publishEvent('engine-ecu', 'rpm', _simulatedRpm.toString()),
+      _publishEvent('engine-ecu', 'motor:current',
+          (_simulatedMotorCurrent * 1000).toString()),
+      _publishEvent(
+          'engine-ecu', 'odometer', (_simulatedOdometer * 1000).toString()),
     ];
     await Future.wait(futures);
   }
@@ -71,8 +200,12 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     final futures = [
       _publishEvent('battery:0', 'present', _battery0Present.toString()),
       _publishEvent('battery:1', 'present', _battery1Present.toString()),
-      if (_battery0Present) _publishEvent('battery:0', 'charge', _simulatedBatteryCharge0.toString()),
-      if (_battery1Present) _publishEvent('battery:1', 'charge', _simulatedBatteryCharge1.toString()),
+      if (_battery0Present)
+        _publishEvent(
+            'battery:0', 'charge', _simulatedBatteryCharge0.toString()),
+      if (_battery1Present)
+        _publishEvent(
+            'battery:1', 'charge', _simulatedBatteryCharge1.toString()),
     ];
     await Future.wait(futures);
   }
@@ -115,6 +248,472 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     super.dispose();
   }
 
+  Widget _buildCard(int index) {
+    switch (index) {
+      case 0:
+        return _buildSection(
+          'Speed & RPM',
+          [
+            _buildSlider(
+              'Speed (km/h)',
+              _simulatedSpeed,
+              0,
+              100,
+              (value) {
+                setState(() => _simulatedSpeed = value.toInt());
+                _updateEngineValues();
+              },
+            ),
+            _buildSlider(
+              'RPM',
+              _simulatedRpm,
+              0,
+              10000,
+              (value) {
+                setState(() => _simulatedRpm = value.toInt());
+                _updateEngineValues();
+              },
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Motor Current (A)'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Slider(
+                        value: _simulatedMotorCurrent.toDouble(),
+                        min: -10,
+                        max: 100,
+                        divisions: 110,
+                        label: _simulatedMotorCurrent.toString(),
+                        onChanged: (value) {
+                          setState(
+                              () => _simulatedMotorCurrent = value.toInt());
+                          _updateEngineValues();
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        _simulatedMotorCurrent.toString(),
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+      case 1:
+        return _buildSection(
+          'Battery 0',
+          [
+            Row(
+              children: [
+                const Text('Present'),
+                const SizedBox(width: 8),
+                Checkbox(
+                  value: _battery0Present,
+                  onChanged: (value) {
+                    setState(() => _battery0Present = value ?? false);
+                    _updateBatteryValues();
+                  },
+                ),
+              ],
+            ),
+            if (_battery0Present)
+              _buildSlider(
+                'Charge (%)',
+                _simulatedBatteryCharge0,
+                0,
+                100,
+                (value) {
+                  setState(() => _simulatedBatteryCharge0 = value.toInt());
+                  _updateBatteryValues();
+                },
+              ),
+            _buildSegmentedButton(
+              'State',
+              ['unknown', 'asleep', 'active', 'idle'],
+              _battery0State,
+              (value) {
+                setState(() => _battery0State = value);
+                _publishEvent('battery:0', 'state', value);
+              },
+            ),
+          ],
+        );
+      case 2:
+        return _buildSection(
+          'Battery 1',
+          [
+            Row(
+              children: [
+                const Text('Present'),
+                const SizedBox(width: 8),
+                Checkbox(
+                  value: _battery1Present,
+                  onChanged: (value) {
+                    setState(() => _battery1Present = value ?? false);
+                    _updateBatteryValues();
+                  },
+                ),
+              ],
+            ),
+            if (_battery1Present)
+              _buildSlider(
+                'Charge (%)',
+                _simulatedBatteryCharge1,
+                0,
+                100,
+                (value) {
+                  setState(() => _simulatedBatteryCharge1 = value.toInt());
+                  _updateBatteryValues();
+                },
+              ),
+            _buildSegmentedButton(
+              'State',
+              ['unknown', 'asleep', 'active', 'idle'],
+              _battery1State,
+              (value) {
+                setState(() => _battery1State = value);
+                _publishEvent('battery:1', 'state', value);
+              },
+            ),
+          ],
+        );
+      case 3:
+        return _buildSection(
+          'Blinker State',
+          [
+            _buildSegmentedButton(
+              '',
+              ['off', 'left', 'right', 'both'],
+              _blinkerState,
+              (value) {
+                setState(() => _blinkerState = value);
+                _publishEvent('vehicle', 'blinker:state', value);
+              },
+            ),
+          ],
+        );
+      case 4:
+        return _buildSection(
+          'Handlebar',
+          [
+            _buildSegmentedButton(
+              '',
+              ['unlocked', 'locked'],
+              _handlebarPosition,
+              (value) {
+                setState(() => _handlebarPosition = value);
+                _publishEvent('vehicle', 'handlebar:position', value);
+              },
+            ),
+          ],
+        );
+      case 5:
+        return _buildSection(
+          'Kickstand',
+          [
+            _buildSegmentedButton(
+              '',
+              ['up', 'down'],
+              _kickstandState,
+              (value) {
+                setState(() => _kickstandState = value);
+                _publishEvent('vehicle', 'kickstand', value);
+              },
+            ),
+          ],
+        );
+      case 6:
+        return _buildSection(
+          'Vehicle State',
+          [
+            _buildSegmentedButton(
+              '',
+              [
+                'parked',
+                'ready-to-drive',
+                'stand-by',
+                'booting',
+                'shutting-down'
+              ],
+              _vehicleState,
+              (value) {
+                setState(() => _vehicleState = value);
+                _publishEvent('vehicle', 'state', value);
+              },
+            ),
+            if (_vehicleStateExpanded)
+              _buildSegmentedButton(
+                '',
+                [
+                  'hibernating',
+                  'hibernating-imminent',
+                  'suspending',
+                  'suspending-imminent',
+                  'off',
+                  'updating'
+                ],
+                _vehicleState,
+                (value) {
+                  setState(() => _vehicleState = value);
+                  _publishEvent('vehicle', 'state', value);
+                },
+              ),
+            TextButton(
+              onPressed: () {
+                setState(() => _vehicleStateExpanded = !_vehicleStateExpanded);
+              },
+              child: Text(_vehicleStateExpanded ? 'Show Less' : 'Show More'),
+            ),
+          ],
+        );
+      case 7:
+        return _buildSection(
+          'Left Brake',
+          [
+            _buildSegmentedButton(
+              '',
+              ['off', 'on'],
+              _leftBrakeState,
+              (value) {
+                setState(() => _leftBrakeState = value);
+                _publishEvent('vehicle', 'brake:left', value);
+              },
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: const Size(0, 32),
+                  ),
+                  onPressed: () => _simulateBrakeTap('left'),
+                  child: const Text('Tap'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: const Size(0, 32),
+                  ),
+                  onPressed: () => _simulateBrakeDoubleTap('left'),
+                  child: const Text('Double-Tap'),
+                ),
+              ],
+            ),
+          ],
+        );
+      case 8:
+        return _buildSection(
+          'Right Brake',
+          [
+            _buildSegmentedButton(
+              '',
+              ['off', 'on'],
+              _rightBrakeState,
+              (value) {
+                setState(() => _rightBrakeState = value);
+                _publishEvent('vehicle', 'brake:right', value);
+              },
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: const Size(0, 32),
+                  ),
+                  onPressed: () => _simulateBrakeTap('right'),
+                  child: const Text('Tap'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: const Size(0, 32),
+                  ),
+                  onPressed: () => _simulateBrakeDoubleTap('right'),
+                  child: const Text('Double-Tap'),
+                ),
+              ],
+            ),
+          ],
+        );
+      case 9:
+        return _buildSection(
+          'Bluetooth',
+          [
+            _buildSegmentedButton(
+              '',
+              ['disconnected', 'connected'],
+              _bluetoothStatus,
+              (value) {
+                setState(() => _bluetoothStatus = value);
+                _publishEvent('ble', 'status', value);
+              },
+            ),
+          ],
+        );
+      case 10:
+        return _buildSection(
+          'Internet Status',
+          [
+            _buildSegmentedButton(
+              '',
+              ['disconnected', 'connected'],
+              _internetStatus,
+              (value) {
+                setState(() => _internetStatus = value);
+                _publishEvent('internet', 'status', value);
+              },
+            ),
+            _buildSlider(
+              'Signal Quality',
+              _signalQuality,
+              0,
+              100,
+              (value) {
+                setState(() => _signalQuality = value.toInt());
+                _publishEvent(
+                    'internet', 'signal-quality', value.toInt().toString());
+              },
+            ),
+          ],
+        );
+      case 11:
+        return _buildSection(
+          'Cloud Status',
+          [
+            _buildSegmentedButton(
+              '',
+              ['disconnected', 'connected'],
+              _cloudStatus,
+              (value) {
+                setState(() => _cloudStatus = value);
+                _publishEvent('internet', 'unu-cloud', value);
+              },
+            ),
+          ],
+        );
+      case 12:
+        return _buildSection(
+          'GPS Status',
+          [
+            _buildSegmentedButton(
+              '',
+              ['off', 'searching', 'fix-established', 'error'],
+              _gpsState,
+              (value) {
+                setState(() => _gpsState = value);
+                _publishEvent('gps', 'state', value);
+              },
+            ),
+          ],
+        );
+      case 13:
+        return _buildSection(
+          'OTA Status',
+          [
+            _buildSegmentedButton(
+              '',
+              [
+                'none',
+                'initializing',
+                'checking-updates',
+                'device-updated',
+                'waiting-dashboard'
+              ],
+              _otaStatus,
+              (value) {
+                setState(() => _otaStatus = value);
+                _publishEvent('ota', 'status', value);
+              },
+            ),
+            if (_otaStatusExpanded) ...[
+              _buildSegmentedButton(
+                '',
+                [
+                  'downloading-updates',
+                  'installing-updates',
+                  'checking-update-error',
+                  'downloading-update-error'
+                ],
+                _otaStatus,
+                (value) {
+                  setState(() => _otaStatus = value);
+                  _publishEvent('ota', 'status', value);
+                },
+              ),
+              _buildSegmentedButton(
+                '',
+                [
+                  'installing-update-error',
+                  'installation-complete-waiting-dashboard-reboot',
+                  'installation-complete-waiting-reboot',
+                  'unknown'
+                ],
+                _otaStatus,
+                (value) {
+                  setState(() => _otaStatus = value);
+                  _publishEvent('ota', 'status', value);
+                },
+              ),
+            ],
+            TextButton(
+              onPressed: () {
+                setState(() => _otaStatusExpanded = !_otaStatusExpanded);
+              },
+              child: Text(_otaStatusExpanded ? 'Show Less' : 'Show More'),
+            ),
+          ],
+        );
+      case 14:
+        return _buildSection(
+          'Odometer',
+          [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Odometer (km)'),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  controller: TextEditingController(
+                      text: _simulatedOdometer.toStringAsFixed(1)),
+                  onSubmitted: (value) {
+                    final parsedValue = double.tryParse(value);
+                    if (parsedValue != null) {
+                      setState(() => _simulatedOdometer = parsedValue);
+                      _updateEngineValues();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -125,260 +724,32 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         children: [
           SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top row with simulator screen and controls
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 480 + 32,
-                      height: 560,
-                      child: _buildSection("Screen", [MainScreen()]),
-                    ),
-                    // Right side - Speed, RPM, and Battery controls
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _buildSection(
-                            'Speed & RPM',
-                            [
-                              _buildSlider(
-                                'Speed (km/h)',
-                                _simulatedSpeed,
-                                0,
-                                100,
-                                (value) {
-                                  setState(() => _simulatedSpeed = value.toInt());
-                                  _updateEngineValues();
-                                },
-                              ),
-                              _buildSlider(
-                                'RPM',
-                                _simulatedRpm,
-                                0,
-                                10000,
-                                (value) {
-                                  setState(() => _simulatedRpm = value.toInt());
-                                  _updateEngineValues();
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildSection(
-                            'Battery States',
-                            [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const Text('Battery 0'),
-                                            const SizedBox(width: 8),
-                                            Checkbox(
-                                              value: _battery0Present,
-                                              onChanged: (value) {
-                                                setState(() => _battery0Present = value ?? false);
-                                                _updateBatteryValues();
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        if (_battery0Present)
-                                          _buildSlider(
-                                            'Charge (%)',
-                                            _simulatedBatteryCharge0,
-                                            0,
-                                            100,
-                                            (value) {
-                                              setState(() => _simulatedBatteryCharge0 = value.toInt());
-                                              _updateBatteryValues();
-                                            },
-                                          ),
-                                        _buildButtonGroup(
-                                          'State',
-                                          ['unknown', 'asleep', 'active', 'idle'],
-                                          (value) => _publishEvent('battery:0', 'state', value),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const Text('Battery 1'),
-                                            const SizedBox(width: 8),
-                                            Checkbox(
-                                              value: _battery1Present,
-                                              onChanged: (value) {
-                                                setState(() => _battery1Present = value ?? false);
-                                                _updateBatteryValues();
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        if (_battery1Present)
-                                          _buildSlider(
-                                            'Charge (%)',
-                                            _simulatedBatteryCharge1,
-                                            0,
-                                            100,
-                                            (value) {
-                                              setState(() => _simulatedBatteryCharge1 = value.toInt());
-                                              _updateBatteryValues();
-                                            },
-                                          ),
-                                        _buildButtonGroup(
-                                          'State',
-                                          ['unknown', 'asleep', 'active', 'idle'],
-                                          (value) => _publishEvent('battery:1', 'state', value),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                // Dashboard cluster
+                SizedBox(
+                  width: 480,
+                  height: 560,
+                  child: _buildSection("Screen", [MainScreen()]),
                 ),
-                const SizedBox(height: 16),
-                // Bottom row with remaining controls
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _buildSection(
-                        'Vehicle States',
-                        [
-                          _buildButtonGroup(
-                            'Blinker State',
-                            ['off', 'left', 'right', 'both'],
-                            (value) => _publishEvent('vehicle', 'blinker:state', value),
-                          ),
-                          _buildButtonGroup(
-                            'Handlebar Position',
-                            ['unlocked', 'locked'],
-                            (value) => _publishEvent('vehicle', 'handlebar:position', value),
-                          ),
-                          _buildButtonGroup(
-                            'Kickstand State',
-                            ['up', 'down'],
-                            (value) => _publishEvent('vehicle', 'kickstand', value),
-                          ),
-                          _buildButtonGroup(
-                            'Vehicle State',
-                            ['stand-by', 'ready-to-drive', 'parked', 'off'],
-                            (value) => _publishEvent('vehicle', 'state', value),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildSection(
-                        'Brake States',
-                        [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildButtonGroup(
-                                'Left Brake',
-                                ['off', 'on', 'tap', 'double-tap'],
-                                (value) {
-                                  switch (value) {
-                                    case 'double-tap':
-                                      _simulateBrakeDoubleTap('left');
-                                      break;
-                                    case 'tap':
-                                      _simulateBrakeTap('left');
-                                      break;
-                                    default:
-                                      _publishEvent('vehicle', 'brake:left', value);
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                          _buildButtonGroup(
-                            'Right Brake',
-                            ['off', 'on', 'tap', 'double-tap'],
-                            (value) {
-                              switch (value) {
-                                case 'double-tap':
-                                  _simulateBrakeDoubleTap('right');
-                                  break;
-                                case 'tap':
-                                  _simulateBrakeTap('right');
-                                  break;
-                                default:
-                                  _publishEvent('vehicle', 'brake:right', value);
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildSection(
-                        'System States',
-                        [
-                          _buildButtonGroup(
-                            'Bluetooth Connection',
-                            ['disconnected', 'connected'],
-                            (value) => _publishEvent('ble', 'status', value),
-                          ),
-                          _buildButtonGroup(
-                            'Internet status',
-                            ['disconnected', 'connected'],
-                            (value) => _publishEvent('internet', 'status', value),
-                          ),
-                          _buildSlider('Signal Quality', _signalQuality, 0, 100, (value) {
-                            setState(() => _signalQuality = value.toInt());
-                            _publishEvent('internet', 'signal-quality', value.toInt().toString());
-                          }),
-                          _buildButtonGroup('Cloud Status', ['disconnected', 'connected'],
-                              (value) => _publishEvent('internet', 'unu-cloud', value)),
-                          _buildButtonGroup('GPS Status', ['off', 'searching', 'fix-established', 'error'],
-                              (value) => _publishEvent('gps', 'state', value)),
 
-                          // OTA Update Status Controls
-                          _buildButtonGroup(
-                            'OTA Status',
-                            [
-                              'none',
-                              'initializing',
-                              'checking-updates',
-                              'checking-update-error',
-                              'device-updated',
-                              'waiting-dashboard',
-                              'downloading-updates',
-                              'downloading-update-error',
-                              'installing-updates',
-                              'installing-update-error',
-                              'installation-complete-waiting-dashboard-reboot',
-                              'installation-complete-waiting-reboot',
-                              'unknown'
-                            ],
-                            (value) => _publishEvent('ota', 'status', value),
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 16),
+
+                // Control cards in a wrap layout next to the dashboard
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.start,
+                    children: [
+                      for (int i = 0; i < 15; i++)
+                        SizedBox(
+                          width: 220,
+                          child: _buildCard(i),
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -389,7 +760,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.red.withOpacity(0.8),
                 child: Text(
                   _errorMessage!,
@@ -447,7 +819,42 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     );
   }
 
-  Widget _buildButtonGroup(
+  Widget _buildSegmentedButton(
+    String label,
+    List<String> options,
+    String selectedValue,
+    ValueChanged<String> onSelected,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (label.isNotEmpty) Text(label),
+        if (label.isNotEmpty) const SizedBox(height: 4),
+        Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: options.map((option) {
+            final isSelected = option == selectedValue;
+            return ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                backgroundColor:
+                    isSelected ? Theme.of(context).colorScheme.primary : null,
+                foregroundColor:
+                    isSelected ? Theme.of(context).colorScheme.onPrimary : null,
+              ),
+              onPressed: () => onSelected(option),
+              child: Text(option, style: const TextStyle(fontSize: 12)),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactButtonGroup(
     String label,
     List<String> options,
     ValueChanged<String> onSelected,
@@ -455,14 +862,20 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label),
-        const SizedBox(height: 4),
+        if (label.isNotEmpty) Text(label),
+        if (label.isNotEmpty) const SizedBox(height: 4),
         Wrap(
-          spacing: 8,
+          spacing: 4,
+          runSpacing: 4,
           children: options.map((option) {
             return ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               onPressed: () => onSelected(option),
-              child: Text(option),
+              child: Text(option, style: const TextStyle(fontSize: 12)),
             );
           }).toList(),
         ),
