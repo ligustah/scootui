@@ -142,7 +142,15 @@ class RedisMDBRepository implements MDBRepository {
     }
   }
 
-  Future<void> dashboardReady() => set("dashboard", "ready", "true");
+  Future<void> dashboardReady() async {
+    // Get the current vehicle state
+    final vehicleState = await get("vehicle", "state");
+
+    // Only set dashboard as ready if the vehicle is not in updating state
+    if (vehicleState != "updating") {
+      await set("dashboard", "ready", "true");
+    }
+  }
 
   @override
   Future<void> set(String cluster, String variable, String value, {bool publish = true}) {

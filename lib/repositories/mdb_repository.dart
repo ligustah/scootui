@@ -7,12 +7,13 @@ abstract class MDBRepository {
 
   Future<List<(String, String)>> getAll(String channel);
 
-  Future<void> set(String channel, String variable, String value,
-      {bool publish = true});
+  Future<void> set(String channel, String variable, String value, {bool publish = true});
 
   Stream<(String, String)> subscribe(String channel);
 
   Future<void> push(String channel, String command);
+
+  Future<void> dashboardReady();
 }
 
 class InMemoryMDBRepository implements MDBRepository {
@@ -35,8 +36,7 @@ class InMemoryMDBRepository implements MDBRepository {
   }
 
   @override
-  Future<void> set(String channel, String variable, String value,
-      {bool publish = true}) async {
+  Future<void> set(String channel, String variable, String value, {bool publish = true}) async {
     _storage.putIfAbsent(channel, () => {});
     _storage[channel]![variable] = value;
 
@@ -88,6 +88,17 @@ class InMemoryMDBRepository implements MDBRepository {
     switch (channel) {
       case 'scooter:blinker':
         await set("vehicle", "blinker:state", command);
+    }
+  }
+
+  @override
+  Future<void> dashboardReady() async {
+    // Get the current vehicle state
+    final vehicleState = await get("vehicle", "state");
+
+    // Only set dashboard as ready if the vehicle is not in updating state
+    if (vehicleState != "updating") {
+      await set("dashboard", "ready", "true");
     }
   }
 }

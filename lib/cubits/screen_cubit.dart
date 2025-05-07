@@ -4,8 +4,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../cubits/mdb_cubits.dart';
 import '../cubits/ota_cubit.dart';
 import '../services/settings_service.dart';
+import '../state/vehicle.dart';
 
 part 'screen_cubit.freezed.dart';
 part 'screen_state.dart';
@@ -13,14 +15,28 @@ part 'screen_state.dart';
 class ScreenCubit extends Cubit<ScreenState> {
   final SettingsService _settingsService;
   final OtaCubit? _otaCubit;
+  final VehicleSync _vehicleSync;
   late StreamSubscription _settingsSubscription; // Add subscription
   StreamSubscription? _otaSubscription;
+  late StreamSubscription _vehicleSubscription;
 
-  ScreenCubit(this._settingsService, [this._otaCubit]) : super(_getInitialState(_settingsService.getScreenSetting())) {
+  ScreenCubit(this._settingsService, this._vehicleSync, [this._otaCubit])
+      : super(_getInitialState(_settingsService.getScreenSetting())) {
     // Subscribe to settings updates
     _settingsSubscription = _settingsService.settingsStream.listen((settings) {
       final screenMode = _settingsService.getScreenSetting(); // Get updated screen mode
       emit(_getInitialState(screenMode)); // Emit new state based on updated mode
+    });
+
+    // Subscribe to vehicle state updates
+    _vehicleSubscription = _vehicleSync.stream.listen((vehicleData) {
+      // When vehicle state is updating, switch to OTA screen
+      if (vehicleData.state == ScooterState.updating) {
+        emit(const ScreenState.ota());
+      } else if (state is ScreenOta && vehicleData.state != ScooterState.updating) {
+        // When vehicle exits updating state, switch back to cluster
+        emit(const ScreenState.cluster());
+      }
     });
 
     // Subscribe to OTA state updates if OtaCubit is provided
@@ -71,13 +87,15 @@ class ScreenCubit extends Cubit<ScreenState> {
 
   static ScreenCubit create(BuildContext context) {
     final settingsService = context.read<SettingsService>();
+    final vehicleSync = context.read<VehicleSync>();
     final otaCubit = context.read<OtaCubit>();
-    return ScreenCubit(settingsService, otaCubit);
+    return ScreenCubit(settingsService, vehicleSync, otaCubit);
   }
 
   @override
   Future<void> close() {
     _settingsSubscription.cancel(); // Cancel subscription on close
+    _vehicleSubscription.cancel(); // Cancel vehicle subscription on close
     _otaSubscription?.cancel(); // Cancel OTA subscription if it exists
     return super.close();
   }
