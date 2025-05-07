@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:redis/redis.dart';
 
+import '../services/serial_number_service.dart';
 import 'mdb_repository.dart';
 
 class ConnectionPool {
@@ -145,6 +145,19 @@ class RedisMDBRepository implements MDBRepository {
   Future<void> dashboardReady() async {
     // Get the current vehicle state
     final vehicleState = await get("vehicle", "state");
+
+    // Read and publish the device serial number
+    try {
+      final serialNumber = await SerialNumberService.readSerialNumber();
+      if (serialNumber != null) {
+        await set("dashboard", "serial-number", serialNumber.toString());
+        print('Published device serial number: $serialNumber');
+      } else {
+        print('Failed to read device serial number');
+      }
+    } catch (e) {
+      print('Error publishing serial number: $e');
+    }
 
     // Only set dashboard as ready if the vehicle is not in updating state
     if (vehicleState != "updating") {
