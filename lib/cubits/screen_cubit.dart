@@ -59,6 +59,8 @@ class ScreenCubit extends Cubit<ScreenState> {
         return const ScreenState.map();
       case 'address_selection': // Default to cluster if address_selection is persisted
         return const ScreenState.cluster();
+      case 'debug': // Handle debug mode
+        return const ScreenState.debug();
       case 'speedometer': // Map OEM 'speedometer' to our 'cluster'
       default:
         return const ScreenState.cluster();
@@ -79,6 +81,12 @@ class ScreenCubit extends Cubit<ScreenState> {
     // Directly emit the state without persisting
     emit(const ScreenState.addressSelection());
     // Do not persist address_selection mode as it can cause hanging
+  }
+
+  void showDebug() {
+    // Directly emit the debug state without persisting
+    emit(const ScreenState.debug());
+    // Debug mode should not be persisted
   }
 
   void _persistScreenMode(String mode) {

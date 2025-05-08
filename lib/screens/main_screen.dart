@@ -3,16 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
-import '../cubits/ota_cubit.dart';
 import '../cubits/screen_cubit.dart';
-import '../state/vehicle.dart';
-import '../state/enums.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/menu/menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
 import 'address_selection_screen.dart';
 import 'cluster_screen.dart';
+import 'debug_screen.dart';
 import 'map_screen.dart';
 import 'ota_background_screen.dart';
 import 'ota_screen.dart';
@@ -44,6 +42,7 @@ class MainScreen extends StatelessWidget {
             ScreenAddressSelection() => const AddressSelectionScreen(),
             ScreenOtaBackground() => const OtaBackgroundScreen(),
             ScreenOta() => const OtaScreen(),
+            ScreenDebug() => const DebugScreen(),
           },
 
           // Menu overlay

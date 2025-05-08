@@ -7,4 +7,5 @@ sealed class ScreenState with _$ScreenState {
   const factory ScreenState.addressSelection() = ScreenAddressSelection;
   const factory ScreenState.otaBackground() = ScreenOtaBackground;
   const factory ScreenState.ota() = ScreenOta;
+  const factory ScreenState.debug() = ScreenDebug;
 }
