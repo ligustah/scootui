@@ -16,7 +16,7 @@ class MenuManager extends ChangeNotifier {
   bool _isMapAvailable = false;
 
   final Function() _onResetTrip;
-  
+
   MenuManager(this._onThemeChanged, this._onResetTrip) {
     _initializeMenu();
   }
@@ -29,7 +29,18 @@ class MenuManager extends ChangeNotifier {
 
   void _buildMenuItems() {
     final List<MenuItem> items = [];
-    
+
+    items.add(
+      MenuItem(
+        title: 'Hazard lights',
+        type: MenuItemType.action,
+        onChanged: (_) {
+          _toggleHazardLights();
+          closeMenu();
+        },
+      ),
+    );
+
     if (_isMapAvailable) {
       items.add(
         MenuItem(
@@ -47,19 +58,11 @@ class MenuManager extends ChangeNotifier {
 
     items.addAll([
       MenuItem(
-        title: 'Hazard lights',
-        type: MenuItemType.action,
-        onChanged: (_) {
-          _toggleHazardLights();
-          closeMenu();
-        },
-      ),
-      MenuItem(
         title: 'Change Theme',
         type: MenuItemType.action,
         onChanged: (_) {
-          final newTheme = _currentTheme == ThemeMode.dark 
-              ? ThemeMode.light 
+          final newTheme = _currentTheme == ThemeMode.dark
+              ? ThemeMode.light
               : ThemeMode.dark;
           _currentTheme = newTheme;
           _onThemeChanged(newTheme);
@@ -86,7 +89,7 @@ class MenuManager extends ChangeNotifier {
 
   void _updateMapViewMenuItem() {
     if (!_isMapAvailable) return;
-    
+
     _menuItems[0] = MenuItem(
       title: _isMapView ? 'Show Dashboard' : 'Show Map View',
       type: MenuItemType.action,
@@ -140,7 +143,7 @@ class MenuManager extends ChangeNotifier {
     if (!_isMenuVisible) return;
 
     final currentItem = _menuItems[_selectedIndex];
-    
+
     if (currentItem.type == MenuItemType.action) {
       currentItem.onChanged?.call(null);
       return;
@@ -148,7 +151,8 @@ class MenuManager extends ChangeNotifier {
 
     if (_isInSubmenu) {
       if (currentItem.type == MenuItemType.toggle) {
-        final newValue = (currentItem.currentValue! + 1) % currentItem.options!.length;
+        final newValue =
+            (currentItem.currentValue! + 1) % currentItem.options!.length;
         currentItem.onChanged?.call(newValue);
       }
       _isInSubmenu = false;
