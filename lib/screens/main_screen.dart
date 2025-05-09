@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../cubits/debug_overlay_cubit.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
@@ -23,12 +24,30 @@ class MainScreen extends StatelessWidget {
     // Get the current screen state
     final state = context.watch<ScreenCubit>().state;
     final menu = context.watch<MenuCubit>();
+    final debugMode = context.watch<DebugOverlayCubit>().state;
 
     Widget menuTrigger(Widget child) => ControlGestureDetector(
           stream: context.read<VehicleSync>().stream,
           onLeftDoubleTap: () => menu.showMenu(),
           child: child,
         );
+
+    // If debug mode is set to full, show the debug screen regardless of current screen state
+    if (debugMode == DebugMode.full) {
+      return SizedBox(
+        width: 480,
+        height: 480,
+        child: Stack(
+          children: [
+            const DebugScreen(),
+
+            // Overlay essential components that should always be visible
+            ShutdownOverlay(),
+            BluetoothPinCodeOverlay(),
+          ],
+        ),
+      );
+    }
 
     return SizedBox(
       width: 480,

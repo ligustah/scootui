@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nested/nested.dart';
 
 import 'address_cubit.dart';
+import 'debug_overlay_cubit.dart';
 import 'map_cubit.dart';
 import 'mdb_cubits.dart';
 import 'menu_cubit.dart';
@@ -31,4 +32,5 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: MenuCubit.create),
   BlocProvider(create: AddressCubit.create),
   BlocProvider(create: ShutdownCubit.create),
+  BlocProvider(create: DebugOverlayCubit.create),
 ];
