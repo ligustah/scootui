@@ -16,8 +16,7 @@ class MenuOverlay extends StatefulWidget {
   State<MenuOverlay> createState() => _MenuOverlayState();
 }
 
-class _MenuOverlayState extends State<MenuOverlay>
-    with SingleTickerProviderStateMixin {
+class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _animation;
   late ScrollController _scrollController;
@@ -38,8 +37,7 @@ class _MenuOverlayState extends State<MenuOverlay>
       parent: _animController,
       curve: Curves.easeOut,
     );
-    _scrollController = ScrollController()
-      ..addListener(_updateScrollIndicators);
+    _scrollController = ScrollController()..addListener(_updateScrollIndicators);
   }
 
   @override
@@ -53,8 +51,7 @@ class _MenuOverlayState extends State<MenuOverlay>
     if (!mounted) return;
     setState(() {
       _showTopScrollIndicator = _scrollController.offset > 20;
-      _showBottomScrollIndicator = _scrollController.offset <
-          _scrollController.position.maxScrollExtent - 20;
+      _showBottomScrollIndicator = _scrollController.offset < _scrollController.position.maxScrollExtent - 20;
     });
   }
 
@@ -70,8 +67,7 @@ class _MenuOverlayState extends State<MenuOverlay>
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
-    } else if (targetOffset + itemHeight >
-        _scrollController.offset + viewportHeight) {
+    } else if (targetOffset + itemHeight > _scrollController.offset + viewportHeight) {
       _scrollController.animateTo(
         targetOffset - viewportHeight + itemHeight,
         duration: const Duration(milliseconds: 200),
@@ -116,6 +112,14 @@ class _MenuOverlayState extends State<MenuOverlay>
     final isDark = theme.state.themeMode == ThemeMode.dark;
 
     final items = [
+      MenuItem(
+        title: 'Hazard lights',
+        type: MenuItemType.action,
+        onChanged: (_) {
+          vehicle.toggleHazardLights();
+          menu.hideMenu();
+        },
+      ),
       if (_showMapView) ...[
         MenuItem(
           title: 'Show Cluster View',
@@ -143,14 +147,6 @@ class _MenuOverlayState extends State<MenuOverlay>
             menu.hideMenu();
           },
         ),
-      MenuItem(
-        title: 'Hazard lights',
-        type: MenuItemType.action,
-        onChanged: (_) {
-          vehicle.toggleHazardLights();
-          menu.hideMenu();
-        },
-      ),
       MenuItem(
           title: "Switch Theme",
           type: MenuItemType.action,
@@ -186,9 +182,7 @@ class _MenuOverlayState extends State<MenuOverlay>
       child: FadeTransition(
         opacity: _animation,
         child: Container(
-          color: isDark
-              ? Colors.black.withOpacity(0.9)
-              : Colors.white.withOpacity(0.9),
+          color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
           padding: const EdgeInsets.only(top: 40),
           // Leave space for top status bar
           child: Column(
@@ -220,8 +214,7 @@ class _MenuOverlayState extends State<MenuOverlay>
                           child: MenuItemWidget(
                             item: item,
                             isSelected: _selectedIndex == index,
-                            isInSubmenu:
-                                false, //widget.isInSubmenu && widget.selectedIndex == index,
+                            isInSubmenu: false, //widget.isInSubmenu && widget.selectedIndex == index,
                           ),
                         );
                       },
@@ -240,12 +233,8 @@ class _MenuOverlayState extends State<MenuOverlay>
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                isDark
-                                    ? Colors.black.withOpacity(0.9)
-                                    : Colors.white.withOpacity(0.9),
-                                isDark
-                                    ? Colors.black.withOpacity(0.0)
-                                    : Colors.white.withOpacity(0.0),
+                                isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
+                                isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
                               ],
                             ),
                           ),
@@ -271,12 +260,8 @@ class _MenuOverlayState extends State<MenuOverlay>
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: [
-                                isDark
-                                    ? Colors.black.withOpacity(0.9)
-                                    : Colors.white.withOpacity(0.9),
-                                isDark
-                                    ? Colors.black.withOpacity(0.0)
-                                    : Colors.white.withOpacity(0.0),
+                                isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
+                                isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
                               ],
                             ),
                           ),
@@ -320,8 +305,7 @@ class _MenuOverlayState extends State<MenuOverlay>
     );
   }
 
-  Widget _buildControlHint(
-      BuildContext context, String control, String action) {
+  Widget _buildControlHint(BuildContext context, String control, String action) {
     final theme = ThemeCubit.watch(context);
 
     return Column(
