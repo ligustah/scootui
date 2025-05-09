@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../cubits/debug_overlay_cubit.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/theme_cubit.dart';
 import '../cubits/trip_cubit.dart';
+import '../widgets/debug/debug_overlay.dart';
 import '../widgets/ota_info_widget.dart';
 import '../widgets/general/odometer_display.dart';
 import '../widgets/indicators/warning_indicators.dart';
@@ -156,6 +159,18 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
           // OTA info widget (will only show when in minimal mode)
           const OtaInfoWidget(),
+
+          // Debug overlay - controlled by DebugOverlayCubit
+          BlocBuilder<DebugOverlayCubit, DebugMode>(
+            builder: (context, debugMode) {
+              // Only show overlay if mode is set to overlay
+              if (debugMode == DebugMode.overlay) {
+                return const DebugOverlay();
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
+          ),
         ],
       ),
     );
