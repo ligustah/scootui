@@ -29,6 +29,7 @@ class _DebugScreenState extends State<DebugScreen> {
   Map<String, String> _versionData = {};
   Map<String, String> _internetData = {};
   Map<String, String> _modemData = {};
+  Map<String, String> _otaData = {};
   Timer? _refreshTimer;
 
   @override
@@ -61,6 +62,7 @@ class _DebugScreenState extends State<DebugScreen> {
     _gpsData = await _getRedisData(mdbRepository, 'gps');
     _internetData = await _getRedisData(mdbRepository, 'internet');
     _modemData = await _getRedisData(mdbRepository, 'modem');
+    _otaData = await _getRedisData(mdbRepository, 'ota');
 
     // Get version data
     final dbcVersion = await mdbRepository.get('version:dbc', 'version_id');
@@ -134,8 +136,7 @@ class _DebugScreenState extends State<DebugScreen> {
                           'Vehicle',
                           _buildWrappingRow([
                             _buildCompactItem('State', _vehicleData['state'] ?? 'N/A'),
-                            _buildCompactItem('DBC', _versionData['dbc'] ?? 'N/A'),
-                            _buildCompactItem('MDB', _versionData['mdb'] ?? 'N/A'),
+                            _buildCompactItem('Pwr', _vehicleData['main-power'] ?? 'N/A'),
                           ]),
                         ),
 
@@ -173,7 +174,6 @@ class _DebugScreenState extends State<DebugScreen> {
                                 _buildCompactItem('HLock', _vehicleData['handlebar:lock-sensor'] ?? 'N/A'),
                                 _buildCompactItem('Kick', _vehicleData['kickstand'] ?? 'N/A'),
                                 _buildCompactItem('Seat', _vehicleData['seatbox:lock'] ?? 'N/A'),
-                                _buildCompactItem('Pwr', _vehicleData['main-power'] ?? 'N/A'),
                               ]),
                               _buildWrappingRow([
                                 _buildCompactItem('BL', _vehicleData['brake:left'] ?? 'N/A'),
@@ -299,12 +299,8 @@ class _DebugScreenState extends State<DebugScreen> {
                                 _buildCompactItem('Status', _internetData['status'] ?? 'N/A'),
                                 _buildCompactItem('Cloud', _internetData['unu-cloud'] ?? 'N/A'),
                                 _buildCompactItem('IP', _internetData['ip-address'] ?? 'N/A'),
-                              ]),
-                              _buildWrappingRow([
                                 _buildCompactItem('Tech', _internetData['access-tech'] ?? 'N/A'),
                                 _buildCompactItem('Signal', _internetData['signal-quality'] ?? 'N/A'),
-                                _buildCompactItem('IMEI', _internetData['sim-imei'] ?? 'N/A'),
-                                _buildCompactItem('ICCID', _internetData['sim-iccid'] ?? 'N/A'),
                               ]),
                             ],
                           ),
@@ -327,6 +323,24 @@ class _DebugScreenState extends State<DebugScreen> {
                                 _buildCompactItem('Code', _modemData['operator-code'] ?? 'N/A'),
                                 _buildCompactItem('Roam', _modemData['is-roaming'] ?? 'N/A'),
                                 _buildCompactItem('RegFail', _modemData['registration-fail'] ?? 'N/A'),
+                              ]),
+                            ],
+                          ),
+                        ),
+
+                        // OTA data
+                        _buildTableRow(
+                          'OTA',
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildWrappingRow([
+                                _buildCompactItem('Status', _otaData['status'] ?? 'N/A'),
+                                _buildCompactItem('Type', _otaData['update-type'] ?? 'N/A'),
+                                _buildCompactItem('Comp', _otaData['component'] ?? 'N/A'),
+                                _buildCompactItem('Prog', '${_otaData['progress'] ?? 'N/A'}%'),
+                                _buildCompactItem('Error', _otaData['error'] ?? 'N/A'),
+                                _buildCompactItem('URL', _otaData['url'] ?? 'N/A'),
                               ]),
                             ],
                           ),
