@@ -36,7 +36,7 @@ class _DebugScreenState extends State<DebugScreen> {
     super.initState();
     _loadData();
     // Set up periodic refresh every 1 second
-    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) => _loadData());
+    _refreshTimer = Timer.periodic(const Duration(milliseconds: 250), (_) => _loadData());
   }
 
   @override
@@ -305,6 +305,28 @@ class _DebugScreenState extends State<DebugScreen> {
                                 _buildCompactItem('Signal', _internetData['signal-quality'] ?? 'N/A'),
                                 _buildCompactItem('IMEI', _internetData['sim-imei'] ?? 'N/A'),
                                 _buildCompactItem('ICCID', _internetData['sim-iccid'] ?? 'N/A'),
+                              ]),
+                            ],
+                          ),
+                        ),
+
+                        // Modem data
+                        _buildTableRow(
+                          'Modem',
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildWrappingRow([
+                                _buildCompactItem('Power', _modemData['power-state'] ?? 'N/A'),
+                                _buildCompactItem('SIM', _modemData['sim-state'] ?? 'N/A'),
+                                _buildCompactItem('Lock', _modemData['sim-lock'] ?? 'N/A'),
+                                _buildCompactItem('Error', _modemData['error-state'] ?? 'N/A'),
+                              ]),
+                              _buildWrappingRow([
+                                _buildCompactItem('Op', _modemData['operator-name'] ?? 'N/A'),
+                                _buildCompactItem('Code', _modemData['operator-code'] ?? 'N/A'),
+                                _buildCompactItem('Roam', _modemData['is-roaming'] ?? 'N/A'),
+                                _buildCompactItem('RegFail', _modemData['registration-fail'] ?? 'N/A'),
                               ]),
                             ],
                           ),
