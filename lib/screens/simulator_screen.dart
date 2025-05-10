@@ -42,6 +42,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   String _vehicleState = 'parked';
   String _leftBrakeState = 'off';
   String _rightBrakeState = 'off';
+  String _seatboxButtonState = 'off';
   String _bluetoothStatus = 'disconnected';
   String _internetStatus = 'disconnected';
   String _cloudStatus = 'disconnected';
@@ -170,6 +171,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       _publishEvent('vehicle', 'state', _vehicleState),
       _publishEvent('vehicle', 'brake:left', _leftBrakeState),
       _publishEvent('vehicle', 'brake:right', _rightBrakeState),
+      _publishEvent('vehicle', 'seatbox:button', _seatboxButtonState),
     ]);
 
     // Initialize system states if not already set
@@ -212,6 +214,19 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   Future<void> _publishEvent(String channel, String key, String value) async {
     await widget.repository.set(channel, key, value);
+  }
+
+  // Button press/release methods
+  Future<void> _seatboxButtonDown() async {
+    print('Seatbox button DOWN');
+    setState(() => _seatboxButtonState = 'on');
+    await _publishEvent('vehicle', 'seatbox:button', 'on');
+  }
+
+  Future<void> _seatboxButtonUp() async {
+    print('Seatbox button UP');
+    setState(() => _seatboxButtonState = 'off');
+    await _publishEvent('vehicle', 'seatbox:button', 'off');
   }
 
   Future<void> _simulateBrakeDoubleTap(String brake) async {
@@ -554,6 +569,65 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         );
       case 9:
         return _buildSection(
+          'Seatbox Button',
+          [
+            // Button with mouse events
+            Listener(
+              onPointerDown: (_) => _seatboxButtonDown(),
+              onPointerUp: (_) => _seatboxButtonUp(),
+              onPointerCancel: (_) => _seatboxButtonUp(),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 40),
+                  backgroundColor: _seatboxButtonState == 'on'
+                      ? Colors.green.shade700
+                      : Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  // This is needed for the button to be clickable,
+                  // but the actual events are handled by the Listener
+                },
+                child: Text(
+                  'Seatbox button',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Current state indicator
+            Row(
+              children: [
+                const Text('Current state:'),
+                const SizedBox(width: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _seatboxButtonState == 'on'
+                        ? Colors.green
+                        : Colors.grey,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _seatboxButtonState.toUpperCase(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      case 10:
+        return _buildSection(
           'Bluetooth',
           [
             _buildSegmentedButton(
@@ -567,7 +641,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             ),
           ],
         );
-      case 10:
+      case 11:
         return _buildSection(
           'Internet Status',
           [
@@ -593,7 +667,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             ),
           ],
         );
-      case 11:
+      case 12:
         return _buildSection(
           'Cloud Status',
           [
@@ -608,7 +682,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             ),
           ],
         );
-      case 12:
+      case 13:
         return _buildSection(
           'GPS Status',
           [
@@ -623,7 +697,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             ),
           ],
         );
-      case 13:
+      case 14:
         return _buildSection(
           'OTA Status',
           [
@@ -680,7 +754,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             ),
           ],
         );
-      case 14:
+      case 15:
         return _buildSection(
           'Odometer',
           [
@@ -743,7 +817,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                     runSpacing: 8,
                     alignment: WrapAlignment.start,
                     children: [
-                      for (int i = 0; i < 15; i++)
+                      for (int i = 0; i < 16; i++)
                         SizedBox(
                           width: 220,
                           child: _buildCard(i),

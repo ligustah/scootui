@@ -8,6 +8,7 @@ import '../cubits/screen_cubit.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/menu/menu_overlay.dart';
+import '../widgets/shortcut_menu/shortcut_menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
 import 'address_selection_screen.dart';
 import 'cluster_screen.dart';
@@ -66,6 +67,9 @@ class MainScreen extends StatelessWidget {
 
           // Menu overlay
           MenuOverlay(),
+
+          // Shortcut menu overlay
+          const ShortcutMenuOverlay(),
 
           // Shutdown animation overlay
           ShutdownOverlay(),

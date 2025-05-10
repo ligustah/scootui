@@ -42,7 +42,8 @@ class DebugOverlayCubit extends Cubit<DebugMode> {
   void _initRedisListener() {
     _checkRedisValue();
 
-    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) => _checkRedisValue());
+    _refreshTimer =
+        Timer.periodic(const Duration(seconds: 1), (_) => _checkRedisValue());
   }
 
   Future<void> _checkRedisValue() async {
@@ -51,7 +52,9 @@ class DebugOverlayCubit extends Cubit<DebugMode> {
     try {
       final value = await _mdbRepository!.get(_redisKey, _redisField);
 
-      final debugMode = (value == null || value.isEmpty) ? DebugMode.off : value.toDebugMode();
+      final debugMode = (value == null || value.isEmpty)
+          ? DebugMode.off
+          : value.toDebugMode();
 
       if (debugMode != state) {
         emit(debugMode);
@@ -64,7 +67,7 @@ class DebugOverlayCubit extends Cubit<DebugMode> {
   void toggleMode() async {
     final DebugMode newMode = switch (state) {
       DebugMode.off => DebugMode.overlay,
-      DebugMode.overlay => DebugMode.full,
+      DebugMode.overlay => DebugMode.off,
       DebugMode.full => DebugMode.off,
     };
 
