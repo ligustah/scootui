@@ -220,42 +220,65 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   Future<void> _seatboxButtonDown() async {
     print('Seatbox button DOWN');
     setState(() => _seatboxButtonState = 'on');
+    // Update the hash state
     await _publishEvent('vehicle', 'seatbox:button', 'on');
+    // Also publish a direct button event
+    await _publishButtonEvent('seatbox:on');
   }
 
   Future<void> _seatboxButtonUp() async {
     print('Seatbox button UP');
     setState(() => _seatboxButtonState = 'off');
+    // Update the hash state
     await _publishEvent('vehicle', 'seatbox:button', 'off');
+    // Also publish a direct button event
+    await _publishButtonEvent('seatbox:off');
+  }
+
+  // Helper method to publish a button event via PUBSUB
+  Future<void> _publishButtonEvent(String event) async {
+    try {
+      await widget.repository.publishButtonEvent(event);
+      print('Published button event: $event');
+    } catch (e) {
+      print('Error publishing button event: $e');
+    }
   }
 
   Future<void> _simulateBrakeDoubleTap(String brake) async {
     // First press
     await _publishEvent('vehicle', 'brake:$brake', 'on');
+    await _publishButtonEvent('brake:$brake:on');
 
     await Future.delayed(const Duration(milliseconds: 100));
 
     // First release
     await _publishEvent('vehicle', 'brake:$brake', 'off');
+    await _publishButtonEvent('brake:$brake:off');
 
     await Future.delayed(const Duration(milliseconds: 100));
 
     // Second press
     await _publishEvent('vehicle', 'brake:$brake', 'on');
+    await _publishButtonEvent('brake:$brake:on');
+
     await Future.delayed(const Duration(milliseconds: 100));
 
     // Second release
     await _publishEvent('vehicle', 'brake:$brake', 'off');
+    await _publishButtonEvent('brake:$brake:off');
   }
 
   Future<void> _simulateBrakeTap(String brake) async {
     // Press
     await _publishEvent('vehicle', 'brake:$brake', 'on');
+    await _publishButtonEvent('brake:$brake:on');
 
     await Future.delayed(const Duration(milliseconds: 100));
 
     // Release
     await _publishEvent('vehicle', 'brake:$brake', 'off');
+    await _publishButtonEvent('brake:$brake:off');
   }
 
   @override
@@ -498,8 +521,15 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               ['off', 'on'],
               _leftBrakeState,
               (value) {
+                // Only update state when UI button is pressed
                 setState(() => _leftBrakeState = value);
+                if (value == 'on') {
+                  print('SIM: Left brake pressed via UI button');
+                } else {
+                  print('SIM: Left brake released via UI button');
+                }
                 _publishEvent('vehicle', 'brake:left', value);
+                _publishButtonEvent('brake:left:$value');
               },
             ),
             const SizedBox(height: 8),
@@ -537,8 +567,15 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               ['off', 'on'],
               _rightBrakeState,
               (value) {
+                // Only update state when UI button is pressed
                 setState(() => _rightBrakeState = value);
+                if (value == 'on') {
+                  print('SIM: Right brake pressed via UI button');
+                } else {
+                  print('SIM: Right brake released via UI button');
+                }
                 _publishEvent('vehicle', 'brake:right', value);
+                _publishButtonEvent('brake:right:$value');
               },
             ),
             const SizedBox(height: 8),
