@@ -2,16 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/theme_cubit.dart';
+import '../cubits/version_overlay_cubit.dart';
 import '../repositories/mdb_repository.dart';
 
-class VersionOverlay extends StatefulWidget {
+class VersionOverlay extends StatelessWidget {
   const VersionOverlay({super.key});
 
   @override
-  State<VersionOverlay> createState() => _VersionOverlayState();
+  Widget build(BuildContext context) {
+    return BlocBuilder<VersionOverlayCubit, bool>(
+      builder: (context, visible) {
+        if (!visible) return const SizedBox();
+
+        return _VersionOverlayContent();
+      },
+    );
+  }
 }
 
-class _VersionOverlayState extends State<VersionOverlay> {
+class _VersionOverlayContent extends StatefulWidget {
+  @override
+  State<_VersionOverlayContent> createState() => _VersionOverlayContentState();
+}
+
+class _VersionOverlayContentState extends State<_VersionOverlayContent> {
   // Version data
   Map<String, String> _systemData = {};
   Map<String, String> _mdbVersionData = {};

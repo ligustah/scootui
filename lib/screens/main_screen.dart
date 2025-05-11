@@ -10,6 +10,7 @@ import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/menu/menu_overlay.dart';
 import '../widgets/shortcut_menu/shortcut_menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
+import '../widgets/version_overlay.dart';
 import 'address_selection_screen.dart';
 import 'cluster_screen.dart';
 import 'debug_screen.dart';
@@ -76,6 +77,9 @@ class MainScreen extends StatelessWidget {
 
           // Bluetooth pin code overlay
           BluetoothPinCodeOverlay(),
+
+          // Version information overlay (triggered by both brakes in parked state)
+          VersionOverlay(),
         ],
       ),
     );
