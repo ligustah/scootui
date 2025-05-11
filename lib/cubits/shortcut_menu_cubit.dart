@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:redis/redis.dart';
 
+import '../repositories/mdb_repository.dart';
+import '../services/redis_connection_manager.dart';
 import '../state/enums.dart';
 import '../state/vehicle.dart';
 import 'debug_overlay_cubit.dart';
@@ -28,8 +31,10 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
   final ThemeCubit _themeCubit;
   final DebugOverlayCubit _debugOverlayCubit;
   final TripCubit _tripCubit;
+  final MDBRepository _mdbRepository;
 
   late final StreamSubscription<VehicleData> _vehicleSubscription;
+  StreamSubscription<(String, String)>? _buttonEventsSubscription;
 
   // Button press tracking
   DateTime? _buttonPressStartTime;
@@ -61,13 +66,47 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
     required ThemeCubit themeCubit,
     required DebugOverlayCubit debugOverlayCubit,
     required TripCubit tripCubit,
+    required MDBRepository mdbRepository,
   })  : _vehicleSync = vehicleSync,
         _themeCubit = themeCubit,
         _debugOverlayCubit = debugOverlayCubit,
         _tripCubit = tripCubit,
+        _mdbRepository = mdbRepository,
         super(ShortcutMenuState.hidden) {
+    // Listen for vehicle state changes via hash polling
     _vehicleSubscription =
         _vehicleSync.stream.listen(_handleVehicleStateChange);
+
+    // Subscribe to direct button events channel for more responsive UI
+    _buttonEventsSubscription =
+        _mdbRepository.subscribe("buttons").listen(_handleButtonEvent);
+  }
+
+  void _handleButtonEvent((String channel, String message) event) {
+    _log('Received button event: ${event.$2}');
+
+    // Parse the button event (format: "button:state")
+    final parts = event.$2.split(':');
+    if (parts.length < 2) return;
+
+    final button = parts[0];
+    final state = parts[1];
+
+    // Handle the seatbox button for quick menu
+    if (button == 'seatbox') {
+      // Only process button events when in ready-to-drive state for menu operations
+      if (_vehicleSync.state.state != ScooterState.readyToDrive) {
+        _resetState();
+        return;
+      }
+
+      if (state == 'on') {
+        _handleButtonPress();
+      } else if (state == 'off') {
+        _handleButtonRelease();
+      }
+    }
+
   }
 
   void _handleVehicleStateChange(VehicleData vehicleData) {
@@ -295,12 +334,14 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
       themeCubit: context.read<ThemeCubit>(),
       debugOverlayCubit: context.read<DebugOverlayCubit>(),
       tripCubit: context.read<TripCubit>(),
+      mdbRepository: RepositoryProvider.of<MDBRepository>(context),
     );
   }
 
   @override
   Future<void> close() {
     _vehicleSubscription.cancel();
+    _buttonEventsSubscription?.cancel();
     _longPressTimer?.cancel();
     _selectionTimer?.cancel();
     _cycleTimer?.cancel();

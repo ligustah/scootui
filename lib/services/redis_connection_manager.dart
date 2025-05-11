@@ -61,14 +61,15 @@ class RedisConnectionManager {
     try {
       // Subscribe to all relevant channels including both batteries
       _pubsub!.subscribe([
-        "vehicle", 
+        "vehicle",
         "engine-ecu",
         "battery:0",
         "battery:1",
         "cb-battery",
         "aux-battery",
         "ble",
-        "gps"
+        "gps",
+        "buttons" // Added button events channel for immediate button press notifications
       ]);
       
       // Set up stream listener
