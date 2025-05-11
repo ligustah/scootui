@@ -95,8 +95,15 @@ class OtaUpdateOverlay extends StatelessWidget {
     final isStandby = vehicleState.state == ScooterState.standBy;
 
     // Watch the OTA status from MDB data
-    final otaStatusString = OtaSync.watch(context).otaStatus;
+    final otaData = OtaSync.watch(context);
+    final otaStatusString = otaData.otaStatus;
     final otaStatus = mapOtaStatus(otaStatusString);
+
+    // Check DBC-specific status field
+    final dbcStatus = otaData.dbcStatus;
+
+    // Check update type to see if this is a blocking update
+    final isBlockingUpdate = otaData.updateType == 'blocking';
 
     // Check if the scooter is in a special state where we don't want to show OTA overlay
     final isSpecialState = vehicleState.state == ScooterState.booting ||
@@ -107,9 +114,11 @@ class OtaUpdateOverlay extends StatelessWidget {
         vehicleState.state == ScooterState.suspendingImminent;
 
     // Always hide the overlay if:
-    // 1. OTA status is none or empty
+    // 1. OTA status is none or empty and there's no DBC update active
     // 2. The scooter is in a special state
-    if (otaStatus == OtaStatus.none || otaStatusString.trim().isEmpty || isSpecialState) {
+    if ((otaStatus == OtaStatus.none || otaStatusString.trim().isEmpty) &&
+        !isBlockingUpdate && (dbcStatus == null || dbcStatus.isEmpty) ||
+        isSpecialState) {
       return Container(); // Don't show anything
     }
 
@@ -122,7 +131,9 @@ class OtaUpdateOverlay extends StatelessWidget {
       showOverlay = otaStatus == OtaStatus.downloadingUpdates ||
           otaStatus == OtaStatus.downloadingUpdateError ||
           otaStatus == OtaStatus.installingUpdates ||
-          otaStatus == OtaStatus.installingUpdateError;
+          otaStatus == OtaStatus.installingUpdateError ||
+          dbcStatus == 'downloading' ||
+          dbcStatus == 'installing';
     } else if (isParked) {
       // In parked mode (unlocked scooter), hide for specific statuses
       // Otherwise shows full overlay on top of the user's selected screen
@@ -132,14 +143,28 @@ class OtaUpdateOverlay extends StatelessWidget {
     } else {
       // In other modes (like standby/locked and off), show for all statuses except deviceUpdated
       // The MainScreen component will handle showing the black background in standby mode
-      showOverlay = otaStatus != OtaStatus.deviceUpdated;
+      showOverlay = otaStatus != OtaStatus.deviceUpdated || isBlockingUpdate;
     }
 
     if (!showOverlay) {
       return Container(); // Don't show anything if overlay is not needed
     }
 
-    final statusText = getOtaStatusText(otaStatus);
+    // Determine the status text to display
+    String statusText = getOtaStatusText(otaStatus);
+
+    // Override with specific message for blocking updates in standby mode
+    if (isBlockingUpdate && vehicleState.state == ScooterState.standBy) {
+      statusText = 'Your scooter is locked. It will fully shut off after finishing the update installation.';
+    }
+
+    // Use DBC status if available
+    if (dbcStatus != null && dbcStatus.isNotEmpty) {
+      OtaStatus dbcOtaStatus = mapOtaStatus(dbcStatus);
+      if (dbcOtaStatus != OtaStatus.none && dbcOtaStatus != OtaStatus.unknown) {
+        statusText = getOtaStatusText(dbcOtaStatus);
+      }
+    }
 
     if (isReadyToDrive) {
       // Minimal overlay at the bottom for ready-to-drive mode
