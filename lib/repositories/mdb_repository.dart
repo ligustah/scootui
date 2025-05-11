@@ -14,6 +14,9 @@ abstract class MDBRepository {
   Future<void> push(String channel, String command);
 
   Future<void> dashboardReady();
+
+  // For direct button events via PUBSUB
+  Future<void> publishButtonEvent(String event);
 }
 
 class InMemoryMDBRepository implements MDBRepository {
@@ -23,6 +26,22 @@ class InMemoryMDBRepository implements MDBRepository {
 
   final Map<String, Map<String, String>> _storage = {};
   final Map<String, List<StreamController<(String, String)>>> _subscribers = {};
+
+  @override
+  Future<void> publishButtonEvent(String event) async {
+    // For simulator, create a message on the 'buttons' channel
+    final controller = StreamController<(String, String)>();
+
+    _subscribers.putIfAbsent('buttons', () => []).add(controller);
+    controller.add(('buttons', event));
+
+    // Cleanup after simulating the event
+    await Future.delayed(Duration.zero);
+    _subscribers['buttons']?.remove(controller);
+    await controller.close();
+
+    print('InMemoryMDBRepository: Published button event: $event');
+  }
 
   @override
   Future<String?> get(String channel, String variable) async {

@@ -10,10 +10,18 @@ import '../state/vehicle.dart';
 class VersionOverlayCubit extends Cubit<bool> {
   Timer? _brakeHoldTimer;
   DateTime? _brakeHoldStartTime;
+  final MDBRepository _mdbRepository;
+  StreamSubscription<(String, String)>? _buttonEventsSubscription;
 
   static const _brakeHoldDuration = Duration(seconds: 3);
 
-  VersionOverlayCubit({MDBRepository? mdbRepository}) : super(false);
+  VersionOverlayCubit({required MDBRepository mdbRepository})
+    : _mdbRepository = mdbRepository,
+      super(false) {
+    // Subscribe to direct button events channel for more responsive UI
+    _buttonEventsSubscription =
+        _mdbRepository.subscribe("buttons").listen(_handleButtonEvent);
+  }
 
   static VersionOverlayCubit create(BuildContext context) {
     return VersionOverlayCubit(
@@ -21,19 +29,60 @@ class VersionOverlayCubit extends Cubit<bool> {
     );
   }
 
+  void _handleButtonEvent((String channel, String message) event) {
+    // Parse the button event (format: "button:state")
+    final parts = event.$2.split(':');
+    if (parts.length < 2) return;
+
+    final button = parts[0];
+    final state = parts[1];
+
+    // Only interested in brake events
+    if (button.startsWith('brake:') && parts.length >= 3) {
+      final brakePosition = parts[1]; // "left" or "right"
+      final brakeState = parts[2]; // "on" or "off"
+
+      // Update the corresponding brake state
+      if (brakePosition == 'left') {
+        _leftBrakePressed = brakeState == 'on';
+      } else if (brakePosition == 'right') {
+        _rightBrakePressed = brakeState == 'on';
+      }
+
+      // Check if we should start or stop the timer
+      if (_leftBrakePressed && _rightBrakePressed && _inParkedState) {
+        // Both brakes pressed in parked state, start timer
+        if (_brakeHoldStartTime == null) {
+          _brakeHoldStartTime = DateTime.now();
+          _startBrakeHoldTimer();
+        }
+      } else {
+        // Conditions not met, reset timer
+        _resetBrakeHold();
+      }
+    }
+  }
+
+
+  // We maintain brake state from both real-time events and regular vehicle data
+  bool _leftBrakePressed = false;
+  bool _rightBrakePressed = false;
+  bool _inParkedState = false;
+
   void updateBrakeState(Toggle leftBrake, Toggle rightBrake, ScooterState scooterState) {
-    final bool leftPressed = leftBrake == Toggle.on;
-    final bool rightPressed = rightBrake == Toggle.on;
-    final bool inParkedState = scooterState == ScooterState.parked;
+    // Store the current state for use with real-time button events
+    _leftBrakePressed = leftBrake == Toggle.on;
+    _rightBrakePressed = rightBrake == Toggle.on;
+    _inParkedState = scooterState == ScooterState.parked;
 
     // Only track brake holds when in parked state
-    if (!inParkedState) {
+    if (!_inParkedState) {
       _resetBrakeHold();
       return;
     }
 
     // Check if both brakes are pressed
-    if (leftPressed && rightPressed) {
+    if (_leftBrakePressed && _rightBrakePressed) {
       // Start timer if not already started
       if (_brakeHoldStartTime == null) {
         _brakeHoldStartTime = DateTime.now();
@@ -43,8 +92,6 @@ class VersionOverlayCubit extends Cubit<bool> {
       // Reset if either brake is released
       _resetBrakeHold();
     }
-
-    // Update brake state
   }
 
   void _startBrakeHoldTimer() {
@@ -68,6 +115,7 @@ class VersionOverlayCubit extends Cubit<bool> {
   @override
   Future<void> close() {
     _brakeHoldTimer?.cancel();
+    _buttonEventsSubscription?.cancel();
     return super.close();
   }
 }

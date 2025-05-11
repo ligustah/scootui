@@ -232,4 +232,12 @@ class RedisMDBRepository implements MDBRepository {
   Future<void> push(String channel, String command) {
     return _withConnection((cmd) => cmd.send_object(["LPUSH", channel, command]));
   }
+
+  @override
+  Future<void> publishButtonEvent(String event) {
+    return _withConnection((cmd) {
+      print('RedisMDBRepository: Publishing button event: $event');
+      return cmd.send_object(["PUBLISH", "buttons", event]);
+    });
+  }
 }
