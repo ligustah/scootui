@@ -83,26 +83,28 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
   }
 
   void _handleButtonEvent((String channel, String message) event) {
-    _log('Received button event: ${event.$2}');
+    final buttonEvent = event.$2;
+    _log('Received button event: $buttonEvent');
 
-    // Parse the button event (format: "button:state")
-    final parts = event.$2.split(':');
+    // Parse the button event
+    final parts = buttonEvent.split(':');
     if (parts.length < 2) return;
 
     final button = parts[0];
     final state = parts[1];
 
-    // Handle the seatbox button for quick menu
+    // Only handle seatbox button for menu operations
     if (button == 'seatbox') {
-      // Only process button events when in ready-to-drive state for menu operations
+      // Skip if not in ready-to-drive state
       if (_vehicleSync.state.state != ScooterState.readyToDrive) {
-        _resetState();
         return;
       }
 
       if (state == 'on') {
+        _log('Seatbox button pressed via PUBSUB');
         _handleButtonPress();
       } else if (state == 'off') {
+        _log('Seatbox button released via PUBSUB');
         _handleButtonRelease();
       }
     }
@@ -110,21 +112,13 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
   }
 
   void _handleVehicleStateChange(VehicleData vehicleData) {
-    // Only process button events when in ready-to-drive state
-    if (vehicleData.state != ScooterState.readyToDrive) {
-      _resetState();
-      return;
+    // If we're no longer in drive mode, hide the menu
+    if (vehicleData.state != ScooterState.readyToDrive && state != ShortcutMenuState.hidden) {
+      _log('No longer in ready-to-drive state, hiding menu');
+      emit(ShortcutMenuState.hidden);
     }
 
-    // Button press detected
-    if (vehicleData.seatboxButton == Toggle.on) {
-      _handleButtonPress();
-    }
-    // Button release detected
-    else if (vehicleData.seatboxButton == Toggle.off &&
-        _buttonPressStartTime != null) {
-      _handleButtonRelease();
-    }
+    // We now rely on PUBSUB events for button handling, no need to check button state here
   }
 
   // Helper method to log with both developer.log and print
