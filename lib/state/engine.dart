@@ -8,37 +8,47 @@ part 'engine.g.dart';
 
 @StateClass("engine-ecu", Duration(seconds: 1))
 class EngineData extends Equatable with $EngineData {
-  @StateField(
-      name: "state", defaultValue: "off", interval: Duration(seconds: 10))
+  @override
+  @StateField(name: "state", defaultValue: "off", interval: Duration(seconds: 10))
   final Toggle powerState;
 
+  @override
   @StateField(name: "kers", defaultValue: "on")
   final Toggle kers;
 
+  @override
   @StateField()
   final String kersReasonOff;
 
+  @override
   @StateField(name: "motor:voltage")
   final num motorVoltage;
 
+  @override
   @StateField(name: "motor:current")
   final num motorCurrent;
 
+  @override
   @StateField()
   final num rpm;
 
+  @override
   @StateField(interval: Duration(milliseconds: 100))
   final num speed;
 
+  @override
   @StateField(defaultValue: "off")
   final Toggle throttle;
 
+  @override
   @StateField(name: "fw-version")
   final String firmwareVersion;
 
+  @override
   @StateField(interval: Duration(seconds: 5))
   final double odometer;
 
+  @override
   @StateField()
   final double temperature;
 

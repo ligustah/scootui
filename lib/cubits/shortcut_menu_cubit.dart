@@ -2,11 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:redis/redis.dart';
 
 import '../repositories/mdb_repository.dart';
-import '../services/redis_connection_manager.dart';
-import '../state/enums.dart';
 import '../state/vehicle.dart';
 import 'debug_overlay_cubit.dart';
 import 'mdb_cubits.dart';
@@ -74,12 +71,10 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
         _mdbRepository = mdbRepository,
         super(ShortcutMenuState.hidden) {
     // Listen for vehicle state changes via hash polling
-    _vehicleSubscription =
-        _vehicleSync.stream.listen(_handleVehicleStateChange);
+    _vehicleSubscription = _vehicleSync.stream.listen(_handleVehicleStateChange);
 
     // Subscribe to direct button events channel for more responsive UI
-    _buttonEventsSubscription =
-        _mdbRepository.subscribe("buttons").listen(_handleButtonEvent);
+    _buttonEventsSubscription = _mdbRepository.subscribe("buttons").listen(_handleButtonEvent);
   }
 
   void _handleButtonEvent((String channel, String message) event) {
@@ -108,7 +103,6 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
         _handleButtonRelease();
       }
     }
-
   }
 
   void _handleVehicleStateChange(VehicleData vehicleData) {
@@ -140,8 +134,7 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
     }
 
     // Check for double press (toggle hazards)
-    if (_buttonReleaseTime != null &&
-        now.difference(_buttonReleaseTime!) < _doublePressDuration) {
+    if (_buttonReleaseTime != null && now.difference(_buttonReleaseTime!) < _doublePressDuration) {
       _log('Double press detected - toggling hazards');
       _executeAction(ShortcutMenuItem.toggleHazards);
       _resetState();
@@ -157,20 +150,17 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
 
     // Start tracking this press
     _buttonPressStartTime = now;
-    _log(
-        'Starting button press tracking, waiting for long press (${_longPressDuration.inMilliseconds}ms)');
+    _log('Starting button press tracking, waiting for long press (${_longPressDuration.inMilliseconds}ms)');
 
     // Start long press timer
     _longPressTimer?.cancel();
     _longPressTimer = Timer(_longPressDuration, () {
       // Long press detected, show menu
-      _log(
-          'Long press detected (${_longPressDuration.inMilliseconds}ms) - showing menu');
+      _log('Long press detected (${_longPressDuration.inMilliseconds}ms) - showing menu');
 
       // Reset selected index to 0
       selectedIndexNotifier.value = 0;
-      _log(
-          'Initial focus: ${_menuItems[selectedIndexNotifier.value]} (index: ${selectedIndexNotifier.value})');
+      _log('Initial focus: ${_menuItems[selectedIndexNotifier.value]} (index: ${selectedIndexNotifier.value})');
 
       // Show menu
       emit(ShortcutMenuState.visible);
@@ -207,13 +197,11 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
 
       _isConfirming = true;
       int currentIndex = selectedIndexNotifier.value;
-      _log(
-          'Menu item selected: ${_menuItems[currentIndex]} (index: $currentIndex)');
+      _log('Menu item selected: ${_menuItems[currentIndex]} (index: $currentIndex)');
 
       emit(ShortcutMenuState.confirmingSelection);
       _log('Menu state changed to CONFIRMING_SELECTION');
-      _log(
-          'Waiting for confirmation press (timeout: ${_confirmDuration.inMilliseconds}ms)');
+      _log('Waiting for confirmation press (timeout: ${_confirmDuration.inMilliseconds}ms)');
 
       // Start confirmation timer
       _selectionTimer?.cancel();
@@ -235,8 +223,7 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
 
   void _startCyclingItems() {
     _cycleTimer?.cancel();
-    _log(
-        'Starting menu item cycling (interval: ${_itemCycleDuration.inMilliseconds}ms)');
+    _log('Starting menu item cycling (interval: ${_itemCycleDuration.inMilliseconds}ms)');
 
     // Start with the first item
     selectedIndexNotifier.value = 0;

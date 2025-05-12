@@ -33,7 +33,6 @@ class AppThemes {
     colorScheme: ColorScheme.dark(
       primary: Colors.blue,
       secondary: Colors.blueAccent,
-      background: Colors.black,
       surface: Colors.grey.shade900,
       error: Colors.redAccent,
     ),
@@ -52,7 +51,6 @@ class AppThemes {
     colorScheme: ColorScheme.light(
       primary: Colors.blue,
       secondary: Colors.blueAccent,
-      background: Colors.white,
       surface: Colors.grey.shade200,
       error: Colors.red,
     ),

@@ -1,8 +1,7 @@
 import 'dart:math' as math;
+
 import 'package:latlong2/latlong.dart';
 
-import '../cubits/map_cubit.dart';
-import 'brouter.dart';
 import 'models.dart';
 
 class RouteHelpers {
@@ -54,15 +53,13 @@ class RouteHelpers {
       throw ArgumentError('Polyline cannot be empty');
     }
 
-    var closestPoint =
-        LatLng(polyline.first.latitude, polyline.first.longitude);
+    var closestPoint = LatLng(polyline.first.latitude, polyline.first.longitude);
     var closestDistance = double.infinity;
     var closestSegmentIndex = 0;
 
     for (var i = 0; i < polyline.length - 1; i++) {
       final segmentStart = LatLng(polyline[i].latitude, polyline[i].longitude);
-      final segmentEnd =
-          LatLng(polyline[i + 1].latitude, polyline[i + 1].longitude);
+      final segmentEnd = LatLng(polyline[i + 1].latitude, polyline[i + 1].longitude);
 
       final pointOnSegment = findClosestPointOnSegment(
         point,
@@ -96,8 +93,7 @@ class RouteHelpers {
     }
 
     // Find the closest point on the route
-    final (closestPoint, segmentIndex, distanceFromRoute) =
-        findClosestPointOnRoute(
+    final (closestPoint, segmentIndex, distanceFromRoute) = findClosestPointOnRoute(
       currentPosition,
       route.waypoints,
     );
@@ -148,8 +144,7 @@ class RouteHelpers {
         final latDiff = (point.latitude - instructionPoint.latitude).abs();
         final lngDiff = (point.longitude - instructionPoint.longitude).abs();
 
-        if (latDiff < _coordinateMatchTolerance &&
-            lngDiff < _coordinateMatchTolerance) {
+        if (latDiff < _coordinateMatchTolerance && lngDiff < _coordinateMatchTolerance) {
           final dist = const Distance().as(
             LengthUnit.Meter,
             LatLng(point.latitude, point.longitude),

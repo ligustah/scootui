@@ -23,7 +23,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   int _simulatedRpm = 0;
   int _simulatedMotorCurrent = 0;
   double _simulatedOdometer = 0.0;
-  double _simulatedTripDistance = 0.0;
 
   // Battery values
   int _simulatedBatteryCharge0 = 100;
@@ -74,35 +73,27 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   Future<void> _loadCurrentValues() async {
     try {
       // Load vehicle states
-      final blinkerState =
-          await widget.repository.get('vehicle', 'blinker:state');
-      final handlebarPosition =
-          await widget.repository.get('vehicle', 'handlebar:position');
-      final kickstandState =
-          await widget.repository.get('vehicle', 'kickstand');
+      final blinkerState = await widget.repository.get('vehicle', 'blinker:state');
+      final handlebarPosition = await widget.repository.get('vehicle', 'handlebar:position');
+      final kickstandState = await widget.repository.get('vehicle', 'kickstand');
       final vehicleState = await widget.repository.get('vehicle', 'state');
-      final leftBrakeState =
-          await widget.repository.get('vehicle', 'brake:left');
-      final rightBrakeState =
-          await widget.repository.get('vehicle', 'brake:right');
+      final leftBrakeState = await widget.repository.get('vehicle', 'brake:left');
+      final rightBrakeState = await widget.repository.get('vehicle', 'brake:right');
 
       // Load system states
       final bluetoothStatus = await widget.repository.get('ble', 'status');
       final internetStatus = await widget.repository.get('internet', 'status');
-      final signalQuality =
-          await widget.repository.get('internet', 'signal-quality');
+      final signalQuality = await widget.repository.get('internet', 'signal-quality');
       final cloudStatus = await widget.repository.get('internet', 'unu-cloud');
       final gpsState = await widget.repository.get('gps', 'state');
       final otaStatus = await widget.repository.get('ota', 'status');
 
       // Load battery states
-      final battery0Present =
-          await widget.repository.get('battery:0', 'present');
+      final battery0Present = await widget.repository.get('battery:0', 'present');
       final battery0Charge = await widget.repository.get('battery:0', 'charge');
       final battery0State = await widget.repository.get('battery:0', 'state');
 
-      final battery1Present =
-          await widget.repository.get('battery:1', 'present');
+      final battery1Present = await widget.repository.get('battery:1', 'present');
       final battery1Charge = await widget.repository.get('battery:1', 'charge');
       final battery1State = await widget.repository.get('battery:1', 'state');
 
@@ -122,30 +113,24 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
         if (bluetoothStatus != null) _bluetoothStatus = bluetoothStatus;
         if (internetStatus != null) _internetStatus = internetStatus;
-        if (signalQuality != null)
-          _signalQuality = int.tryParse(signalQuality) ?? 0;
+        if (signalQuality != null) _signalQuality = int.tryParse(signalQuality) ?? 0;
         if (cloudStatus != null) _cloudStatus = cloudStatus;
         if (gpsState != null) _gpsState = gpsState;
         if (otaStatus != null) _otaStatus = otaStatus;
 
-        if (battery0Present != null)
-          _battery0Present = battery0Present.toLowerCase() == 'true';
-        if (battery0Charge != null)
-          _simulatedBatteryCharge0 = int.tryParse(battery0Charge) ?? 100;
+        if (battery0Present != null) _battery0Present = battery0Present.toLowerCase() == 'true';
+        if (battery0Charge != null) _simulatedBatteryCharge0 = int.tryParse(battery0Charge) ?? 100;
         if (battery0State != null) _battery0State = battery0State;
 
-        if (battery1Present != null)
-          _battery1Present = battery1Present.toLowerCase() == 'true';
-        if (battery1Charge != null)
-          _simulatedBatteryCharge1 = int.tryParse(battery1Charge) ?? 100;
+        if (battery1Present != null) _battery1Present = battery1Present.toLowerCase() == 'true';
+        if (battery1Charge != null) _simulatedBatteryCharge1 = int.tryParse(battery1Charge) ?? 100;
         if (battery1State != null) _battery1State = battery1State;
 
         if (speed != null) _simulatedSpeed = int.tryParse(speed) ?? 0;
         if (rpm != null) _simulatedRpm = int.tryParse(rpm) ?? 0;
         if (odometer != null) {
           final odometerValue = double.tryParse(odometer) ?? 0.0;
-          _simulatedOdometer =
-              odometerValue / 1000.0; // Convert from meters to km
+          _simulatedOdometer = odometerValue / 1000.0; // Convert from meters to km
         }
       });
     } catch (e) {
@@ -190,10 +175,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     final futures = [
       _publishEvent('engine-ecu', 'speed', _simulatedSpeed.toString()),
       _publishEvent('engine-ecu', 'rpm', _simulatedRpm.toString()),
-      _publishEvent('engine-ecu', 'motor:current',
-          (_simulatedMotorCurrent * 1000).toString()),
-      _publishEvent(
-          'engine-ecu', 'odometer', (_simulatedOdometer * 1000).toString()),
+      _publishEvent('engine-ecu', 'motor:current', (_simulatedMotorCurrent * 1000).toString()),
+      _publishEvent('engine-ecu', 'odometer', (_simulatedOdometer * 1000).toString()),
     ];
     await Future.wait(futures);
   }
@@ -202,12 +185,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     final futures = [
       _publishEvent('battery:0', 'present', _battery0Present.toString()),
       _publishEvent('battery:1', 'present', _battery1Present.toString()),
-      if (_battery0Present)
-        _publishEvent(
-            'battery:0', 'charge', _simulatedBatteryCharge0.toString()),
-      if (_battery1Present)
-        _publishEvent(
-            'battery:1', 'charge', _simulatedBatteryCharge1.toString()),
+      if (_battery0Present) _publishEvent('battery:0', 'charge', _simulatedBatteryCharge0.toString()),
+      if (_battery1Present) _publishEvent('battery:1', 'charge', _simulatedBatteryCharge1.toString()),
     ];
     await Future.wait(futures);
   }
@@ -326,8 +305,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                         divisions: 110,
                         label: _simulatedMotorCurrent.toString(),
                         onChanged: (value) {
-                          setState(
-                              () => _simulatedMotorCurrent = value.toInt());
+                          setState(() => _simulatedMotorCurrent = value.toInt());
                           _updateEngineValues();
                         },
                       ),
@@ -474,13 +452,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           [
             _buildSegmentedButton(
               '',
-              [
-                'parked',
-                'ready-to-drive',
-                'stand-by',
-                'booting',
-                'shutting-down'
-              ],
+              ['parked', 'ready-to-drive', 'stand-by', 'booting', 'shutting-down'],
               _vehicleState,
               (value) {
                 setState(() => _vehicleState = value);
@@ -490,14 +462,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             if (_vehicleStateExpanded)
               _buildSegmentedButton(
                 '',
-                [
-                  'hibernating',
-                  'hibernating-imminent',
-                  'suspending',
-                  'suspending-imminent',
-                  'off',
-                  'updating'
-                ],
+                ['hibernating', 'hibernating-imminent', 'suspending', 'suspending-imminent', 'off', 'updating'],
                 _vehicleState,
                 (value) {
                   setState(() => _vehicleState = value);
@@ -538,8 +503,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     minimumSize: const Size(0, 32),
                   ),
                   onPressed: () => _simulateBrakeTap('left'),
@@ -547,8 +511,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     minimumSize: const Size(0, 32),
                   ),
                   onPressed: () => _simulateBrakeDoubleTap('left'),
@@ -584,8 +547,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     minimumSize: const Size(0, 32),
                   ),
                   onPressed: () => _simulateBrakeTap('right'),
@@ -593,8 +555,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     minimumSize: const Size(0, 32),
                   ),
                   onPressed: () => _simulateBrakeDoubleTap('right'),
@@ -616,9 +577,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, 40),
-                  backgroundColor: _seatboxButtonState == 'on'
-                      ? Colors.green.shade700
-                      : Colors.blue.shade700,
+                  backgroundColor: _seatboxButtonState == 'on' ? Colors.green.shade700 : Colors.blue.shade700,
                   foregroundColor: Colors.white,
                 ),
                 onPressed: () {
@@ -643,12 +602,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 const Text('Current state:'),
                 const SizedBox(width: 4),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _seatboxButtonState == 'on'
-                        ? Colors.green
-                        : Colors.grey,
+                    color: _seatboxButtonState == 'on' ? Colors.green : Colors.grey,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -698,8 +654,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               100,
               (value) {
                 setState(() => _signalQuality = value.toInt());
-                _publishEvent(
-                    'internet', 'signal-quality', value.toInt().toString());
+                _publishEvent('internet', 'signal-quality', value.toInt().toString());
               },
             ),
           ],
@@ -740,13 +695,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           [
             _buildSegmentedButton(
               '',
-              [
-                'none',
-                'initializing',
-                'checking-updates',
-                'device-updated',
-                'waiting-dashboard'
-              ],
+              ['none', 'initializing', 'checking-updates', 'device-updated', 'waiting-dashboard'],
               _otaStatus,
               (value) {
                 setState(() => _otaStatus = value);
@@ -756,12 +705,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             if (_otaStatusExpanded) ...[
               _buildSegmentedButton(
                 '',
-                [
-                  'downloading-updates',
-                  'installing-updates',
-                  'checking-update-error',
-                  'downloading-update-error'
-                ],
+                ['downloading-updates', 'installing-updates', 'checking-update-error', 'downloading-update-error'],
                 _otaStatus,
                 (value) {
                   setState(() => _otaStatus = value);
@@ -803,11 +747,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
-                  controller: TextEditingController(
-                      text: _simulatedOdometer.toStringAsFixed(1)),
+                  controller: TextEditingController(text: _simulatedOdometer.toStringAsFixed(1)),
                   onSubmitted: (value) {
                     final parsedValue = double.tryParse(value);
                     if (parsedValue != null) {
@@ -871,8 +813,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.red.withOpacity(0.8),
                 child: Text(
                   _errorMessage!,
@@ -951,39 +892,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: const Size(0, 32),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                backgroundColor:
-                    isSelected ? Theme.of(context).colorScheme.primary : null,
-                foregroundColor:
-                    isSelected ? Theme.of(context).colorScheme.onPrimary : null,
-              ),
-              onPressed: () => onSelected(option),
-              child: Text(option, style: const TextStyle(fontSize: 12)),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCompactButtonGroup(
-    String label,
-    List<String> options,
-    ValueChanged<String> onSelected,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (label.isNotEmpty) Text(label),
-        if (label.isNotEmpty) const SizedBox(height: 4),
-        Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: options.map((option) {
-            return ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                minimumSize: const Size(0, 32),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                backgroundColor: isSelected ? Theme.of(context).colorScheme.primary : null,
+                foregroundColor: isSelected ? Theme.of(context).colorScheme.onPrimary : null,
               ),
               onPressed: () => onSelected(option),
               child: Text(option, style: const TextStyle(fontSize: 12)),

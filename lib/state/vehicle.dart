@@ -32,9 +32,11 @@ enum HandleBarPosition { onPlace }
 
 @StateClass("vehicle", Duration(seconds: 1))
 class VehicleData with $VehicleData {
+  @override
   @StateField(name: "blinker:state", defaultValue: "off")
   BlinkerState blinkerState;
 
+  @override
   @StateField(
     name: "blinker:switch",
     defaultValue: "off",
@@ -42,6 +44,7 @@ class VehicleData with $VehicleData {
   )
   BlinkerSwitch blinkerSwitch;
 
+  @override
   @StateField(
     name: "brake:left",
     defaultValue: "off",
@@ -49,6 +52,7 @@ class VehicleData with $VehicleData {
   )
   Toggle brakeLeft;
 
+  @override
   @StateField(
     name: "brake:right",
     defaultValue: "off",
@@ -56,21 +60,27 @@ class VehicleData with $VehicleData {
   )
   Toggle brakeRight;
 
+  @override
   @StateField(defaultValue: "down")
   Kickstand kickstand;
 
+  @override
   @StateField(defaultValue: "off")
   ScooterState state;
 
+  @override
   @StateField(name: "handlebar:lock-sensor", defaultValue: "locked")
   HandleBarLockSensor handleBarLockSensor;
 
+  @override
   @StateField(name: "handlebar:position", defaultValue: "onPlace")
   HandleBarPosition handleBarPosition;
 
+  @override
   @StateField(name: "seatbox:button", defaultValue: "off")
   Toggle seatboxButton;
 
+  @override
   @StateField(
     name: "seatbox:lock",
     defaultValue: "closed",
@@ -78,6 +88,7 @@ class VehicleData with $VehicleData {
   )
   SeatboxLock seatboxLock;
 
+  @override
   @StateField(defaultValue: "off")
   Toggle hornButton;
 

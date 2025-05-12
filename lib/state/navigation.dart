@@ -7,6 +7,7 @@ part 'navigation.g.dart';
 
 @StateClass("navigation", Duration(seconds: 5))
 class NavigationData extends Equatable with $NavigationData {
+  @override
   @StateField()
   final String destination;
 

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/shutdown_cubit.dart';
-import 'shutdown_animation.dart'; // This import is still correct as the file name didn't change
+import 'shutdown_animation.dart';
 
 class ShutdownOverlay extends StatelessWidget {
   const ShutdownOverlay({super.key});

@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:meta/meta.dart';
 
 import '../state/engine.dart';
 import 'mdb_cubits.dart';
@@ -61,9 +59,7 @@ class TripCubit extends Cubit<TripState> {
     return super.close();
   }
 
-  static TripState watch(BuildContext context) =>
-      context.watch<TripCubit>().state;
+  static TripState watch(BuildContext context) => context.watch<TripCubit>().state;
 
-  static TripCubit create(BuildContext context) =>
-      TripCubit(context.read<EngineSync>().stream);
+  static TripCubit create(BuildContext context) => TripCubit(context.read<EngineSync>().stream);
 }

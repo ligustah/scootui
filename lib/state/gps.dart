@@ -17,24 +17,31 @@ enum GpsState {
 
 @StateClass("gps", Duration(seconds: 3))
 class GpsData extends Equatable with $GpsData {
+  @override
   @StateField()
   final double latitude;
 
+  @override
   @StateField()
   final double longitude;
 
+  @override
   @StateField()
   final double course;
 
+  @override
   @StateField()
   final double speed;
 
+  @override
   @StateField()
   final double altitude;
 
+  @override
   @StateField()
   final String timestamp;
 
+  @override
   @StateField(defaultValue: "off")
   final GpsState state;
 

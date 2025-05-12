@@ -324,7 +324,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
                           ),
                           // Second line: float-charge
                           Text(
-                            "${_auxBatteryData['charge-status'] ?? 'unknown'}",
+                            _auxBatteryData['charge-status'] ?? 'unknown',
                             style: const TextStyle(
                               fontSize: 9,
                               color: Colors.grey,

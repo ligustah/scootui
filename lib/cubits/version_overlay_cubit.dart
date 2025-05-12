@@ -17,11 +17,10 @@ class VersionOverlayCubit extends Cubit<bool> {
   static const _brakeHoldDuration = Duration(seconds: 3);
 
   VersionOverlayCubit({required MDBRepository mdbRepository})
-    : _mdbRepository = mdbRepository,
-      super(false) {
+      : _mdbRepository = mdbRepository,
+        super(false) {
     // Subscribe to direct button events channel for more responsive UI
-    _buttonEventsSubscription =
-        _mdbRepository.subscribe("buttons").listen(_handleButtonEvent);
+    _buttonEventsSubscription = _mdbRepository.subscribe("buttons").listen(_handleButtonEvent);
   }
 
   static VersionOverlayCubit create(BuildContext context) {
@@ -39,7 +38,8 @@ class VersionOverlayCubit extends Cubit<bool> {
     cubit._leftBrakePressed = currentState.brakeLeft == Toggle.on;
     cubit._rightBrakePressed = currentState.brakeRight == Toggle.on;
 
-    print('VERSION_OVERLAY: Initial state - left: ${cubit._leftBrakePressed}, right: ${cubit._rightBrakePressed}, parked: ${cubit._inParkedState}');
+    print(
+        'VERSION_OVERLAY: Initial state - left: ${cubit._leftBrakePressed}, right: ${cubit._rightBrakePressed}, parked: ${cubit._inParkedState}');
 
     // Update brake state whenever vehicle data changes
     vehicleSync.stream.listen((vehicleData) {
@@ -81,7 +81,8 @@ class VersionOverlayCubit extends Cubit<bool> {
       }
 
       // Check current overall state for debugging
-      print('VERSION_OVERLAY: After update - left: $_leftBrakePressed, right: $_rightBrakePressed, parked: $_inParkedState');
+      print(
+          'VERSION_OVERLAY: After update - left: $_leftBrakePressed, right: $_rightBrakePressed, parked: $_inParkedState');
 
       // Check if we should start or stop the timer
       if (_leftBrakePressed && _rightBrakePressed && _inParkedState) {
@@ -96,13 +97,13 @@ class VersionOverlayCubit extends Cubit<bool> {
       } else {
         // Conditions not met, reset timer
         if (_brakeHoldStartTime != null) {
-          print('VERSION_OVERLAY: Conditions no longer met, canceling timer - left: $_leftBrakePressed, right: $_rightBrakePressed, parked: $_inParkedState');
+          print(
+              'VERSION_OVERLAY: Conditions no longer met, canceling timer - left: $_leftBrakePressed, right: $_rightBrakePressed, parked: $_inParkedState');
         }
         _resetBrakeHold();
       }
     }
   }
-
 
   // We maintain brake state from both real-time events and regular vehicle data
   bool _leftBrakePressed = false;
@@ -114,12 +115,6 @@ class VersionOverlayCubit extends Cubit<bool> {
     bool leftChanged = _leftBrakePressed != (leftBrake == Toggle.on);
     bool rightChanged = _rightBrakePressed != (rightBrake == Toggle.on);
     bool stateChanged = _inParkedState != (scooterState == ScooterState.parked);
-
-    if (leftChanged || rightChanged || stateChanged) {
-      print('VERSION_OVERLAY: State changed - left: ${leftBrake == Toggle.on} (was: $_leftBrakePressed), ' +
-            'right: ${rightBrake == Toggle.on} (was: $_rightBrakePressed), ' +
-            'state: $scooterState (parked: ${scooterState == ScooterState.parked}, was: $_inParkedState)');
-    }
 
     // Update internal state
     _leftBrakePressed = leftBrake == Toggle.on;

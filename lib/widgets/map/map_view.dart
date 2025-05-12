@@ -2,33 +2,12 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
-    show
-        Alignment,
-        BuildContext,
-        Colors,
-        Icon,
-        Icons,
-        StatelessWidget,
-        Widget,
-        TickerProviderStateMixin;
+    show Alignment, BuildContext, Colors, Icon, Icons, Widget, TickerProviderStateMixin;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_map/flutter_map.dart'
-    show
-        FlutterMap,
-        MapController,
-        MapOptions,
-        Marker,
-        MarkerLayer,
-        Polyline,
-        PolylineLayer,
-        StrokePattern,
-        TileLayer;
+    show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, Polyline, PolylineLayer, StrokePattern, TileLayer;
 import 'package:latlong2/latlong.dart';
-import 'package:mbtiles/mbtiles.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart'
-    show TileProviders, VectorTileLayer, VectorTileProvider;
-import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart'
-    show MbTilesVectorTileProvider;
+import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer, VectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
 
 import '../../routing/models.dart';
@@ -53,8 +32,7 @@ class OnlineMapView extends StatefulWidget {
   State<OnlineMapView> createState() => _OnlineMapViewState();
 }
 
-class _OnlineMapViewState extends State<OnlineMapView>
-    with TickerProviderStateMixin {
+class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return FlutterMap(
@@ -124,8 +102,7 @@ class OfflineMapView extends StatefulWidget {
   State<OfflineMapView> createState() => _OfflineMapViewState();
 }
 
-class _OfflineMapViewState extends State<OfflineMapView>
-    with TickerProviderStateMixin {
+class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStateMixin {
   bool _isReady = false;
 
   Widget? _routeLayer() {
@@ -135,9 +112,7 @@ class _OfflineMapViewState extends State<OfflineMapView>
       return null;
     }
 
-    final points = line
-        .map((latlng) => LatLng(latlng.latitude, latlng.longitude))
-        .toList();
+    final points = line.map((latlng) => LatLng(latlng.latitude, latlng.longitude)).toList();
 
     return PolylineLayer(
       polylines: [
@@ -167,8 +142,7 @@ class _OfflineMapViewState extends State<OfflineMapView>
     }
 
     final distance = switch (current.distance) {
-      > 500 =>
-        '${((((current.distance + 99) ~/ 100) * 100) / 1000).toStringAsFixed(1)} km',
+      > 500 => '${((((current.distance + 99) ~/ 100) * 100) / 1000).toStringAsFixed(1)} km',
       > 100 => '${(((current.distance + 99) ~/ 100) * 100)} m',
       > 10 => '${(((current.distance + 9) ~/ 10) * 10)} m',
       _ => '${current.distance.toInt()} m',
@@ -219,8 +193,7 @@ class _OfflineMapViewState extends State<OfflineMapView>
     // last waypoint on the road.
     final destination = widget.destination;
     final lastWaypoint = widget.route!.waypoints.last;
-    return destination == null ||
-        distanceCalculator.as(LengthUnit.Meter, destination, lastWaypoint) < 15;
+    return destination == null || distanceCalculator.as(LengthUnit.Meter, destination, lastWaypoint) < 15;
   }
 
   List<Marker> _routeMarkers() {
@@ -229,8 +202,7 @@ class _OfflineMapViewState extends State<OfflineMapView>
     final destination = widget.destination;
     final lastWaypoint = widget.route!.waypoints.last;
     final flagIcon = const Icon(Icons.flag, color: Colors.white, size: 30.0);
-    final mapPinIcon =
-        const Icon(Icons.location_pin, color: Colors.red, size: 30.0);
+    final mapPinIcon = const Icon(Icons.location_pin, color: Colors.red, size: 30.0);
 
     final destinationNearWaypoint = _isDestinationNearWaypoint();
 

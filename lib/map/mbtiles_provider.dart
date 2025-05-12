@@ -12,18 +12,15 @@ part 'mbtiles_provider.freezed.dart';
 
 @freezed
 sealed class _Request with _$Request {
-  const factory _Request.getTile(String requestId, TileIdentity tile) =
-      _GetTileRequest;
+  const factory _Request.getTile(String requestId, TileIdentity tile) = _GetTileRequest;
   const factory _Request.dispose() = _DisposeRequest;
   const factory _Request.init(TilesRepository tilesRepository) = _InitRequest;
 }
 
 @freezed
 sealed class _Response with _$Response {
-  const factory _Response.tile(String requestId, Uint8List tile) =
-      _TileResponse;
-  const factory _Response.error(String requestId, String message) =
-      _ErrorResponse;
+  const factory _Response.tile(String requestId, Uint8List tile) = _TileResponse;
+  const factory _Response.error(String requestId, String message) = _ErrorResponse;
   const factory _Response.init(InitResult result) = _InitResponse;
 }
 
@@ -128,15 +125,13 @@ void _startRemoteIsolate((SendPort, RootIsolateToken) init) {
               final meta = mbTiles.getMetadata();
               initPort.send(_Response.init(InitResult.success(meta)));
             case NotFound():
-              initPort
-                  .send(_Response.init(InitResult.error('Map file not found')));
+              initPort.send(_Response.init(InitResult.error('Map file not found')));
             case Error(:final message):
               initPort.send(_Response.init(InitResult.error(message)));
           }
         case _GetTileRequest(:final requestId, :final tile):
           if (_mbTiles == null) {
-            initPort
-                .send(_Response.error(requestId, 'MBTiles not initialized'));
+            initPort.send(_Response.error(requestId, 'MBTiles not initialized'));
             return;
           }
           final tmsY = ((1 << tile.z) - 1) - tile.y;

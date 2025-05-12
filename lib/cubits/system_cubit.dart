@@ -1,10 +1,8 @@
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:meta/meta.dart';
 
 @immutable
 class SystemState {
@@ -22,11 +20,9 @@ class SystemCubit extends Cubit<SystemState> {
     _timer = Timer.periodic(Duration(seconds: 1), updateTime);
   }
 
-  static SystemState watch(BuildContext context) =>
-      context.watch<SystemCubit>().state;
+  static SystemState watch(BuildContext context) => context.watch<SystemCubit>().state;
 
-  static SystemCubit create(BuildContext context) =>
-      SystemCubit();
+  static SystemCubit create(BuildContext context) => SystemCubit();
 
   void updateTime(Timer t) {
     emit(SystemState(DateTime.now()));

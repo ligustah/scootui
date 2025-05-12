@@ -142,6 +142,7 @@ class RedisMDBRepository implements MDBRepository {
     }
   }
 
+  @override
   Future<void> dashboardReady() async {
     // Get the current vehicle state
     final vehicleState = await get("vehicle", "state");

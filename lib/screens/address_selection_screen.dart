@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/address_cubit.dart';
@@ -29,8 +28,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     super.dispose();
   }
 
-  Widget _buildDialInput(MapCubit mapCubit, ScreenCubit screenCubit,
-      Map<String, Address> addresses) {
+  Widget _buildDialInput(MapCubit mapCubit, ScreenCubit screenCubit, Map<String, Address> addresses) {
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
       onLeftPress: () => _controller.scroll(),
@@ -44,8 +42,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
           final address = addresses[code];
           if (address != null) {
             final mdbRepo = context.read<MDBRepository>();
-            final coordinates =
-                "${address.coordinates.latitude},${address.coordinates.longitude}";
+            final coordinates = "${address.coordinates.latitude},${address.coordinates.longitude}";
             mdbRepo.set("navigation", "destination", coordinates);
             mapCubit.startNavigation(address.coordinates);
           }
@@ -64,8 +61,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
     final child = switch (addressCubit.state) {
-      AddressStateLoaded(:final addresses) =>
-        _buildDialInput(mapCubit, screenCubit, addresses),
+      AddressStateLoaded(:final addresses) => _buildDialInput(mapCubit, screenCubit, addresses),
       AddressStateLoading(:final message) => Center(
             child: Column(
           children: [
