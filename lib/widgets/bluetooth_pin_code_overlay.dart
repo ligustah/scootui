@@ -52,7 +52,7 @@ class _BluetoothPinCodeOverlayState extends State<BluetoothPinCodeOverlay> {
               left: 0,
               right: 0,
               child: Container(
-                height: MediaQuery.of(context).size.height * 0.20,
+                height: MediaQuery.of(context).size.height * 0.30,
                 color: Colors.blue.withOpacity(0.8),
                 alignment: Alignment.center,
                 child: Column(
