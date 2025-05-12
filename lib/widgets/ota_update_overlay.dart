@@ -92,7 +92,6 @@ class OtaUpdateOverlay extends StatelessWidget {
     final vehicleState = VehicleSync.watch(context);
     final isReadyToDrive = vehicleState.state == ScooterState.readyToDrive;
     final isParked = vehicleState.state == ScooterState.parked;
-    final isStandby = vehicleState.state == ScooterState.standBy;
 
     // Watch the OTA status from MDB data
     final otaData = OtaSync.watch(context);
@@ -116,8 +115,7 @@ class OtaUpdateOverlay extends StatelessWidget {
     // Always hide the overlay if:
     // 1. OTA status is none or empty and there's no DBC update active
     // 2. The scooter is in a special state
-    if ((otaStatus == OtaStatus.none || otaStatusString.trim().isEmpty) &&
-        !isBlockingUpdate && (dbcStatus == null || dbcStatus.isEmpty) ||
+    if ((otaStatus == OtaStatus.none || otaStatusString.trim().isEmpty) && !isBlockingUpdate && (dbcStatus.isEmpty) ||
         isSpecialState) {
       return Container(); // Don't show anything
     }
@@ -159,7 +157,7 @@ class OtaUpdateOverlay extends StatelessWidget {
     }
 
     // Use DBC status if available
-    if (dbcStatus != null && dbcStatus.isNotEmpty) {
+    if (dbcStatus.isNotEmpty) {
       OtaStatus dbcOtaStatus = mapOtaStatus(dbcStatus);
       if (dbcOtaStatus != OtaStatus.none && dbcOtaStatus != OtaStatus.unknown) {
         statusText = getOtaStatusText(dbcOtaStatus);

@@ -126,6 +126,7 @@ class OtaCubit extends Cubit<OtaState> {
 
     // Get DBC-specific status field which is populated by the update-service
     final dbcStatus = _otaSync.state.dbcStatus;
+    final mdbStatus = _otaSync.state.mdbStatus;
 
     // Determine the status text to display
     String statusText = getOtaStatusText(otaStatus);
@@ -136,7 +137,7 @@ class OtaCubit extends Cubit<OtaState> {
     }
 
     // If we have a specific DBC status, use it (takes precedence)
-    if (dbcStatus != null && dbcStatus.isNotEmpty) {
+    if (dbcStatus.isNotEmpty) {
       OtaStatus dbcOtaStatus = mapOtaStatus(dbcStatus);
       if (dbcOtaStatus != OtaStatus.none && dbcOtaStatus != OtaStatus.unknown) {
         statusText = getOtaStatusText(dbcOtaStatus);
@@ -153,7 +154,8 @@ class OtaCubit extends Cubit<OtaState> {
 
     // Always hide if OTA status is none/empty or in special states
     if ((otaStatus == OtaStatus.none || otaStatusString?.trim().isEmpty == true) &&
-        !isBlockingUpdate && !isSpecialState) {
+        !isBlockingUpdate &&
+        !isSpecialState) {
       emit(const OtaState.inactive());
       return;
     }

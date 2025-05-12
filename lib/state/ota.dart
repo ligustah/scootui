@@ -14,10 +14,13 @@ class OtaData with $OtaData {
   @StateField(name: "status:dbc", defaultValue: "")
   String dbcStatus;
 
+  @StateField(name: "status:mdb", defaultValue: "")
+  String mdbStatus;
+
   OtaData({
     this.otaStatus = "none",
     this.updateType = "none",
     this.dbcStatus = "",
+    this.mdbStatus = "",
   });
-
 }
