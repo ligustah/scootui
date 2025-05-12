@@ -1,9 +1,9 @@
 import 'dart:async'; // Import dart:async for StreamSubscription
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../repositories/mdb_repository.dart';
 import '../services/settings_service.dart';
 import '../theme_config.dart';
 

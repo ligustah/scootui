@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:rbush/rbush.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart'
-    show TileProviders, VectorTileLayer;
-import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart';
+import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer;
 
 import '../cubits/address_cubit.dart';
-import '../map/mbtiles_provider.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../repositories/address_repository.dart';
@@ -20,8 +16,7 @@ class DestinationScreen extends StatefulWidget {
   State<DestinationScreen> createState() => _DestinationScreenState();
 }
 
-class _DestinationScreenState extends State<DestinationScreen>
-    with SingleTickerProviderStateMixin {
+class _DestinationScreenState extends State<DestinationScreen> with SingleTickerProviderStateMixin {
   Address? _currentDestination;
 
   @override
@@ -36,8 +31,7 @@ class _DestinationScreenState extends State<DestinationScreen>
     );
   }
 
-  Widget _buildMap(BuildContext context, MapCubit map, AddressCubit address,
-      ThemeData themeData) {
+  Widget _buildMap(BuildContext context, MapCubit map, AddressCubit address, ThemeData themeData) {
     final mapState = map.state;
     if (mapState is! MapOffline) {
       return Center(
@@ -83,16 +77,8 @@ class _DestinationScreenState extends State<DestinationScreen>
         break;
     }
 
-    final MapOffline(
-      :tiles,
-      :position,
-      :controller,
-      :theme,
-      :onReady,
-      :orientation,
-      :route,
-      :nextInstruction
-    ) = mapState;
+    final MapOffline(:tiles, :position, :controller, :theme, :onReady, :orientation, :route, :nextInstruction) =
+        mapState;
 
     return FlutterMap(
       options: MapOptions(
@@ -198,14 +184,12 @@ class _DestinationScreenState extends State<DestinationScreen>
 }
 
 class CameraFilteredMarkerLayer extends StatefulWidget {
-  const CameraFilteredMarkerLayer(
-      {super.key, required this.markers, this.minZoom = 0});
+  const CameraFilteredMarkerLayer({super.key, required this.markers, this.minZoom = 0});
   final List<Marker> markers;
   final double minZoom;
 
   @override
-  State<CameraFilteredMarkerLayer> createState() =>
-      _CameraFilteredMarkerLayerState();
+  State<CameraFilteredMarkerLayer> createState() => _CameraFilteredMarkerLayerState();
 }
 
 class _CameraFilteredMarkerLayerState extends State<CameraFilteredMarkerLayer> {

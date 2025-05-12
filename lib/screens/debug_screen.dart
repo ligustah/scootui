@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../cubits/mdb_cubits.dart';
 import '../repositories/mdb_repository.dart';
 import '../widgets/status_bars/top_status_bar.dart';
 
@@ -354,28 +353,6 @@ class _DebugScreenState extends State<DebugScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildGroupTitle(String title) {
-    return Container(
-      padding: const EdgeInsets.only(top: 4, right: 4),
-      child: Text(
-        '$title:',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey[300],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSeparator() {
-    return Divider(
-      color: Colors.grey[800],
-      height: 8,
-      thickness: 1,
     );
   }
 
