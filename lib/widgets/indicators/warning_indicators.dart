@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import 'indicator_lights.dart';
+import 'speed_limit_indicator.dart';
 
 class WarningIndicators extends StatelessWidget {
   const WarningIndicators({
@@ -21,8 +22,19 @@ class WarningIndicators extends StatelessWidget {
           // Left turn signal
           IndicatorLights.leftBlinker(state),
 
-          // Parking indicator
-          IndicatorLights.parkingBrake(state),
+          // Center section with parking indicator and speed limit
+          Row(
+            children: [
+              // Parking indicator
+              IndicatorLights.parkingBrake(state),
+              
+              // Small spacer between indicators
+              const SizedBox(width: 10),
+              
+              // Speed limit indicator
+              const SpeedLimitIndicator(iconSize: 36),
+            ],
+          ),
 
           // Right turn signal
           IndicatorLights.rightBlinker(state),

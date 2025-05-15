@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/theme_cubit.dart';
+import '../indicators/speed_limit_indicator.dart';
 
 class OdometerDisplay extends StatelessWidget {
   final double tripDistance;
@@ -220,27 +221,46 @@ class AnimatedOdometerDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 500),
-      tween: Tween<double>(
-        begin: previousTrip,
-        end: tripDistance,
-      ),
-      builder: (context, tripValue, child) {
-        return TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 500),
-          tween: Tween<double>(
-            begin: previousTotal,
-            end: totalDistance,
+    return Column(
+      children: [
+        // Road name display at the top
+        Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: RoadNameDisplay(
+            textStyle: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: ThemeCubit.watch(context).isDark ? Colors.white70 : Colors.black54,
+            ),
           ),
-          builder: (context, totalValue, child) {
-            return OdometerDisplay(
-              tripDistance: tripValue,
-              totalDistance: totalValue,
-            );
-          },
-        );
-      },
+        ),
+        
+        // Odometer display below the road name
+        Expanded(
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 500),
+            tween: Tween<double>(
+              begin: previousTrip,
+              end: tripDistance,
+            ),
+            builder: (context, tripValue, child) {
+              return TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 500),
+                tween: Tween<double>(
+                  begin: previousTotal,
+                  end: totalDistance,
+                ),
+                builder: (context, totalValue, child) {
+                  return OdometerDisplay(
+                    tripDistance: tripValue,
+                    totalDistance: totalValue,
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
