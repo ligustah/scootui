@@ -9,10 +9,10 @@ class SpeedLimitIndicator extends StatelessWidget {
   final Color? iconColor;
 
   const SpeedLimitIndicator({
-    Key? key,
+    super.key,
     this.iconSize = 36,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +65,9 @@ class RoadNameDisplay extends StatelessWidget {
   final TextStyle? textStyle;
 
   const RoadNameDisplay({
-    Key? key,
+    super.key,
     this.textStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

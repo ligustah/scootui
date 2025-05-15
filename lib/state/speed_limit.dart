@@ -12,7 +12,7 @@ class SpeedLimitData extends Equatable with $SpeedLimitData {
   final String value;
 
   @override
-  @StateField()
+  @StateField(name: "road_name")
   final String roadName;
 
   SpeedLimitData({

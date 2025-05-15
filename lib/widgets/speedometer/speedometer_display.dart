@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
+import '../indicators/speed_limit_indicator.dart';
 
 class SpeedometerDisplay extends StatefulWidget {
   final double maxSpeed;
@@ -53,17 +54,16 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
               shape: BoxShape.circle,
             ),
           ),
-
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
               return TweenAnimationBuilder<Color?>(
                 duration: const Duration(milliseconds: 50),
                 tween: ColorTween(
-                  begin: _isRegenerating 
+                  begin: _isRegenerating
                       ? Colors.red.withOpacity(0.3)
                       : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200),
-                  end: _isRegenerating 
+                  end: _isRegenerating
                       ? Colors.red.withOpacity(0.3)
                       : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200),
                 ),
@@ -82,26 +82,51 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
               );
             },
           ),
+          Transform.translate(
+            offset: const Offset(0, -10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Speed limit indicator and road name
+                SizedBox(
+                  height: 40, // Fixed height to keep layout compact
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SpeedLimitIndicator(iconSize: 38),
+                    ],
+                  ),
+                ),
 
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                speed.toStringAsFixed(0),
-                style: TextStyle(
-                  fontSize: 96,
-                  fontWeight: FontWeight.bold,
-                  color: theme.isDark ? Colors.white : Colors.black,
+                // Use RichText with reduced line height
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    text: speed.toStringAsFixed(0),
+                    style: TextStyle(
+                      fontSize: 96,
+                      height: 1, // Reduce line height
+                      fontWeight: FontWeight.bold,
+                      color: theme.isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
                 ),
-              ),
-              Text(
-                'km/h',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: theme.isDark ? Colors.white70 : Colors.black54,
+
+                // Use RichText for km/h with tight line height
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    text: 'km/h',
+                    style: TextStyle(
+                      fontSize: 24,
+                      height: 0.9, // Reduce line height
+                      color: theme.isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -177,11 +202,11 @@ class _SpeedometerPainter extends CustomPainter {
     final speedStep = 10.0; // 10 km/h per major tick
     final totalMajorTicks = (maxSpeed / speedStep).ceil() + 1;
     final minorTicksPerMajor = 1; // Number of minor ticks between major ticks
-    
+
     for (int i = 0; i <= totalMajorTicks * minorTicksPerMajor; i++) {
       final isMajorTick = i % minorTicksPerMajor == 0;
       final speedValue = (i / minorTicksPerMajor * speedStep).toInt();
-      
+
       // Skip if speed value would exceed maxSpeed
       if (speedValue > maxSpeed) continue;
 
@@ -206,8 +231,8 @@ class _SpeedometerPainter extends CustomPainter {
   @override
   bool shouldRepaint(_SpeedometerPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-           oldDelegate.isDark != isDark ||
-           oldDelegate.isRegenerating != isRegenerating ||
-           oldDelegate.backgroundColor != backgroundColor;
+        oldDelegate.isDark != isDark ||
+        oldDelegate.isRegenerating != isRegenerating ||
+        oldDelegate.backgroundColor != backgroundColor;
   }
 }
