@@ -39,15 +39,8 @@ class SpeedLimitData extends Equatable with $SpeedLimitData {
       if (intValue == 40) return "speedlimit_40";
       if (intValue == 50) return "speedlimit_50";
 
-      // Use ranges for non-exact matches
-      if (intValue < 10) return "speedlimit_10"; // Will late user blank + custom text
-      if (intValue < 20) return "speedlimit_10";
-      if (intValue < 30) return "speedlimit_20";
-      if (intValue < 40) return "speedlimit_30";
-      if (intValue < 50) return "speedlimit_40";
-      if (intValue == 50) return "speedlimit_50";
-
-      return "speedlimit_over_50";
+      // For all other values, use the blank template with custom text
+      return "speedlimit_blank";
     } catch (e) {
       return "speedlimit_unknown";
     }
