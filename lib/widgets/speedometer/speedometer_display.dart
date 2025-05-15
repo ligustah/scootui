@@ -21,15 +21,31 @@ class SpeedometerDisplay extends StatefulWidget {
 class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   double _lastSpeed = 0.0;
+  double _animationStartSpeed = 0.0;
+  double _targetSpeed = 0.0;
   bool _isRegenerating = false;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
-    );
+    )
+      ..addListener(() {
+        // Force rebuild on animation updates
+        if (mounted) setState(() {});
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          // Only update _lastSpeed when animation completes
+          if (mounted) {
+            setState(() {
+              _lastSpeed = _targetSpeed;
+            });
+          }
+        }
+      });
   }
 
   @override
@@ -40,96 +56,114 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    final speed = EngineSync.select(context, (data) => data.speed);
-
+    final engineData = EngineSync.watch(context);
+    final speed = engineData.speed.toDouble();
     final theme = ThemeCubit.watch(context);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 50),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-            ),
-          ),
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return TweenAnimationBuilder<Color?>(
-                duration: const Duration(milliseconds: 50),
-                tween: ColorTween(
-                  begin: _isRegenerating
-                      ? Colors.red.withOpacity(0.3)
-                      : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200),
-                  end: _isRegenerating
-                      ? Colors.red.withOpacity(0.3)
-                      : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200),
-                ),
-                builder: (context, color, child) {
-                  return CustomPaint(
-                    size: const Size.fromRadius(150),
-                    painter: _SpeedometerPainter(
-                      progress: speed / widget.maxSpeed,
-                      isDark: theme.isDark,
-                      isRegenerating: _isRegenerating,
-                      backgroundColor: color ?? Colors.grey,
-                      maxSpeed: widget.maxSpeed,
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-          Transform.translate(
-            offset: const Offset(0, -10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Speed limit indicator and road name
-                SizedBox(
-                  height: 40, // Fixed height to keep layout compact
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SpeedLimitIndicator(iconSize: 38),
-                    ],
-                  ),
-                ),
+    // Check if we're regenerating by monitoring the motor current
+    // Negative current indicates regenerative braking
+    final bool regenerating = engineData.motorCurrent < 0;
 
-                // Use RichText with reduced line height
-                RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    text: speed.toStringAsFixed(0),
-                    style: TextStyle(
-                      fontSize: 96,
-                      height: 1, // Reduce line height
-                      fontWeight: FontWeight.bold,
-                      color: theme.isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                ),
+    if (_isRegenerating != regenerating) {
+      setState(() {
+        _isRegenerating = regenerating;
+      });
+    }
 
-                // Use RichText for km/h with tight line height
-                RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    text: 'km/h',
-                    style: TextStyle(
-                      fontSize: 24,
-                      height: 0.9, // Reduce line height
-                      color: theme.isDark ? Colors.white70 : Colors.black54,
-                    ),
+    // If the speed has changed and we're not currently animating
+    if (speed != _targetSpeed && !_controller.isAnimating) {
+      // Store the starting point (current displayed value) and target
+      _animationStartSpeed = _lastSpeed;
+      _targetSpeed = speed;
+
+      // Start a new animation
+      _controller.reset();
+      _controller.forward();
+    }
+
+    // Calculate the animated speed value
+    double animatedSpeed;
+
+    if (_controller.isAnimating) {
+      // Apply easing curve for smooth motion
+      final curvedValue = Curves.easeOutCubic.transform(_controller.value);
+      animatedSpeed = _animationStartSpeed + (curvedValue * (_targetSpeed - _animationStartSpeed));
+    } else {
+      // Not animating, use the last stable value
+      animatedSpeed = _lastSpeed;
+    }
+
+    // Calculate background color based on regeneration state
+    final backgroundColor =
+        _isRegenerating ? Colors.red.withOpacity(0.3) : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+          ),
+        ),
+        // Main speedometer gauge
+        CustomPaint(
+          size: const Size.fromRadius(150),
+          painter: _SpeedometerPainter(
+            progress: animatedSpeed / widget.maxSpeed,
+            isDark: theme.isDark,
+            isRegenerating: _isRegenerating,
+            backgroundColor: backgroundColor,
+            maxSpeed: widget.maxSpeed,
+          ),
+        ),
+        // Speed display and indicators
+        Transform.translate(
+          offset: const Offset(0, -10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Speed limit indicator
+              SizedBox(
+                height: 40, // Fixed height to keep layout compact
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SpeedLimitIndicator(iconSize: 38),
+                  ],
+                ),
+              ),
+
+              // Animated speed text
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  text: animatedSpeed.toStringAsFixed(0),
+                  style: TextStyle(
+                    fontSize: 96,
+                    height: 1, // Reduce line height
+                    fontWeight: FontWeight.bold,
+                    color: theme.isDark ? Colors.white : Colors.black,
                   ),
                 ),
-              ],
-            ),
+              ),
+
+              // Use RichText for km/h with tight line height
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  text: 'km/h',
+                  style: TextStyle(
+                    fontSize: 24,
+                    height: 0.9, // Reduce line height
+                    color: theme.isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
