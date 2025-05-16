@@ -15,26 +15,45 @@ class OdometerDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Trip distance
-          _DistanceDisplay(
-            label: 'TRIP',
-            value: _formatDistance(tripDistance),
-            alignment: CrossAxisAlignment.start,
-          ),
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Trip distance
+              _DistanceDisplay(
+                label: 'TRIP',
+                value: _formatDistance(tripDistance),
+                alignment: CrossAxisAlignment.start,
+              ),
 
-          // Total distance
-          _DistanceDisplay(
-            label: 'TOTAL',
-            value: _formatDistance(totalDistance),
-            alignment: CrossAxisAlignment.end,
+              // Total distance
+              _DistanceDisplay(
+                label: 'TOTAL',
+                value: _formatDistance(totalDistance),
+                alignment: CrossAxisAlignment.end,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+
+        // Road name absolutely positioned in center
+        Positioned.fill(
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 200),
+              child: RoadNameDisplay(
+                textStyle: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -223,19 +242,6 @@ class AnimatedOdometerDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Road name display at the top
-        Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: RoadNameDisplay(
-            textStyle: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: ThemeCubit.watch(context).isDark ? Colors.white70 : Colors.black54,
-            ),
-          ),
-        ),
-        
-        // Odometer display below the road name
         Expanded(
           child: TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 500),

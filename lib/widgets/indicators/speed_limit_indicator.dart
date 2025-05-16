@@ -78,12 +78,57 @@ class RoadNameDisplay extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Text(
-      speedLimitData.roadName,
-      style: textStyle ?? Theme.of(context).textTheme.bodyMedium,
-      textAlign: TextAlign.center,
-      overflow: TextOverflow.ellipsis,
-      maxLines: 1,
+    // Get styling based on German road sign standards for different road types
+    final (Color bgColor, Color textColor, BoxBorder? border) = _getRoadSignStyle(speedLimitData.roadType);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4),
+        border: border,
+      ),
+      child: Text(
+        speedLimitData.roadName,
+        style: (textStyle ?? Theme.of(context).textTheme.bodyMedium)?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w500,
+        ),
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+      ),
     );
+  }
+
+  /// Returns styling based on German road sign standards
+  (Color, Color, BoxBorder?) _getRoadSignStyle(String roadType) {
+    switch (roadType.toLowerCase()) {
+      case 'motorway':
+      case 'trunk':
+        // Autobahn - Blue with white text
+        return (Colors.blue.shade800, Colors.white, null);
+
+      case 'primary':
+        // Federal roads (Bundesstraße) - Yellow with black text
+        return (Colors.amber.shade600, Colors.black, null);
+
+      case 'secondary':
+        // State roads (Landstraße) - White with black text and thin border
+        return (Colors.white, Colors.black, Border.all(color: Colors.black54, width: 1));
+
+      case 'tertiary':
+        // County roads (Kreisstraße) - White with black text
+        return (Colors.white, Colors.black, Border.all(color: Colors.black38, width: 0.5));
+
+      case 'residential':
+      case 'living_street':
+        // Residential - Light gray with black text
+        return (Colors.grey.shade200, Colors.black87, null);
+
+      default:
+        // Default style for other road types
+        return (Colors.grey.shade100, Colors.black87, Border.all(color: Colors.grey.shade400, width: 0.5));
+    }
   }
 }

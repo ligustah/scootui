@@ -9,6 +9,7 @@ part of 'speed_limit.dart';
 abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
   String get value;
   String get roadName;
+  String get roadType;
   get syncSettings => SyncSettings(
       "speed_limit",
       Duration(microseconds: 5000000),
@@ -27,6 +28,13 @@ abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
             typeName: "String",
             defaultValue: null,
             interval: null),
+        SyncFieldSettings(
+            name: "roadType",
+            variable: "road_type",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: null,
+            interval: null),
       ],
       "null");
 
@@ -35,10 +43,11 @@ abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
     return SpeedLimitData(
       value: "value" != name ? value : value,
       roadName: "road_name" != name ? roadName : value,
+      roadType: "road_type" != name ? roadType : value,
     );
   }
 
-  List<Object?> get props => [value, roadName];
+  List<Object?> get props => [value, roadName, roadType];
   @override
   String toString() {
     final buf = StringBuffer();
@@ -46,6 +55,7 @@ abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
     buf.writeln("SpeedLimitData(");
     buf.writeln("	value = $value");
     buf.writeln("	roadName = $roadName");
+    buf.writeln("	roadType = $roadType");
     buf.writeln(")");
 
     return buf.toString();

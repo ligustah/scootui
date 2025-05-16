@@ -15,9 +15,14 @@ class SpeedLimitData extends Equatable with $SpeedLimitData {
   @StateField(name: "road_name")
   final String roadName;
 
+  @override
+  @StateField(name: "road_type")
+  final String roadType;
+
   SpeedLimitData({
     this.value = "",
     this.roadName = "",
+    this.roadType = "",
   });
 
   // Check if we have a valid speed limit to display
@@ -29,17 +34,18 @@ class SpeedLimitData extends Equatable with $SpeedLimitData {
       return ""; // No icon when no speed limit data
     }
 
+    // Handle special string values
+    if (value == "unknown") {
+      return ""; // No icon for unknown speed limit
+    }
+
+    if (value == "none") {
+      return "speedlimit_none"; // Use none icon
+    }
+
     try {
-      final intValue = int.parse(value);
-
-      // Return specific icon for exact matches
-      if (intValue == 10) return "speedlimit_10";
-      if (intValue == 20) return "speedlimit_20";
-      if (intValue == 30) return "speedlimit_30";
-      if (intValue == 40) return "speedlimit_40";
-      if (intValue == 50) return "speedlimit_50";
-
-      // For all other values, use the blank template with custom text
+      int.parse(value);
+      // Use the blank template with custom text
       return "speedlimit_blank";
     } catch (e) {
       return "speedlimit_unknown";
