@@ -9,7 +9,7 @@ part 'speed_limit.g.dart';
 class SpeedLimitData extends Equatable with $SpeedLimitData {
   @override
   @StateField()
-  final String value;
+  final String speedLimit;
 
   @override
   @StateField()
@@ -20,13 +20,18 @@ class SpeedLimitData extends Equatable with $SpeedLimitData {
   final String roadType;
 
   SpeedLimitData({
-    this.value = "",
+    this.speedLimit = "",
     this.roadName = "",
     this.roadType = "",
   });
 
   // Check if we have a valid speed limit to display
-  bool get hasSpeedLimit => value.isNotEmpty;
+  bool get hasSpeedLimit {
+    if (speedLimit == "unknown" || speedLimit == "none" || speedLimit.isEmpty) {
+      return false;
+    }
+    return true;
+  }
 
   // Get the appropriate icon name based on the speed limit value
   String get iconName {
@@ -35,19 +40,20 @@ class SpeedLimitData extends Equatable with $SpeedLimitData {
     }
 
     // Handle special string values
-    if (value == "unknown" || value == "") {
+    if (speedLimit == "unknown" || speedLimit == "") {
       return ""; // No icon for unknown speed limit
     }
 
-    if (value == "none") {
+    if (speedLimit == "none") {
       return "speedlimit_none"; // Use none icon
     }
 
     try {
-      int.parse(value);
+      int.parse(speedLimit);
       // Use the blank template with custom text
       return "speedlimit_blank";
     } catch (e) {
+      print("SpeedLimit iconName Exception: ${e}");
       return "speedlimit_unknown";
     }
   }

@@ -39,7 +39,7 @@ class SpeedLimitIndicator extends StatelessWidget {
           // Text overlay
           // Scale font size proportionally to the icon size (64pt at 144px)
           Text(
-            speedLimitData.value,
+            speedLimitData.speedLimit,
             style: GoogleFonts.robotoCondensed(
               fontWeight: FontWeight.bold,
               fontSize: iconSize * (64 / 144), // Scale proportionally
