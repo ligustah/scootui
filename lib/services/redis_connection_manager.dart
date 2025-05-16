@@ -59,18 +59,8 @@ class RedisConnectionManager {
 
     try {
       // Subscribe to all relevant channels including both batteries
-      _pubsub!.subscribe([
-        "vehicle",
-        "engine-ecu",
-        "battery:0",
-        "battery:1",
-        "cb-battery",
-        "aux-battery",
-        "ble",
-        "gps",
-        "buttons",
-        "speed_limit"
-      ]);
+      _pubsub!.subscribe(
+          ["vehicle", "engine-ecu", "battery:0", "battery:1", "cb-battery", "aux-battery", "ble", "gps", "buttons"]);
 
       // Set up stream listener
       final stream = _pubsub!.getStream();

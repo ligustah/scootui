@@ -11,7 +11,7 @@ abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
   String get roadName;
   String get roadType;
   get syncSettings => SyncSettings(
-      "speed_limit",
+      "speed-limit",
       Duration(microseconds: 5000000),
       [
         SyncFieldSettings(
@@ -23,14 +23,14 @@ abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
             interval: null),
         SyncFieldSettings(
             name: "roadName",
-            variable: "road_name",
+            variable: "road-name",
             type: SyncFieldType.string,
             typeName: "String",
             defaultValue: null,
             interval: null),
         SyncFieldSettings(
             name: "roadType",
-            variable: "road_type",
+            variable: "road-type",
             type: SyncFieldType.string,
             typeName: "String",
             defaultValue: null,
@@ -42,8 +42,8 @@ abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
   SpeedLimitData update(String name, String value) {
     return SpeedLimitData(
       value: "value" != name ? value : value,
-      roadName: "road_name" != name ? roadName : value,
-      roadType: "road_type" != name ? roadType : value,
+      roadName: "road-name" != name ? roadName : value,
+      roadType: "road-type" != name ? roadType : value,
     );
   }
 

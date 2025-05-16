@@ -5,18 +5,18 @@ import '../builders/sync/settings.dart';
 
 part 'speed_limit.g.dart';
 
-@StateClass("speed_limit", Duration(seconds: 5))
+@StateClass("speed-limit", Duration(seconds: 5))
 class SpeedLimitData extends Equatable with $SpeedLimitData {
   @override
   @StateField()
   final String value;
 
   @override
-  @StateField(name: "road_name")
+  @StateField()
   final String roadName;
 
   @override
-  @StateField(name: "road_type")
+  @StateField()
   final String roadType;
 
   SpeedLimitData({
@@ -35,7 +35,7 @@ class SpeedLimitData extends Equatable with $SpeedLimitData {
     }
 
     // Handle special string values
-    if (value == "unknown") {
+    if (value == "unknown" || value == "") {
       return ""; // No icon for unknown speed limit
     }
 
