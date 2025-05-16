@@ -6,19 +6,17 @@ import 'indicator_light.dart';
 final class IndicatorLights {
   static IndicatorLight rightBlinker(VehicleData state) => IndicatorLight(
         icon: IndicatorLight.svgAsset('librescoot-turn-right.svg'),
-        isActive: state.blinkerState == BlinkerState.right ||
-            state.blinkerState == BlinkerState.both,
+        isActive: state.blinkerState == BlinkerState.right || state.blinkerState == BlinkerState.both,
         activeColor: Colors.green,
-        size: 48,
+        size: 64,
         blinking: true,
       );
 
   static IndicatorLight leftBlinker(VehicleData state) => IndicatorLight(
         icon: IndicatorLight.svgAsset('librescoot-turn-left.svg'),
-        isActive: state.blinkerState == BlinkerState.left ||
-            state.blinkerState == BlinkerState.both,
+        isActive: state.blinkerState == BlinkerState.left || state.blinkerState == BlinkerState.both,
         activeColor: Colors.green,
-        size: 48,
+        size: 64,
         blinking: true,
       );
 
