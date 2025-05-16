@@ -13,7 +13,7 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
   String get mdbStatus;
   get syncSettings => SyncSettings(
       "ota",
-      Duration(microseconds: 1000000),
+      Duration(microseconds: 5000000),
       [
         SyncFieldSettings(
             name: "otaStatus",

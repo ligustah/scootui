@@ -3,7 +3,7 @@ import '../builders/sync/settings.dart';
 
 part 'ota.g.dart';
 
-@StateClass("ota", Duration(seconds: 1))
+@StateClass("ota", Duration(seconds: 5))
 class OtaData with $OtaData {
   @override
   @StateField(name: "status", defaultValue: "unknown")
