@@ -18,8 +18,11 @@ class SpeedometerDisplay extends StatefulWidget {
   State<SpeedometerDisplay> createState() => _SpeedometerDisplayState();
 }
 
-class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProviderStateMixin {
+  late AnimationController _speedController;
+  late AnimationController _colorController;
+  late Animation<Color?> _colorAnimation;
+
   double _lastSpeed = 0.0;
   double _animationStartSpeed = 0.0;
   double _targetSpeed = 0.0;
@@ -28,7 +31,9 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+
+    // Speed animation controller
+    _speedController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     )
@@ -46,11 +51,20 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
           }
         }
       });
+
+    // Color animation controller
+    _colorController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    )..addListener(() {
+        if (mounted) setState(() {});
+      });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _speedController.dispose();
+    _colorController.dispose();
     super.dispose();
   }
 
@@ -68,34 +82,58 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with SingleTick
       setState(() {
         _isRegenerating = regenerating;
       });
+
+      // Set up color animation based on new state
+      final Color fromColor =
+          _isRegenerating ? (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200) : Colors.red.withOpacity(0.3);
+
+      final Color toColor =
+          _isRegenerating ? Colors.red.withOpacity(0.3) : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+
+      _colorAnimation = ColorTween(
+        begin: fromColor,
+        end: toColor,
+      ).animate(CurvedAnimation(
+        parent: _colorController,
+        curve: Curves.easeInOut,
+      ));
+
+      // Start color animation
+      _colorController.reset();
+      _colorController.forward();
     }
 
     // If the speed has changed and we're not currently animating
-    if (speed != _targetSpeed && !_controller.isAnimating) {
+    if (speed != _targetSpeed && !_speedController.isAnimating) {
       // Store the starting point (current displayed value) and target
       _animationStartSpeed = _lastSpeed;
       _targetSpeed = speed;
 
       // Start a new animation
-      _controller.reset();
-      _controller.forward();
+      _speedController.reset();
+      _speedController.forward();
     }
 
     // Calculate the animated speed value
     double animatedSpeed;
 
-    if (_controller.isAnimating) {
+    if (_speedController.isAnimating) {
       // Apply easing curve for smooth motion
-      final curvedValue = Curves.easeOutCubic.transform(_controller.value);
+      final curvedValue = Curves.easeOutCubic.transform(_speedController.value);
       animatedSpeed = _animationStartSpeed + (curvedValue * (_targetSpeed - _animationStartSpeed));
     } else {
       // Not animating, use the last stable value
       animatedSpeed = _lastSpeed;
     }
 
-    // Calculate background color based on regeneration state
-    final backgroundColor =
-        _isRegenerating ? Colors.red.withOpacity(0.3) : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+    // Get the current animated background color
+    Color backgroundColor;
+    if (_colorController.isAnimating && _colorAnimation.value != null) {
+      backgroundColor = _colorAnimation.value!;
+    } else {
+      backgroundColor =
+          _isRegenerating ? Colors.red.withOpacity(0.3) : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+    }
 
     return Stack(
       alignment: Alignment.center,
