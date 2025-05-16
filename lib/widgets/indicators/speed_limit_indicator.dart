@@ -82,7 +82,7 @@ class RoadNameDisplay extends StatelessWidget {
     final (Color bgColor, Color textColor, BoxBorder? border) = _getRoadSignStyle(speedLimitData.roadType);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(4),

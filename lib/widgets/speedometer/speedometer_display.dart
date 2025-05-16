@@ -11,7 +11,7 @@ class SpeedometerDisplay extends StatefulWidget {
 
   const SpeedometerDisplay({
     super.key,
-    this.maxSpeed = 70.0,
+    this.maxSpeed = 60.0,
   });
 
   @override
@@ -136,7 +136,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     }
 
     return Stack(
-      alignment: Alignment.center,
+      alignment: Alignment.topCenter,
       children: [
         Container(
           decoration: const BoxDecoration(
@@ -156,22 +156,10 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
         ),
         // Speed display and indicators
         Transform.translate(
-          offset: const Offset(0, -10),
+          offset: const Offset(0, 10),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Speed limit indicator
-              SizedBox(
-                height: 40, // Fixed height to keep layout compact
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SpeedLimitIndicator(iconSize: 38),
-                  ],
-                ),
-              ),
-
               // Animated speed text
               RichText(
                 textAlign: TextAlign.center,
@@ -179,24 +167,43 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
                   text: animatedSpeed.toStringAsFixed(0),
                   style: TextStyle(
                     fontSize: 96,
-                    height: 1, // Reduce line height
+                    height: 1,
                     fontWeight: FontWeight.bold,
                     color: theme.isDark ? Colors.white : Colors.black,
                   ),
                 ),
               ),
 
-              // Use RichText for km/h with tight line height
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   text: 'km/h',
                   style: TextStyle(
                     fontSize: 24,
-                    height: 0.9, // Reduce line height
+                    height: 0.95,
                     color: theme.isDark ? Colors.white70 : Colors.black54,
                   ),
                 ),
+              ),
+
+              // Speed limit indicator
+              const SizedBox(height: 16),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SpeedLimitIndicator(iconSize: 24),
+                  const SizedBox(width: 4),
+                  SizedBox(
+                    width: 140,
+                    child: RoadNameDisplay(
+                      textStyle: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

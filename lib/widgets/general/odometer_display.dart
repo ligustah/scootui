@@ -38,21 +38,6 @@ class OdometerDisplay extends StatelessWidget {
             ],
           ),
         ),
-
-        // Road name absolutely positioned in center
-        Positioned.fill(
-          child: Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 200),
-              child: RoadNameDisplay(
-                textStyle: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -90,7 +75,8 @@ class _DistanceDisplay extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
+            height: 0.9,
             fontWeight: FontWeight.w500,
             color: isDark ? Colors.white60 : Colors.black54,
             letterSpacing: 1,
@@ -108,7 +94,8 @@ class _DistanceDisplay extends StatelessWidget {
             Text(
               whole,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
+                height: 0.9,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
@@ -117,7 +104,8 @@ class _DistanceDisplay extends StatelessWidget {
             Text(
               '.',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
+                height: 0.9,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
@@ -126,20 +114,21 @@ class _DistanceDisplay extends StatelessWidget {
             Text(
               decimal,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
+                height: 0.9,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(width: 4),
-            // Unit (km)
-            Text(
-              'km',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.white60 : Colors.black54,
-              ),
-            ),
+            // const SizedBox(width: 4),
+            // // Unit (km)
+            // Text(
+            //   'km',
+            //   style: TextStyle(
+            //     fontSize: 12,
+            //     color: isDark ? Colors.white60 : Colors.black54,
+            //   ),
+            // ),
           ],
         ),
       ],
