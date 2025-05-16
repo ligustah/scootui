@@ -105,7 +105,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
                     // Power display at bottom of speedometer area
                     Positioned(
-                      bottom: 20,
+                      bottom: 10,
                       left: 40,
                       right: 40,
                       child: PowerDisplay(
@@ -118,7 +118,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
               // Bottom area with trip/total distance
               Container(
-                height: 80,
+                height: 60,
                 decoration: BoxDecoration(
                   border: Border(
                     top: BorderSide(

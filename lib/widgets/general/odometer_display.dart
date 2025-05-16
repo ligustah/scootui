@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/theme_cubit.dart';
+import '../indicators/speed_limit_indicator.dart';
 
 class OdometerDisplay extends StatelessWidget {
   final double tripDistance;
@@ -14,26 +15,30 @@ class OdometerDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Trip distance
-          _DistanceDisplay(
-            label: 'TRIP',
-            value: _formatDistance(tripDistance),
-            alignment: CrossAxisAlignment.start,
-          ),
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Trip distance
+              _DistanceDisplay(
+                label: 'TRIP',
+                value: _formatDistance(tripDistance),
+                alignment: CrossAxisAlignment.start,
+              ),
 
-          // Total distance
-          _DistanceDisplay(
-            label: 'TOTAL',
-            value: _formatDistance(totalDistance),
-            alignment: CrossAxisAlignment.end,
+              // Total distance
+              _DistanceDisplay(
+                label: 'TOTAL',
+                value: _formatDistance(totalDistance),
+                alignment: CrossAxisAlignment.end,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -70,7 +75,8 @@ class _DistanceDisplay extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
+            height: 0.9,
             fontWeight: FontWeight.w500,
             color: isDark ? Colors.white60 : Colors.black54,
             letterSpacing: 1,
@@ -88,7 +94,8 @@ class _DistanceDisplay extends StatelessWidget {
             Text(
               whole,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
+                height: 0.9,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
@@ -97,7 +104,8 @@ class _DistanceDisplay extends StatelessWidget {
             Text(
               '.',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
+                height: 0.9,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
@@ -106,20 +114,21 @@ class _DistanceDisplay extends StatelessWidget {
             Text(
               decimal,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
+                height: 0.9,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(width: 4),
-            // Unit (km)
-            Text(
-              'km',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.white60 : Colors.black54,
-              ),
-            ),
+            // const SizedBox(width: 4),
+            // // Unit (km)
+            // Text(
+            //   'km',
+            //   style: TextStyle(
+            //     fontSize: 12,
+            //     color: isDark ? Colors.white60 : Colors.black54,
+            //   ),
+            // ),
           ],
         ),
       ],
@@ -220,27 +229,33 @@ class AnimatedOdometerDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 500),
-      tween: Tween<double>(
-        begin: previousTrip,
-        end: tripDistance,
-      ),
-      builder: (context, tripValue, child) {
-        return TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 500),
-          tween: Tween<double>(
-            begin: previousTotal,
-            end: totalDistance,
+    return Column(
+      children: [
+        Expanded(
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 500),
+            tween: Tween<double>(
+              begin: previousTrip,
+              end: tripDistance,
+            ),
+            builder: (context, tripValue, child) {
+              return TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 500),
+                tween: Tween<double>(
+                  begin: previousTotal,
+                  end: totalDistance,
+                ),
+                builder: (context, totalValue, child) {
+                  return OdometerDisplay(
+                    tripDistance: tripValue,
+                    totalDistance: totalValue,
+                  );
+                },
+              );
+            },
           ),
-          builder: (context, totalValue, child) {
-            return OdometerDisplay(
-              tripDistance: tripValue,
-              totalDistance: totalValue,
-            );
-          },
-        );
-      },
+        ),
+      ],
     );
   }
 }

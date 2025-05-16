@@ -25,6 +25,7 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: GpsSync.create),
   BlocProvider(create: InternetSync.create),
   BlocProvider(create: NavigationSync.create),
+  BlocProvider(create: SpeedLimitSync.create),
   BlocProvider(create: SystemCubit.create),
   BlocProvider(create: TripCubit.create),
   BlocProvider(create: MapCubit.create),

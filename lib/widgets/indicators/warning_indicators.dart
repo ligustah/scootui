@@ -21,7 +21,7 @@ class WarningIndicators extends StatelessWidget {
           // Left turn signal
           IndicatorLights.leftBlinker(state),
 
-          // Parking indicator
+          // Center section with parking indicator
           IndicatorLights.parkingBrake(state),
 
           // Right turn signal
@@ -31,4 +31,3 @@ class WarningIndicators extends StatelessWidget {
     );
   }
 }
-

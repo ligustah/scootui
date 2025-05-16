@@ -9,6 +9,7 @@ import '../state/gps.dart';
 import '../state/internet.dart';
 import '../state/navigation.dart';
 import '../state/ota.dart';
+import '../state/speed_limit.dart';
 import '../state/vehicle.dart';
 import 'syncable_cubit.dart';
 
@@ -114,4 +115,16 @@ class OtaSync extends SyncableCubit<OtaData> {
   static OtaSync create(BuildContext context) => OtaSync(RepositoryProvider.of<MDBRepository>(context))..start();
 
   OtaSync(MDBRepository repo) : super(redisRepository: repo, initialState: OtaData());
+}
+
+class SpeedLimitSync extends SyncableCubit<SpeedLimitData> {
+  static SpeedLimitData watch(BuildContext context) => context.watch<SpeedLimitSync>().state;
+
+  static SpeedLimitSync create(BuildContext context) => 
+      SpeedLimitSync(RepositoryProvider.of<MDBRepository>(context))..start();
+  
+  static T select<T>(BuildContext context, T Function(SpeedLimitData) selector) =>
+      selector(context.select((SpeedLimitSync e) => e.state));
+
+  SpeedLimitSync(MDBRepository repo) : super(redisRepository: repo, initialState: SpeedLimitData());
 }

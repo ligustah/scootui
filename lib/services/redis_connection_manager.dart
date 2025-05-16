@@ -6,7 +6,7 @@ class RedisConnectionManager {
   final int port;
   final Function(String) onConnectionLost;
   final Function() onConnectionRestored;
-  
+
   RedisConnection? _connection;
   Command? _command;
   PubSub? _pubsub;
@@ -29,25 +29,24 @@ class RedisConnectionManager {
     if (_isDisposed) return;
 
     try {
-      await cleanup();  // Clean up any existing connections
-      
+      await cleanup(); // Clean up any existing connections
+
       // Create a new connection for commands
       final commandConnection = RedisConnection();
       _command = await commandConnection.connect(host, port);
-      
+
       // Create a separate connection for PubSub
       final pubsubConnection = RedisConnection();
       final pubsubCommand = await pubsubConnection.connect(host, port);
       _pubsub = PubSub(pubsubCommand);
-      
+
       _connection = commandConnection;
-      
+
       if (_eventHandler != null) {
         await _setupSubscription(_eventHandler!);
       }
-      
+
       _isReconnecting = false;
-      
     } catch (e) {
       // print('Redis connection error: $e');
       await cleanup();
@@ -60,24 +59,15 @@ class RedisConnectionManager {
 
     try {
       // Subscribe to all relevant channels including both batteries
-      _pubsub!.subscribe([
-        "vehicle",
-        "engine-ecu",
-        "battery:0",
-        "battery:1",
-        "cb-battery",
-        "aux-battery",
-        "ble",
-        "gps",
-        "buttons" // Added button events channel for immediate button press notifications
-      ]);
-      
+      _pubsub!.subscribe(
+          ["vehicle", "engine-ecu", "battery:0", "battery:1", "cb-battery", "aux-battery", "ble", "gps", "buttons"]);
+
       // Set up stream listener
       final stream = _pubsub!.getStream();
-      
+
       // Cancel any existing subscription
       await _subscription?.cancel();
-      
+
       _subscription = stream.listen(
         (msg) {
           // Ensure msg is a List and has at least 3 elements
@@ -112,18 +102,18 @@ class RedisConnectionManager {
   }
 
   void handleConnectionLoss() {
-    _command = null;  // Mark connection as lost
+    _command = null; // Mark connection as lost
     onConnectionLost('Connection to MDB failed');
-    cleanup();  // Clean up existing connections
-    startReconnecting();  // Start reconnection process
+    cleanup(); // Clean up existing connections
+    startReconnecting(); // Start reconnection process
   }
 
   void startReconnecting() {
     if (_isReconnecting || _isDisposed) return;
-    
+
     _isReconnecting = true;
     _reconnectTimer?.cancel();
-    
+
     // Attempt to reconnect every second
     _reconnectTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (_isDisposed || !_isReconnecting) {
@@ -132,7 +122,7 @@ class RedisConnectionManager {
       }
 
       try {
-        await connect();  // This will create new connections and resubscribe
+        await connect(); // This will create new connections and resubscribe
         timer.cancel();
         _isReconnecting = false;
         onConnectionRestored();
@@ -147,7 +137,7 @@ class RedisConnectionManager {
     try {
       await _subscription?.cancel();
       _subscription = null;
-      
+
       if (_command != null) {
         await _command!.get_connection().close();
         _command = null;
