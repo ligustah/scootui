@@ -4,8 +4,7 @@ import 'package:simple_animations/simple_animations.dart';
 
 import '../../cubits/theme_cubit.dart';
 
-typedef IndicatorIcon = Widget Function(
-    Color color, double size);
+typedef IndicatorIcon = Widget Function(Color color, double size);
 
 class IndicatorLight extends StatelessWidget {
   static IndicatorIcon svgAsset(String iconName) {
@@ -48,7 +47,7 @@ class IndicatorLight extends StatelessWidget {
     // TODO: this should probably not live in here, but it's easier for now
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
-    final inactiveColor = isDark ? Colors.white24 : Colors.black12;
+    final inactiveColor = isDark ? Colors.white12 : Colors.black12;
 
     render(final Color color) => icon(color, size);
 
@@ -57,8 +56,8 @@ class IndicatorLight extends StatelessWidget {
       if (blinking && isActive)
         MirrorAnimationBuilder(
           tween: IntTween(begin: 0, end: 255),
-          curve: Curves.easeInOut,
-          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeInOutExpo,
+          duration: const Duration(milliseconds: 327),
           builder: (context, value, child) => render(activeColor.withAlpha(value)),
         ),
     ]);
