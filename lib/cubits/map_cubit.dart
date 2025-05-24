@@ -17,6 +17,7 @@ import '../config.dart';
 import '../map/mbtiles_provider.dart';
 import '../repositories/tiles_repository.dart';
 import '../routing/brouter.dart';
+import '../routing/valhalla.dart';
 import '../routing/models.dart';
 import '../routing/route_helpers.dart';
 import '../state/gps.dart';
@@ -161,16 +162,18 @@ class MapCubit extends Cubit<MapState> {
 
     emit(state.copyWith(destination: destination));
 
-    final brouter = BRouterService(serverURL: AppConfig.routerEndpoint);
-    final route = await brouter.getRoute(
-      BRouterRequest(
-        waypoints: [state.position, destination],
-      ),
+    final valhallaService =
+        ValhallaService(serverURL: AppConfig.valhallaEndpoint);
+    final route = await valhallaService.getRoute(
+      state.position,
+      destination,
     );
 
     emit(state.copyWith(
-        route: route,
-        nextInstruction: _nextInstruction(route, state.position)));
+      route: route,
+      nextInstruction:
+          route.instructions.isNotEmpty ? route.instructions.first : null,
+    ));
   }
 
   void _moveAndRotate(LatLng center, double course, {Duration? duration}) {

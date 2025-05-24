@@ -15,6 +15,13 @@ class AppConfig {
   /// Default BRouter endpoint URL
   static String routerEndpoint = 'http://localhost:17777';
 
+  /// Default Valhalla endpoint URL
+  static String valhallaEndpoint = 'http://localhost:8002';
+
   /// Redis brouter endpoint setting key
   static const String routerEndpointKey = 'brouter-url';
+
+  // TODO: add to setting service
+  /// Redis valhalla endpoint setting key
+  // static const String valhallaEndpointKey = 'valhalla-url';
 }
