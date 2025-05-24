@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
-    show Alignment, BuildContext, Colors, Icon, Icons, Widget, TickerProviderStateMixin;
+    show Alignment, BuildContext, Colors, Icon, Icons, Widget, TickerProviderStateMixin, Padding, ColoredBox, Align, FontWeight, TextStyle;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_map/flutter_map.dart'
     show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, Polyline, PolylineLayer, StrokePattern, TileLayer;
 import 'package:latlong2/latlong.dart';
+import './user_location_marker_icon.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer, VectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
 
@@ -56,14 +57,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
               width: 30.0,
               height: 30.0,
               alignment: Alignment.center,
-              child: Transform.rotate(
-                angle: -widget.orientation * (math.pi / 180),
-                child: const Icon(
-                  Icons.navigation,
-                  color: Colors.blue,
-                  size: 30.0,
-                ),
-              ),
+              child: UserLocationMarkerIcon(orientation: widget.orientation),
             ),
           ],
         ),
@@ -276,18 +270,21 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
           tileDelay: Duration.zero,
         ),
         if (routeLayer != null) routeLayer,
-        MarkerLayer(markers: [
-          Marker(
-            rotate: true,
-            point: widget.position,
-            child: const Icon(
-              Icons.navigation,
-              color: Colors.blue,
-              size: 30.0,
+        // Dedicated MarkerLayer for the user's location
+        MarkerLayer(
+          markers: [
+            Marker(
+              point: widget.position,
+              width: 30.0,
+              height: 30.0,
+              alignment: Alignment.center,
+              child: UserLocationMarkerIcon(orientation: widget.orientation),
             ),
-          ),
-          ..._routeMarkers()
-        ]),
+          ],
+        ),
+        // Separate MarkerLayer for other route-related markers
+        if (_routeMarkers().isNotEmpty)
+          MarkerLayer(markers: _routeMarkers()),
         if (instructionLayer != null) instructionLayer,
       ],
     );

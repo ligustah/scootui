@@ -21,44 +21,44 @@ class SpeedometerDisplay extends StatefulWidget {
 class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProviderStateMixin {
   late AnimationController _speedController;
   late AnimationController _colorController;
-  late Animation<Color?> _colorAnimation;
+  late Animation<Color?> _colorAnimation; // Keep this for the color tween
 
   double _lastSpeed = 0.0;
   double _animationStartSpeed = 0.0;
   double _targetSpeed = 0.0;
-  bool _isRegenerating = false;
+  bool _isRegenerating = false; // Still useful for logic and initial color state
 
   @override
   void initState() {
     super.initState();
 
-    // Speed animation controller
     _speedController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
-    )
-      ..addListener(() {
-        // Force rebuild on animation updates
-        if (mounted) setState(() {});
-      })
-      ..addStatusListener((status) {
+    )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          // Only update _lastSpeed when animation completes
           if (mounted) {
-            setState(() {
-              _lastSpeed = _targetSpeed;
-            });
+            // Update _lastSpeed when animation completes.
+            // No setState needed here as AnimatedBuilder will handle UI updates.
+            _lastSpeed = _targetSpeed;
           }
         }
       });
 
-    // Color animation controller
     _colorController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
-    )..addListener(() {
-        if (mounted) setState(() {});
-      });
+    );
+
+    // Initialize _colorAnimation with a default. It will be updated.
+    // Using a transparent color initially, will be set properly before first use.
+    _colorAnimation = ColorTween(
+      begin: Colors.transparent,
+      end: Colors.transparent,
+    ).animate(CurvedAnimation(
+      parent: _colorController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   @override
@@ -70,145 +70,134 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
   @override
   Widget build(BuildContext context) {
-    final engineData = EngineSync.watch(context);
-    final speed = engineData.speed.toDouble();
+    final engineData = EngineSync.select(context, (data) => (data.speed, data.motorCurrent));
+    final double currentSpeed = engineData.$1.toDouble();
+    final double motorCurrent = engineData.$2;
     final theme = ThemeCubit.watch(context);
 
-    // Check if we're regenerating by monitoring the motor current
-    // Negative current indicates regenerative braking
-    final bool regenerating = engineData.motorCurrent < 0;
+    final bool regenerating = motorCurrent < 0;
 
     if (_isRegenerating != regenerating) {
-      setState(() {
-        _isRegenerating = regenerating;
-      });
+      _isRegenerating = regenerating; // Update state directly
 
-      // Set up color animation based on new state
-      final Color fromColor =
-          _isRegenerating ? (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200) : Colors.red.withOpacity(0.3);
+      final Color fromColor = _isRegenerating
+          ? (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200)
+          : Colors.red.withOpacity(0.3);
+      final Color toColor = _isRegenerating
+          ? Colors.red.withOpacity(0.3)
+          : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
 
-      final Color toColor =
-          _isRegenerating ? Colors.red.withOpacity(0.3) : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
-
+      // Update _colorAnimation before starting the animation
       _colorAnimation = ColorTween(
-        begin: fromColor,
+        begin: fromColor, // Could also be _colorAnimation.value if we want smoother transitions from ongoing animation
         end: toColor,
       ).animate(CurvedAnimation(
         parent: _colorController,
         curve: Curves.easeInOut,
       ));
 
-      // Start color animation
       _colorController.reset();
       _colorController.forward();
     }
 
-    // If the speed has changed and we're not currently animating
-    if (speed != _targetSpeed && !_speedController.isAnimating) {
-      // Store the starting point (current displayed value) and target
+    if (currentSpeed != _targetSpeed && !_speedController.isAnimating) {
       _animationStartSpeed = _lastSpeed;
-      _targetSpeed = speed;
-
-      // Start a new animation
+      _targetSpeed = currentSpeed;
       _speedController.reset();
       _speedController.forward();
     }
 
-    // Calculate the animated speed value
-    double animatedSpeed;
+    return AnimatedBuilder(
+      animation: Listenable.merge([_speedController, _colorController]),
+      builder: (context, child) {
+        double animatedSpeed;
+        if (_speedController.isAnimating) {
+          final curvedValue = Curves.easeOutCubic.transform(_speedController.value);
+          animatedSpeed = _animationStartSpeed + (curvedValue * (_targetSpeed - _animationStartSpeed));
+        } else {
+          animatedSpeed = _lastSpeed;
+        }
 
-    if (_speedController.isAnimating) {
-      // Apply easing curve for smooth motion
-      final curvedValue = Curves.easeOutCubic.transform(_speedController.value);
-      animatedSpeed = _animationStartSpeed + (curvedValue * (_targetSpeed - _animationStartSpeed));
-    } else {
-      // Not animating, use the last stable value
-      animatedSpeed = _lastSpeed;
-    }
+        Color backgroundColor;
+        // Use _colorAnimation.value directly. If controller is not animating, it holds the end color.
+        // Check if _colorAnimation has been initialized properly, especially on first build.
+        if (_colorAnimation.value != null) {
+            backgroundColor = _colorAnimation.value!;
+        } else {
+            // Fallback or initial color before first animation
+            backgroundColor = _isRegenerating
+                ? Colors.red.withOpacity(0.3)
+                : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+        }
+        
+        // Ensure theme is accessible for initial backgroundColor if needed before _colorAnimation is set
+        // This might require theme to be available here or passed if not directly accessible.
 
-    // Get the current animated background color
-    Color backgroundColor;
-    if (_colorController.isAnimating && _colorAnimation.value != null) {
-      backgroundColor = _colorAnimation.value!;
-    } else {
-      backgroundColor =
-          _isRegenerating ? Colors.red.withOpacity(0.3) : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
-    }
-
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-          ),
-        ),
-        // Main speedometer gauge
-        CustomPaint(
-          size: const Size.fromRadius(150),
-          painter: _SpeedometerPainter(
-            progress: animatedSpeed / widget.maxSpeed,
-            isDark: theme.isDark,
-            isRegenerating: _isRegenerating,
-            backgroundColor: backgroundColor,
-            maxSpeed: widget.maxSpeed,
-          ),
-        ),
-        // Speed display and indicators
-        Transform.translate(
-          offset: const Offset(0, 10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Animated speed text
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  text: animatedSpeed.toStringAsFixed(0),
-                  style: TextStyle(
-                    fontSize: 96,
-                    height: 1,
-                    fontWeight: FontWeight.bold,
-                    color: theme.isDark ? Colors.white : Colors.black,
-                  ),
-                ),
+        return Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            CustomPaint(
+              size: const Size.fromRadius(150),
+              painter: _SpeedometerPainter(
+                progress: animatedSpeed / widget.maxSpeed,
+                isDark: theme.isDark, // theme might need to be passed or accessed if not in scope
+                isRegenerating: _isRegenerating, // Use the state variable
+                backgroundColor: backgroundColor,
+                maxSpeed: widget.maxSpeed,
               ),
-
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  text: 'km/h',
-                  style: TextStyle(
-                    fontSize: 24,
-                    height: 0.95,
-                    color: theme.isDark ? Colors.white70 : Colors.black54,
-                  ),
-                ),
-              ),
-
-              // Speed limit indicator
-              const SizedBox(height: 16),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+            ),
+            Transform.translate(
+              offset: const Offset(0, 10),
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SpeedLimitIndicator(iconSize: 24),
-                  const SizedBox(width: 4),
-                  SizedBox(
-                    width: 140,
-                    child: RoadNameDisplay(
-                      textStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      text: animatedSpeed.toStringAsFixed(0),
+                      style: TextStyle(
+                        fontSize: 96,
+                        height: 1,
+                        fontWeight: FontWeight.bold,
+                        color: theme.isDark ? Colors.white : Colors.black,
                       ),
                     ),
                   ),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      text: 'km/h',
+                      style: TextStyle(
+                        fontSize: 24,
+                        height: 0.95,
+                        color: theme.isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SpeedLimitIndicator(iconSize: 24),
+                      const SizedBox(width: 4),
+                      SizedBox(
+                        width: 140,
+                        child: RoadNameDisplay(
+                          textStyle: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }

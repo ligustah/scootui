@@ -25,7 +25,7 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get the current screen state
     final state = context.watch<ScreenCubit>().state;
-    final menu = context.watch<MenuCubit>();
+    final menu = context.read<MenuCubit>(); // Changed from .watch to .read
     final debugMode = context.watch<DebugOverlayCubit>().state;
 
     Widget menuTrigger(Widget child) => ControlGestureDetector(
