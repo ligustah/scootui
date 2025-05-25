@@ -7,16 +7,6 @@ part 'battery.g.dart';
 
 enum BatteryState { unknown, asleep, idle, active }
 
-// Represents a battery fault code (0-13)
-class BatteryFault {
-  final int code;
-
-  const BatteryFault(this.code);
-
-  @override
-  String toString() => "B${code.toString()}";
-}
-
 @StateClass("battery", Duration(seconds: 30))
 class BatteryData extends Equatable with $BatteryData {
   @override
@@ -64,10 +54,6 @@ class BatteryData extends Equatable with $BatteryData {
   final String temperatureState;
 
   @override
-  @StateField(name: "fault")
-  final List<BatteryFault> faults;
-
-  @override
   @StateField()
   final int cycleCount;
 
@@ -87,6 +73,26 @@ class BatteryData extends Equatable with $BatteryData {
   @StateField(name: "fw-version")
   final String firmwareVersion;
 
+  @override
+  List<Object?> get props => [
+        id,
+        present,
+        state,
+        voltage,
+        current,
+        charge,
+        temperature0,
+        temperature1,
+        temperature2,
+        temperature3,
+        temperatureState,
+        cycleCount,
+        stateOfHealth,
+        serialNumber,
+        manufacturingDate,
+        firmwareVersion,
+      ];
+
   BatteryData({
     required this.id,
     this.present = false,
@@ -104,7 +110,6 @@ class BatteryData extends Equatable with $BatteryData {
     this.temperature2 = 0,
     this.temperature3 = 0,
     this.temperatureState = "",
-    this.faults = const [],
   });
 
   // Create a copy of this BatteryData with the given fields replaced
@@ -120,7 +125,6 @@ class BatteryData extends Equatable with $BatteryData {
     int? temperature2,
     int? temperature3,
     String? temperatureState,
-    List<BatteryFault>? faults,
     int? cycleCount,
     int? stateOfHealth,
     String? serialNumber,
@@ -139,7 +143,6 @@ class BatteryData extends Equatable with $BatteryData {
       temperature2: temperature2 ?? this.temperature2,
       temperature3: temperature3 ?? this.temperature3,
       temperatureState: temperatureState ?? this.temperatureState,
-      faults: faults ?? this.faults,
       cycleCount: cycleCount ?? this.cycleCount,
       stateOfHealth: stateOfHealth ?? this.stateOfHealth,
       serialNumber: serialNumber ?? this.serialNumber,

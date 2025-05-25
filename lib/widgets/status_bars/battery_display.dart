@@ -13,13 +13,11 @@ const double kBatteryIconHeight = 24.0;
 const double kScaleFactor = kBatteryIconWidth / 144.0;
 
 // Charge level rectangle dimensions (scaled from 144x144)
-const double kChargeRectX = 26.0 * kScaleFactor;
-const double kChargeRectY = 43.0 * kScaleFactor;
-const double kChargeRectHeight = 81.0 * kScaleFactor;
-const double kChargeRectMaxWidth = 92.0 * kScaleFactor;
-
-// Text position (scaled from 144x144)
-const double kTextY = 45.0 * kScaleFactor;
+// Made larger: x-1, y-1, w+2, h+1
+const double kChargeRectX = 23.0 * kScaleFactor;
+const double kChargeRectY = 41.0 * kScaleFactor;
+const double kChargeRectHeight = 83.0 * kScaleFactor;
+const double kChargeRectMaxWidth = 98.0 * kScaleFactor;
 
 class BatteryStatusDisplay extends StatelessWidget {
   final BatteryData battery;
@@ -28,112 +26,85 @@ class BatteryStatusDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine which icon to show based on battery state
-    Widget batteryIcon;
-
     // Get theme information
     final ThemeState(:isDark) = ThemeCubit.watch(context);
     final iconColor = isDark ? Colors.white : Colors.black;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final backgroundColor = isDark ? Colors.black : Colors.white;
+
+    // Determine which icon to show and what text to display
+    Widget batteryIcon;
+    String? labelText;
 
     if (!battery.present) {
-      // Battery not present - show blank with slash overlay
-      batteryIcon = Stack(
-        alignment: Alignment.center,
-        children: [
-          SvgPicture.asset(
-            'assets/icons/librescoot-battery-blank.svg',
-            width: kBatteryIconWidth,
-            height: kBatteryIconHeight,
-            colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-          ),
-          SvgPicture.asset(
-            'assets/icons/librescoot-overlay-slashed.svg',
-            width: kBatteryIconWidth,
-            height: kBatteryIconHeight,
-            colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-          ),
-        ],
-      );
-    } else if (battery.faults.isNotEmpty) {
-      // Battery has fault - show error overlay with fault code
-      batteryIcon = Stack(
-        alignment: Alignment.center,
-        children: [
-          SvgPicture.asset(
-            'assets/icons/librescoot-battery-blank.svg',
-            width: kBatteryIconWidth,
-            height: kBatteryIconHeight,
-            colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-          ),
-          SvgPicture.asset(
-            'assets/icons/librescoot-overlay-error.svg',
-            width: kBatteryIconWidth,
-            height: kBatteryIconHeight,
-            colorFilter: ColorFilter.mode(Colors.red, BlendMode.srcIn),
-          ),
-          Positioned(
-            top: kTextY,
-            child: Center(
-              child: Builder(builder: (context) {
-                final ThemeState(:isDark) = ThemeCubit.watch(context);
-                return Text(
-                  battery.faults.first.toString(),
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 1
-                      ..color = isDark ? Colors.black : Colors.white,
-                  ),
-                );
-              }),
-            ),
-          ),
-          Positioned(
-            top: kTextY,
-            child: Center(
-              child: Text(
-                battery.faults.first.toString(),
-                style: const TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    } else if (battery.state == BatteryState.asleep) {
-      // Battery is asleep
-      batteryIcon = Stack(
-        alignment: Alignment.center,
-        children: [
-          SvgPicture.asset(
-            'assets/icons/librescoot-battery-blank.svg',
-            width: kBatteryIconWidth,
-            height: kBatteryIconHeight,
-            colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-          ),
-          SvgPicture.asset(
-            'assets/icons/librescoot-overlay-asleep.svg',
-            width: kBatteryIconWidth,
-            height: kBatteryIconHeight,
-            colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-          ),
-        ],
-      );
-    } else if (battery.charge <= 0) {
-      // Critically empty battery
+      // Battery not present - show absent icon
       batteryIcon = SvgPicture.asset(
-        'assets/icons/librescoot-battery-level-0.svg',
+        'assets/icons/librescoot-main-battery-absent.svg',
         width: kBatteryIconWidth,
         height: kBatteryIconHeight,
         colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
       );
+    } else if (battery.state == BatteryState.asleep || battery.state == BatteryState.idle) {
+      // Battery is asleep or idle - show normal charge icon with asleep mask and overlay
+      final chargeWidth = (battery.charge / 100.0) * kChargeRectMaxWidth;
+
+      batteryIcon = Stack(
+        alignment: Alignment.center,
+        children: [
+          // Base battery icon with charge level
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Base battery icon
+              SvgPicture.asset(
+                'assets/icons/librescoot-main-battery-blank.svg',
+                width: kBatteryIconWidth,
+                height: kBatteryIconHeight,
+                colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+              ),
+
+              // Charge level rectangle
+              Positioned(
+                left: kChargeRectX,
+                top: kChargeRectY,
+                child: Container(
+                  width: chargeWidth,
+                  height: kChargeRectHeight,
+                  color: iconColor,
+                ),
+              ),
+            ],
+          ),
+
+          // Apply asleep mask (draw inverted - mask areas in background color)
+          SvgPicture.asset(
+            'assets/icons/librescoot-main-battery-asleep-mask.svg',
+            width: kBatteryIconWidth,
+            height: kBatteryIconHeight,
+            colorFilter: ColorFilter.mode(backgroundColor, BlendMode.srcIn),
+          ),
+
+          // Apply asleep overlay
+          SvgPicture.asset(
+            'assets/icons/librescoot-main-battery-asleep-overlay.svg',
+            width: kBatteryIconWidth,
+            height: kBatteryIconHeight,
+            colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+          ),
+        ],
+      );
+      labelText = '${battery.charge}';
+    } else if (battery.charge <= 0) {
+      // Critically empty battery - show empty icon
+      batteryIcon = SvgPicture.asset(
+        'assets/icons/librescoot-main-battery-empty.svg',
+        width: kBatteryIconWidth,
+        height: kBatteryIconHeight,
+        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+      );
+      labelText = '${battery.charge}';
     } else {
-      // Normal battery with charge level
+      // Normal battery with charge level - draw charge state as a block
       final chargeWidth = (battery.charge / 100.0) * kChargeRectMaxWidth;
 
       batteryIcon = Stack(
@@ -141,7 +112,7 @@ class BatteryStatusDisplay extends StatelessWidget {
         children: [
           // Base battery icon
           SvgPicture.asset(
-            'assets/icons/librescoot-battery-blank.svg',
+            'assets/icons/librescoot-main-battery-blank.svg',
             width: kBatteryIconWidth,
             height: kBatteryIconHeight,
             colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
@@ -157,48 +128,29 @@ class BatteryStatusDisplay extends StatelessWidget {
               color: iconColor,
             ),
           ),
+        ],
+      );
+      labelText = '${battery.charge}';
+    }
 
-          // Charge percentage text with outline
-          Positioned(
-            bottom: 2,
-            child: Center(
-              child: Builder(builder: (context) {
-                final ThemeState(:isDark) = ThemeCubit.watch(context);
-                return Text(
-                  battery.charge.toString(),
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 1
-                      ..color = isDark ? Colors.black : Colors.white,
-                  ),
-                );
-              }),
-            ),
-          ),
-
-          // Charge percentage text
-          Positioned(
-            bottom: 2,
-            child: Center(
-              child: Text(
-                battery.charge.toString(),
-                style: TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
+    // Return the battery icon with text label beside it
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        batteryIcon,
+        if (labelText != null) ...[
+          const SizedBox(width: 4),
+          Text(
+            labelText,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: textColor,
             ),
           ),
         ],
-      );
-    }
-
-    // Return the battery icon
-    return batteryIcon;
+      ],
+    );
   }
 }
 
@@ -214,6 +166,7 @@ class CombinedBatteryDisplay extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         BatteryStatusDisplay(battery: battery1),
+        const SizedBox(width: 8),
         BatteryStatusDisplay(battery: battery2),
       ],
     );
