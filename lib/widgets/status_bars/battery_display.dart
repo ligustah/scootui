@@ -19,6 +19,9 @@ const double kChargeRectY = 41.0 * kScaleFactor;
 const double kChargeRectHeight = 83.0 * kScaleFactor;
 const double kChargeRectMaxWidth = 98.0 * kScaleFactor;
 
+// Fixed width for charge labels to prevent layout shifts
+const double kChargeLabelWidth = 24.0;
+
 class BatteryStatusDisplay extends StatelessWidget {
   final BatteryData battery;
 
@@ -94,7 +97,7 @@ class BatteryStatusDisplay extends StatelessWidget {
         ],
       );
       labelText = '${battery.charge}';
-    } else if (battery.charge <= 0) {
+    } else if (battery.charge <= 10) {
       // Critically empty battery - show empty icon
       batteryIcon = SvgPicture.asset(
         'assets/icons/librescoot-main-battery-empty.svg',
@@ -139,13 +142,19 @@ class BatteryStatusDisplay extends StatelessWidget {
       children: [
         batteryIcon,
         if (labelText != null) ...[
-          const SizedBox(width: 4),
-          Text(
-            labelText,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: textColor,
+          const SizedBox(width: 2),
+          SizedBox(
+            width: kChargeLabelWidth,
+            child: Text(
+              labelText,
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -1.1,
+                color: textColor,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ],
