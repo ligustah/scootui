@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../state/vehicle.dart';
+import '../../state/enums.dart';
 import 'indicator_light.dart';
 
 final class IndicatorLights {
@@ -25,5 +26,20 @@ final class IndicatorLights {
         isActive: state.state == ScooterState.parked,
         activeColor: Colors.red,
         size: 36, // Smaller than blinkers
+      );
+
+  static IndicatorLight engineWarning(VehicleData state) => IndicatorLight(
+        icon: IndicatorLight.svgAsset('librescoot-engine-warning.svg'),
+        isActive: state.isUnableToDrive == Toggle.on,
+        activeColor: Colors.yellow,
+        size: 36,
+      );
+
+  static IndicatorLight hazards(VehicleData state) => IndicatorLight(
+        icon: IndicatorLight.svgAsset('librescoot-hazards.svg'),
+        isActive: state.blinkerState == BlinkerState.both,
+        activeColor: Colors.red,
+        size: 36,
+        blinking: true,
       );
 }

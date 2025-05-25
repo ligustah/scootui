@@ -69,6 +69,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
   Toggle get seatboxButton;
   SeatboxLock get seatboxLock;
   Toggle get hornButton;
+  Toggle get isUnableToDrive;
   get syncSettings => SyncSettings(
       "vehicle",
       Duration(microseconds: 1000000),
@@ -150,6 +151,13 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
             typeName: "Toggle",
             defaultValue: "off",
             interval: null),
+        SyncFieldSettings(
+            name: "isUnableToDrive",
+            variable: "unable-to-drive",
+            type: SyncFieldType.enum_,
+            typeName: "Toggle",
+            defaultValue: "off",
+            interval: null),
       ],
       "null");
 
@@ -186,6 +194,9 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
           : $_SeatboxLockMap[value] ?? SeatboxLock.closed,
       hornButton:
           "horn-button" != name ? hornButton : $_ToggleMap[value] ?? Toggle.off,
+      isUnableToDrive: "unable-to-drive" != name
+          ? isUnableToDrive
+          : $_ToggleMap[value] ?? Toggle.off,
     );
   }
 
@@ -200,7 +211,8 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
         handleBarPosition,
         seatboxButton,
         seatboxLock,
-        hornButton
+        hornButton,
+        isUnableToDrive
       ];
   @override
   String toString() {
@@ -218,6 +230,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
     buf.writeln("	seatboxButton = $seatboxButton");
     buf.writeln("	seatboxLock = $seatboxLock");
     buf.writeln("	hornButton = $hornButton");
+    buf.writeln("	isUnableToDrive = $isUnableToDrive");
     buf.writeln(")");
 
     return buf.toString();
