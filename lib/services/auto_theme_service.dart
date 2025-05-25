@@ -5,13 +5,13 @@ import 'package:flutter/foundation.dart';
 import '../config.dart';
 import '../repositories/mdb_repository.dart';
 
-/// Service for managing automatic theme switching based on illumination sensor
+/// Service for managing automatic theme switching based on brightness sensor
 class AutoThemeService {
   final MDBRepository _mdbRepository;
   Timer? _brightnessTimer;
   StreamSubscription? _brightnessSubscription;
 
-  // Exponential smoothing for illumination (better than simple averaging)
+  // Exponential smoothing for brightness (better than simple averaging)
   double? _smoothedBrightness;
   static const double _smoothingFactor = 0.7; // Alpha value for exponential smoothing (0.0 to 1.0)
 
@@ -43,7 +43,7 @@ class AutoThemeService {
 
     if (enabled) {
       _startBrightnessMonitoring();
-      // Immediately check current illumination when enabling auto mode
+      // Immediately check current brightness when enabling auto mode
       _checkBrightness();
     } else {
       _stopBrightnessMonitoring();
@@ -56,7 +56,7 @@ class AutoThemeService {
     _brightnessSubscription = _mdbRepository.subscribe(AppConfig.redisSettingsCluster).listen(
       (event) {
         final (_, key) = event;
-        if (key == AppConfig.illuminationKey) {
+        if (key == AppConfig.brightnessKey) {
           _handleBrightnessChange();
         }
       },
@@ -95,7 +95,7 @@ class AutoThemeService {
     if (!_isAutoEnabled) return;
 
     try {
-      final brightnessStr = await _mdbRepository.get(AppConfig.redisSettingsCluster, AppConfig.illuminationKey);
+      final brightnessStr = await _mdbRepository.get(AppConfig.redisSettingsCluster, AppConfig.brightnessKey);
       if (brightnessStr == null) return;
 
       final brightness = double.tryParse(brightnessStr);

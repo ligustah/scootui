@@ -25,8 +25,8 @@ class AppConfig {
   /// Redis valhalla endpoint setting key
   // static const String valhallaEndpointKey = 'valhalla-url';
 
-  /// Redis illumination sensor key
-  static const String illuminationKey = 'illumination';
+  /// Redis brightness sensor key
+  static const String brightnessKey = 'brightness';
 
   /// Auto theme light threshold (lux) - switch to light theme above this value
   static const double autoThemeLightThreshold = 25.0;
