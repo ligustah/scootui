@@ -18,6 +18,8 @@ mixin _$ThemeState {
   ThemeData get lightTheme;
   ThemeData get darkTheme;
   ThemeMode get themeMode;
+  bool get isAutoMode;
+  ThemeMode get autoResolvedTheme;
 
   /// Create a copy of ThemeState
   /// with the given fields replaced by the non-null parameter values.
@@ -36,16 +38,20 @@ mixin _$ThemeState {
             (identical(other.darkTheme, darkTheme) ||
                 other.darkTheme == darkTheme) &&
             (identical(other.themeMode, themeMode) ||
-                other.themeMode == themeMode));
+                other.themeMode == themeMode) &&
+            (identical(other.isAutoMode, isAutoMode) ||
+                other.isAutoMode == isAutoMode) &&
+            (identical(other.autoResolvedTheme, autoResolvedTheme) ||
+                other.autoResolvedTheme == autoResolvedTheme));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, lightTheme, darkTheme, themeMode);
+  int get hashCode => Object.hash(runtimeType, lightTheme, darkTheme, themeMode,
+      isAutoMode, autoResolvedTheme);
 
   @override
   String toString() {
-    return 'ThemeState(lightTheme: $lightTheme, darkTheme: $darkTheme, themeMode: $themeMode)';
+    return 'ThemeState(lightTheme: $lightTheme, darkTheme: $darkTheme, themeMode: $themeMode, isAutoMode: $isAutoMode, autoResolvedTheme: $autoResolvedTheme)';
   }
 }
 
@@ -55,7 +61,12 @@ abstract mixin class $ThemeStateCopyWith<$Res> {
           ThemeState value, $Res Function(ThemeState) _then) =
       _$ThemeStateCopyWithImpl;
   @useResult
-  $Res call({ThemeData lightTheme, ThemeData darkTheme, ThemeMode themeMode});
+  $Res call(
+      {ThemeData lightTheme,
+      ThemeData darkTheme,
+      ThemeMode themeMode,
+      bool isAutoMode,
+      ThemeMode autoResolvedTheme});
 }
 
 /// @nodoc
@@ -73,6 +84,8 @@ class _$ThemeStateCopyWithImpl<$Res> implements $ThemeStateCopyWith<$Res> {
     Object? lightTheme = null,
     Object? darkTheme = null,
     Object? themeMode = null,
+    Object? isAutoMode = null,
+    Object? autoResolvedTheme = null,
   }) {
     return _then(_self.copyWith(
       lightTheme: null == lightTheme
@@ -87,6 +100,14 @@ class _$ThemeStateCopyWithImpl<$Res> implements $ThemeStateCopyWith<$Res> {
           ? _self.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
               as ThemeMode,
+      isAutoMode: null == isAutoMode
+          ? _self.isAutoMode
+          : isAutoMode // ignore: cast_nullable_to_non_nullable
+              as bool,
+      autoResolvedTheme: null == autoResolvedTheme
+          ? _self.autoResolvedTheme
+          : autoResolvedTheme // ignore: cast_nullable_to_non_nullable
+              as ThemeMode,
     ));
   }
 }
@@ -97,7 +118,9 @@ class _ThemeState extends ThemeState {
   const _ThemeState(
       {required this.lightTheme,
       required this.darkTheme,
-      this.themeMode = ThemeMode.dark})
+      this.themeMode = ThemeMode.dark,
+      this.isAutoMode = false,
+      this.autoResolvedTheme = ThemeMode.dark})
       : super._();
 
   @override
@@ -107,6 +130,12 @@ class _ThemeState extends ThemeState {
   @override
   @JsonKey()
   final ThemeMode themeMode;
+  @override
+  @JsonKey()
+  final bool isAutoMode;
+  @override
+  @JsonKey()
+  final ThemeMode autoResolvedTheme;
 
   /// Create a copy of ThemeState
   /// with the given fields replaced by the non-null parameter values.
@@ -126,16 +155,20 @@ class _ThemeState extends ThemeState {
             (identical(other.darkTheme, darkTheme) ||
                 other.darkTheme == darkTheme) &&
             (identical(other.themeMode, themeMode) ||
-                other.themeMode == themeMode));
+                other.themeMode == themeMode) &&
+            (identical(other.isAutoMode, isAutoMode) ||
+                other.isAutoMode == isAutoMode) &&
+            (identical(other.autoResolvedTheme, autoResolvedTheme) ||
+                other.autoResolvedTheme == autoResolvedTheme));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, lightTheme, darkTheme, themeMode);
+  int get hashCode => Object.hash(runtimeType, lightTheme, darkTheme, themeMode,
+      isAutoMode, autoResolvedTheme);
 
   @override
   String toString() {
-    return 'ThemeState(lightTheme: $lightTheme, darkTheme: $darkTheme, themeMode: $themeMode)';
+    return 'ThemeState(lightTheme: $lightTheme, darkTheme: $darkTheme, themeMode: $themeMode, isAutoMode: $isAutoMode, autoResolvedTheme: $autoResolvedTheme)';
   }
 }
 
@@ -147,7 +180,12 @@ abstract mixin class _$ThemeStateCopyWith<$Res>
       __$ThemeStateCopyWithImpl;
   @override
   @useResult
-  $Res call({ThemeData lightTheme, ThemeData darkTheme, ThemeMode themeMode});
+  $Res call(
+      {ThemeData lightTheme,
+      ThemeData darkTheme,
+      ThemeMode themeMode,
+      bool isAutoMode,
+      ThemeMode autoResolvedTheme});
 }
 
 /// @nodoc
@@ -165,6 +203,8 @@ class __$ThemeStateCopyWithImpl<$Res> implements _$ThemeStateCopyWith<$Res> {
     Object? lightTheme = null,
     Object? darkTheme = null,
     Object? themeMode = null,
+    Object? isAutoMode = null,
+    Object? autoResolvedTheme = null,
   }) {
     return _then(_ThemeState(
       lightTheme: null == lightTheme
@@ -178,6 +218,14 @@ class __$ThemeStateCopyWithImpl<$Res> implements _$ThemeStateCopyWith<$Res> {
       themeMode: null == themeMode
           ? _self.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
+              as ThemeMode,
+      isAutoMode: null == isAutoMode
+          ? _self.isAutoMode
+          : isAutoMode // ignore: cast_nullable_to_non_nullable
+              as bool,
+      autoResolvedTheme: null == autoResolvedTheme
+          ? _self.autoResolvedTheme
+          : autoResolvedTheme // ignore: cast_nullable_to_non_nullable
               as ThemeMode,
     ));
   }

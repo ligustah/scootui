@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 
@@ -29,6 +30,26 @@ class InMemoryMDBRepository implements MDBRepository {
 
   final Map<String, Map<String, String>> _storage = {};
   final Map<String, List<StreamController<(String, String)>>> _subscribers = {};
+  Timer? _illuminationSimulationTimer;
+
+  InMemoryMDBRepository() {
+    _startIlluminationSimulation();
+  }
+
+  /// Start simulating brightness sensor data for testing auto theme
+  void _startIlluminationSimulation() {
+    // Set initial illumination value
+    set('dashboard', 'illumination', '20.0', publish: false);
+
+    // Simulate changing brightness every 10 seconds for testing
+    _illuminationSimulationTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      final random = Random();
+      // Simulate brightness values between 5 and 50 lux
+      final illumination = 5.0 + random.nextDouble() * 45.0;
+      set('dashboard', 'illumination', illumination.toStringAsFixed(1));
+      print('InMemoryMDBRepository: Simulated illumination: ${illumination.toStringAsFixed(1)} lux');
+    });
+  }
 
   @override
   Future<void> publishButtonEvent(String event) async {
@@ -90,6 +111,7 @@ class InMemoryMDBRepository implements MDBRepository {
   }
 
   Future<void> dispose() async {
+    _illuminationSimulationTimer?.cancel();
     for (var controllers in _subscribers.values) {
       for (var controller in controllers) {
         await controller.close();

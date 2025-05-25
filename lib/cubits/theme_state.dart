@@ -7,8 +7,11 @@ abstract class ThemeState with _$ThemeState {
     required ThemeData lightTheme,
     required ThemeData darkTheme,
     @Default(ThemeMode.dark) ThemeMode themeMode,
+    @Default(false) bool isAutoMode,
+    @Default(ThemeMode.dark) ThemeMode autoResolvedTheme,
   }) = _ThemeState;
 
-  bool get isDark => themeMode == ThemeMode.dark;
+  bool get isDark => isAutoMode ? autoResolvedTheme == ThemeMode.dark : themeMode == ThemeMode.dark;
   ThemeData get theme => isDark ? darkTheme : lightTheme;
+  ThemeMode get effectiveThemeMode => isAutoMode ? autoResolvedTheme : themeMode;
 }
