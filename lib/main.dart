@@ -75,7 +75,7 @@ class ScooterClusterApp extends StatelessWidget {
               title: 'Scooter Cluster',
               theme: state.lightTheme,
               darkTheme: state.darkTheme,
-              themeMode: state.themeMode,
+              themeMode: state.effectiveThemeMode,
               debugShowCheckedModeBanner: false,
               home: Scaffold(
                 body: MainScreen(),

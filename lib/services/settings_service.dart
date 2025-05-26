@@ -49,10 +49,11 @@ class SettingsService {
 
     // Print current settings
     final theme = getThemeSetting();
+    final autoTheme = getAutoThemeSetting();
     final mode = getScreenSetting();
     final routerEndpoint = getRouterEndpoint();
     debugPrint(
-        '🔧 SettingsService: Final settings - Theme: ${theme.toString()}, Mode: $mode, Router Endpoint: $routerEndpoint');
+        '🔧 SettingsService: Final settings - Theme: ${theme.toString()}, Auto Theme: $autoTheme, Mode: $mode, Router Endpoint: $routerEndpoint');
 
     // Emit the initial loaded settings
     _settingsController.add(_settings);
@@ -250,9 +251,28 @@ class SettingsService {
         return ThemeMode.light;
       case 'dark':
         return ThemeMode.dark;
+      case 'auto':
+        // When theme is 'auto', return dark as the fallback theme mode
+        // The actual theme will be determined by auto theme service
+        return ThemeMode.dark;
       default:
         return ThemeMode.dark; // Also default to dark for unknown values
     }
+  }
+
+  /// Gets the auto theme setting with fallback to default
+  bool getAutoThemeSetting() {
+    final themeValue = _settings[AppConfig.themeSettingKey];
+
+    debugPrint('🔧 SettingsService: Getting auto theme setting - theme: $themeValue');
+
+    // If theme is set to 'auto', enable auto mode
+    if (themeValue == 'auto') {
+      return true;
+    }
+
+    // Otherwise auto mode is disabled
+    return false;
   }
 
   /// Gets a screen setting with fallback to default
@@ -305,6 +325,27 @@ class SettingsService {
     // Save to both file and Redis
     await _saveToFile();
     await _mdbRepository.set(AppConfig.redisSettingsCluster, AppConfig.themeSettingKey, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the auto theme setting
+  Future<void> updateAutoThemeSetting(bool enabled) async {
+    debugPrint('🔧 SettingsService: Updating auto theme setting to $enabled');
+
+    if (enabled) {
+      // When enabling auto mode, set theme to 'auto'
+      _settings[AppConfig.themeSettingKey] = 'auto';
+      await _mdbRepository.set(AppConfig.redisSettingsCluster, AppConfig.themeSettingKey, 'auto');
+    } else {
+      // When disabling auto mode, set theme to 'dark' as default
+      _settings[AppConfig.themeSettingKey] = 'dark';
+      await _mdbRepository.set(AppConfig.redisSettingsCluster, AppConfig.themeSettingKey, 'dark');
+    }
+
+    // Save to file
+    await _saveToFile();
 
     // Emit updated settings
     _settingsController.add(_settings);

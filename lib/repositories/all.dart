@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nested/nested.dart';
 
 import '../services/settings_service.dart';
+import '../services/auto_theme_service.dart';
 import 'address_repository.dart';
 import 'mdb_repository.dart';
 import 'redis_mdb_repository.dart';
@@ -15,6 +16,9 @@ final List<SingleChildWidget> allRepositories = [
       create: kIsWeb ? InMemoryMDBRepository.create : RedisMDBRepository.create),
   RepositoryProvider(
     create: (context) => SettingsService(context.read<MDBRepository>())..initialize(),
+  ),
+  RepositoryProvider(
+    create: (context) => AutoThemeService(context.read<MDBRepository>()),
   ),
   RepositoryProvider(create: AddressRepository.create),
   RepositoryProvider(create: TilesRepository.create),

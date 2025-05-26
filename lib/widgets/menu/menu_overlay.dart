@@ -109,7 +109,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         break;
     }
 
-    final isDark = theme.state.themeMode == ThemeMode.dark;
+    // Use the proper isDark getter that handles auto mode
+    final isDark = theme.state.isDark;
 
     final items = [
       MenuItem(
