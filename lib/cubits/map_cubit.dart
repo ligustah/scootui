@@ -37,7 +37,7 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<NavigationData> _navigationSub;
   final NavigationSync _navigationSync;
   final TilesRepository _tilesRepository;
-  static const double _offRouteTolerance = 5.0; // 5 meters
+  static const double _offRouteTolerance = 50.0; // 50 meters
   static const double _maxZoom = 19.0;
   static const double _minZoom = 16.5;
   static const double _zoomInStart = 220.0;
@@ -197,7 +197,7 @@ class MapCubit extends Cubit<MapState> {
 
       // Only use route bearing if we're close enough to the route
       if (distance < _offRouteTolerance) {
-        // 5 meters tolerance
+        // 50 meters tolerance
         // Get next point to calculate bearing
         final nextPointIndex =
             math.min(segmentIndex + 1, route.waypoints.length - 1);
