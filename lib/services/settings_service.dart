@@ -51,9 +51,7 @@ class SettingsService {
     final theme = getThemeSetting();
     final autoTheme = getAutoThemeSetting();
     final mode = getScreenSetting();
-    final routerEndpoint = getRouterEndpoint();
-    debugPrint(
-        '🔧 SettingsService: Final settings - Theme: ${theme.toString()}, Auto Theme: $autoTheme, Mode: $mode, Router Endpoint: $routerEndpoint');
+    debugPrint('🔧 SettingsService: Final settings - Theme: ${theme.toString()}, Auto Theme: $autoTheme, Mode: $mode');
 
     // Emit the initial loaded settings
     _settingsController.add(_settings);
@@ -114,17 +112,6 @@ class SettingsService {
       if (mode != null) {
         _settings[AppConfig.modeSettingKey] = mode;
       }
-
-      debugPrint('🔧 SettingsService: Loading router endpoint from Redis');
-      final routerEndpoint = await _mdbRepository.get(
-        AppConfig.redisSettingsCluster,
-        AppConfig.routerEndpointKey,
-      );
-      debugPrint('🔧 SettingsService: Redis router endpoint = $routerEndpoint');
-      if (routerEndpoint != null) {
-        _settings[AppConfig.routerEndpointKey] = routerEndpoint;
-        AppConfig.routerEndpoint = routerEndpoint; // Update AppConfig immediately
-      }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error loading settings from Redis: $e');
     }
@@ -160,23 +147,6 @@ class SettingsService {
           );
         }
       }
-
-      if (_settings.containsKey(AppConfig.routerEndpointKey)) {
-        final redisEndpoint = await _mdbRepository.get(
-          AppConfig.redisSettingsCluster,
-          AppConfig.routerEndpointKey,
-        );
-        debugPrint(
-            '🔧 SettingsService: Sync check - Redis router endpoint = $redisEndpoint, settings = ${_settings[AppConfig.routerEndpointKey]}');
-        if (redisEndpoint == null) {
-          debugPrint('🔧 SettingsService: Syncing router endpoint to Redis');
-          await _mdbRepository.set(
-            AppConfig.redisSettingsCluster,
-            AppConfig.routerEndpointKey,
-            _settings[AppConfig.routerEndpointKey],
-          );
-        }
-      }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error syncing settings to Redis: $e');
     }
@@ -201,23 +171,18 @@ class SettingsService {
   Future<void> _handleRedisChange(String key) async {
     try {
       // Only handle changes for keys we expect to save to the settings file
-      if (key == AppConfig.themeSettingKey || key == AppConfig.modeSettingKey || key == AppConfig.routerEndpointKey) {
+      if (key == AppConfig.themeSettingKey || key == AppConfig.modeSettingKey) {
         final value = await _mdbRepository.get(AppConfig.redisSettingsCluster, key);
         debugPrint('🔧 SettingsService: Redis change - key: $key, value: $value');
         if (value != null) {
           _settings[key] = value;
 
-          // Update AppConfig if it's the router endpoint
-          if (key == AppConfig.routerEndpointKey) {
-            AppConfig.routerEndpoint = value;
-          }
-
           await _saveToFile();
           // Emit updated settings
           _settingsController.add(_settings);
         }
-      } else {
-        debugPrint('🔧 SettingsService: Ignoring Redis change for key: $key');
+        // } else {
+        //   debugPrint('🔧 SettingsService: Ignoring Redis change for key: $key');
       }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error handling Redis change: $e');
@@ -280,29 +245,6 @@ class SettingsService {
     final value = _settings[AppConfig.modeSettingKey] as String?;
     debugPrint('🔧 SettingsService: Getting screen setting: $value');
     return value ?? 'speedometer';
-  }
-
-  /// Gets the router endpoint with fallback to default
-  String getRouterEndpoint() {
-    return _settings[AppConfig.routerEndpointKey] as String? ?? AppConfig.routerEndpoint;
-  }
-
-  /// Updates the router endpoint setting
-  Future<void> updateRouterEndpoint(String endpoint) async {
-    debugPrint('🔧 SettingsService: Updating router endpoint setting to $endpoint');
-    _settings[AppConfig.routerEndpointKey] = endpoint;
-    AppConfig.routerEndpoint = endpoint;
-
-    // Save to both file and Redis
-    await _saveToFile();
-    await _mdbRepository.set(
-      AppConfig.redisSettingsCluster,
-      AppConfig.routerEndpointKey,
-      endpoint,
-    );
-
-    // Emit updated settings
-    _settingsController.add(_settings);
   }
 
   /// Updates the theme setting

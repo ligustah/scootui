@@ -16,7 +16,6 @@ import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 import '../config.dart';
 import '../map/mbtiles_provider.dart';
 import '../repositories/tiles_repository.dart';
-import '../routing/brouter.dart';
 import '../routing/valhalla.dart';
 import '../routing/models.dart';
 import '../routing/route_helpers.dart';
@@ -59,12 +58,11 @@ class MapCubit extends Cubit<MapState> {
         .._onGpsData(context.read<GpsSync>().state)
         .._loadMap(context.read<ThemeCubit>().state);
 
-  MapCubit(Stream<GpsData> gpsStream, Stream<ThemeState> themeUpdates,
-      NavigationSync navigationSync, TilesRepository tilesRepository)
+  MapCubit(Stream<GpsData> gpsStream, Stream<ThemeState> themeUpdates, NavigationSync navigationSync,
+      TilesRepository tilesRepository)
       : _tilesRepository = tilesRepository,
         _navigationSync = navigationSync,
-        super(MapLoading(
-            controller: MapController(), position: defaultCoordinates)) {
+        super(MapLoading(controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = gpsStream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
     _navigationSub = navigationSync.stream.listen(_onNavigationData);
@@ -123,8 +121,7 @@ class MapCubit extends Cubit<MapState> {
     // if the destination is more than 10 meters away from the last waypoint,
     // show both the destination and the last waypoint, otherwise just center
     // on the destination
-    if (distanceCalculator.as(LengthUnit.Meter, lastWaypoint, destination) >
-        15) {
+    if (distanceCalculator.as(LengthUnit.Meter, lastWaypoint, destination) > 15) {
       _animatedController?.mapController.fitCamera(
         CameraFit.coordinates(
           coordinates: [lastWaypoint, destination],
@@ -140,9 +137,7 @@ class MapCubit extends Cubit<MapState> {
     }
     await Future.delayed(const Duration(milliseconds: 5000));
     await _animatedController?.animatedFitCamera(
-      cameraFit: CameraFit.coordinates(
-          coordinates: [current.position, destination],
-          padding: const EdgeInsets.all(50)),
+      cameraFit: CameraFit.coordinates(coordinates: [current.position, destination], padding: const EdgeInsets.all(50)),
       rotation: 0,
       cancelPreviousAnimations: true,
       curve: Curves.easeInOut,
@@ -151,8 +146,7 @@ class MapCubit extends Cubit<MapState> {
     await Future.delayed(const Duration(milliseconds: 4000));
     _mapLocked = false;
 
-    _moveAndRotate(current.position, current.orientation,
-        duration: const Duration(milliseconds: 2000));
+    _moveAndRotate(current.position, current.orientation, duration: const Duration(milliseconds: 2000));
   }
 
   Future<void> setDestination(LatLng destination) async {
@@ -162,8 +156,7 @@ class MapCubit extends Cubit<MapState> {
 
     emit(state.copyWith(destination: destination));
 
-    final valhallaService =
-        ValhallaService(serverURL: AppConfig.valhallaEndpoint);
+    final valhallaService = ValhallaService(serverURL: AppConfig.valhallaEndpoint);
     final route = await valhallaService.getRoute(
       state.position,
       destination,
@@ -171,8 +164,7 @@ class MapCubit extends Cubit<MapState> {
 
     emit(state.copyWith(
       route: route,
-      nextInstruction:
-          route.instructions.isNotEmpty ? route.instructions.first : null,
+      nextInstruction: route.instructions.isNotEmpty ? route.instructions.first : null,
     ));
   }
 
@@ -189,8 +181,7 @@ class MapCubit extends Cubit<MapState> {
 
     if (route != null && route.waypoints.isNotEmpty) {
       // Find the closest point and next point on route
-      final (point, segmentIndex, distance) =
-          RouteHelpers.findClosestPointOnRoute(
+      final (point, segmentIndex, distance) = RouteHelpers.findClosestPointOnRoute(
         center,
         route.waypoints,
       );
@@ -199,20 +190,17 @@ class MapCubit extends Cubit<MapState> {
       if (distance < _offRouteTolerance) {
         // 50 meters tolerance
         // Get next point to calculate bearing
-        final nextPointIndex =
-            math.min(segmentIndex + 1, route.waypoints.length - 1);
+        final nextPointIndex = math.min(segmentIndex + 1, route.waypoints.length - 1);
         if (nextPointIndex > segmentIndex) {
           final currentPoint = route.waypoints[segmentIndex];
           final nextPoint = route.waypoints[nextPointIndex];
 
           // Calculate bearing between points
-          final y = math.sin(nextPoint.longitude - currentPoint.longitude) *
-              math.cos(nextPoint.latitude);
-          final x =
-              math.cos(currentPoint.latitude) * math.sin(nextPoint.latitude) -
-                  math.sin(currentPoint.latitude) *
-                      math.cos(nextPoint.latitude) *
-                      math.cos(nextPoint.longitude - currentPoint.longitude);
+          final y = math.sin(nextPoint.longitude - currentPoint.longitude) * math.cos(nextPoint.latitude);
+          final x = math.cos(currentPoint.latitude) * math.sin(nextPoint.latitude) -
+              math.sin(currentPoint.latitude) *
+                  math.cos(nextPoint.latitude) *
+                  math.cos(nextPoint.longitude - currentPoint.longitude);
           final routeBearing = math.atan2(y, x) * (180 / math.pi);
 
           // Normalize to 0-360
@@ -227,10 +215,7 @@ class MapCubit extends Cubit<MapState> {
             zoom = _maxZoom;
           } else {
             zoom = _minZoom +
-                (_maxZoom - _minZoom) *
-                    (1 -
-                        (instruction.distance - _zoomInEnd) /
-                            (_zoomInStart - _zoomInEnd));
+                (_maxZoom - _minZoom) * (1 - (instruction.distance - _zoomInEnd) / (_zoomInStart - _zoomInEnd));
           }
         }
       }
@@ -255,9 +240,7 @@ class MapCubit extends Cubit<MapState> {
 
     // If we're too far from the route and haven't rerouted recently
     if (distance > _offRouteTolerance &&
-        (_lastReroute == null ||
-            DateTime.now().difference(_lastReroute!) >
-                const Duration(seconds: 5))) {
+        (_lastReroute == null || DateTime.now().difference(_lastReroute!) > const Duration(seconds: 5))) {
       _lastReroute = DateTime.now();
 
       if (route.waypoints.isEmpty) {
@@ -286,8 +269,7 @@ class MapCubit extends Cubit<MapState> {
         return;
       }
 
-      final coordinates =
-          data.destination.split(",").map(double.parse).toList();
+      final coordinates = data.destination.split(",").map(double.parse).toList();
       final destination = LatLng(coordinates[0], coordinates[1]);
 
       // Check if map is ready before starting navigation
@@ -324,8 +306,7 @@ class MapCubit extends Cubit<MapState> {
   void _onThemeUpdate(ThemeState event) {
     final current = state;
 
-    emit(MapState.loading(
-        controller: state.controller, position: state.position));
+    emit(MapState.loading(controller: state.controller, position: state.position));
     _getTheme(event.isDark).then((theme) => emit(switch (current) {
           MapOffline() => current.copyWith(theme: theme),
           _ => current,
@@ -349,24 +330,16 @@ class MapCubit extends Cubit<MapState> {
       MapOffline() => current.copyWith(isReady: true),
       MapOnline() => current.copyWith(isReady: true),
       // If it was loading, transition to offline ready state
-      MapLoading(
-        :final position,
-        :final controller,
-        :final route,
-        :final nextInstruction,
-        :final destination
-      ) =>
+      MapLoading(:final position, :final controller, :final route, :final nextInstruction, :final destination) =>
         MapOffline(
           position: position,
           orientation: 0, // Assuming default orientation initially
           controller: controller,
           tiles: state is MapOffline
               ? (state as MapOffline).tiles
-              : AsyncMbTilesProvider(
-                  _tilesRepository), // Need to handle this better if online is possible
-          theme: state is MapOffline
-              ? (state as MapOffline).theme
-              : await _getTheme(false), // Need to handle this better
+              : AsyncMbTilesProvider(_tilesRepository), // Need to handle this better if online is possible
+          theme:
+              state is MapOffline ? (state as MapOffline).theme : await _getTheme(false), // Need to handle this better
           onReady: _onMapReady,
           isReady: true,
           route: route,
@@ -383,8 +356,7 @@ class MapCubit extends Cubit<MapState> {
 
       // Check if there was a pending destination and process it now
       if (_pendingDestination != null) {
-        print(
-            "Map is ready, processing pending destination: $_pendingDestination");
+        print("Map is ready, processing pending destination: $_pendingDestination");
         startNavigation(_pendingDestination!);
         _pendingDestination = null; // Clear pending once processed
       } else {
@@ -392,11 +364,9 @@ class MapCubit extends Cubit<MapState> {
         final initialData = _navigationSync.state;
         if (initialData.destination.isNotEmpty) {
           try {
-            final coordinates =
-                initialData.destination.split(",").map(double.parse).toList();
+            final coordinates = initialData.destination.split(",").map(double.parse).toList();
             final initialDestination = LatLng(coordinates[0], coordinates[1]);
-            print(
-                "Map is ready, processing initial destination from Redis: $initialDestination");
+            print("Map is ready, processing initial destination from Redis: $initialDestination");
             startNavigation(initialDestination);
           } catch (e) {
             print("Error processing initial navigation data: $e");
@@ -435,8 +405,7 @@ class MapCubit extends Cubit<MapState> {
 
   Future<void> _loadMap(ThemeState themeState) async {
     _animatedController = null;
-    emit(MapState.loading(
-        controller: state.controller, position: state.position));
+    emit(MapState.loading(controller: state.controller, position: state.position));
     final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
@@ -455,8 +424,7 @@ class MapCubit extends Cubit<MapState> {
         ));
 
       case InitError(:final message):
-        emit(MapState.unavailable(message,
-            controller: ctrl, position: state.position));
+        emit(MapState.unavailable(message, controller: ctrl, position: state.position));
     }
   }
 }
