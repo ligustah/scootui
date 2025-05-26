@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:latlong2/latlong.dart';
 
 part 'valhalla_models.freezed.dart';
 part 'valhalla_models.g.dart';
@@ -10,8 +9,7 @@ abstract class ValhallaResponse with _$ValhallaResponse {
     required Trip trip,
   }) = _ValhallaResponse;
 
-  factory ValhallaResponse.fromJson(Map<String, dynamic> json) =>
-      _$ValhallaResponseFromJson(json);
+  factory ValhallaResponse.fromJson(Map<String, dynamic> json) => _$ValhallaResponseFromJson(json);
 }
 
 @freezed
@@ -42,8 +40,7 @@ abstract class Maneuver with _$Maneuver {
     int? beginShapeIndex,
   }) = _Maneuver;
 
-  factory Maneuver.fromJson(Map<String, dynamic> json) =>
-      _$ManeuverFromJson(json);
+  factory Maneuver.fromJson(Map<String, dynamic> json) => _$ManeuverFromJson(json);
 }
 
 @freezed
@@ -53,6 +50,5 @@ abstract class Summary with _$Summary {
     required int time,
   }) = _Summary;
 
-  factory Summary.fromJson(Map<String, dynamic> json) =>
-      _$SummaryFromJson(json);
+  factory Summary.fromJson(Map<String, dynamic> json) => _$SummaryFromJson(json);
 }

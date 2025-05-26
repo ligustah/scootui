@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:dio/dio.dart';
 import 'package:google_polyline_algorithm/google_polyline_algorithm.dart';
 import 'package:latlong2/latlong.dart';
@@ -16,8 +14,7 @@ class ValhallaService {
   static const int _receiveTimeoutSeconds = 5;
 
   // Valhalla maneuver types that map to our instruction types
-  static final Map<int, RouteInstruction Function(double, LatLng)>
-      _maneuverMap = {
+  static final Map<int, RouteInstruction Function(double, LatLng)> _maneuverMap = {
     2: (distance, location) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.right,
@@ -175,20 +172,15 @@ class ValhallaService {
     final List<RouteInstruction> instructions = [];
 
     // Extract waypoints from shape
-    final points = decodePolyline(leg.shape, accuracyExponent: 6)
-        .map((e) => LatLng(e[0].toDouble(), e[1].toDouble()))
-        .toList();
+    final points =
+        decodePolyline(leg.shape, accuracyExponent: 6).map((e) => LatLng(e[0].toDouble(), e[1].toDouble())).toList();
     waypoints.addAll(points);
 
     // Extract instructions
     for (final maneuver in leg.maneuvers) {
       final location = LatLng(
-        maneuver.beginShapeIndex != null
-            ? points[maneuver.beginShapeIndex!].latitude
-            : points.last.latitude,
-        maneuver.beginShapeIndex != null
-            ? points[maneuver.beginShapeIndex!].longitude
-            : points.last.longitude,
+        maneuver.beginShapeIndex != null ? points[maneuver.beginShapeIndex!].latitude : points.last.latitude,
+        maneuver.beginShapeIndex != null ? points[maneuver.beginShapeIndex!].longitude : points.last.longitude,
       );
 
       final distance = maneuver.length * 1000; // Convert to meters
@@ -207,8 +199,7 @@ class ValhallaService {
     );
   }
 
-  RouteInstruction? _createInstruction(
-      int type, double distance, LatLng location) {
+  RouteInstruction? _createInstruction(int type, double distance, LatLng location) {
     final instructionCreator = _maneuverMap[type];
     if (instructionCreator != null) {
       return instructionCreator(distance, location);

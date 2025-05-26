@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scooter_cluster/cubits/dashboard_cubit.dart';
 
 import '../repositories/mdb_repository.dart';
 import '../widgets/status_bars/top_status_bar.dart';
@@ -34,9 +35,9 @@ class _DebugScreenState extends State<DebugScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
-    // Set up periodic refresh every 1 second
-    _refreshTimer = Timer.periodic(const Duration(milliseconds: 250), (_) => _loadData());
+    _loadLegacyData();
+    // Set up periodic refresh every 1 second for legacy data
+    _refreshTimer = Timer.periodic(const Duration(milliseconds: 250), (_) => _loadLegacyData());
   }
 
   @override
@@ -45,7 +46,8 @@ class _DebugScreenState extends State<DebugScreen> {
     super.dispose();
   }
 
-  Future<void> _loadData() async {
+  // Renamed to avoid conflict and clarify purpose
+  Future<void> _loadLegacyData() async {
     final mdbRepository = context.read<MDBRepository>();
 
     // Load data from Redis
@@ -90,6 +92,7 @@ class _DebugScreenState extends State<DebugScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final dashboardData = DashboardSyncCubit.watch(context); // Watch DashboardSyncCubit
 
     return Container(
       width: 480,
@@ -343,6 +346,18 @@ class _DebugScreenState extends State<DebugScreen> {
                               ]),
                             ],
                           ),
+                        ),
+
+                        // Dashboard Data (New)
+                        _buildTableRow(
+                          'Dashboard',
+                          _buildWrappingRow([
+                            _buildCompactItem('Bright', '${dashboardData.brightness?.toStringAsFixed(1) ?? "N/A"} lx'),
+                            _buildCompactItem('Backlight', dashboardData.backlight?.toString() ?? 'N/A'),
+                            _buildCompactItem('Theme', dashboardData.theme ?? 'N/A'),
+                            _buildCompactItem('Mode', dashboardData.mode ?? 'N/A'),
+                            _buildCompactItem('Debug', dashboardData.debug ?? 'N/A'),
+                          ]),
                         ),
                       ],
                     ),

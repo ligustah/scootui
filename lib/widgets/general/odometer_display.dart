@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/theme_cubit.dart';
-import '../indicators/speed_limit_indicator.dart';
 
 class OdometerDisplay extends StatelessWidget {
   final double tripDistance;

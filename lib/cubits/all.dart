@@ -14,6 +14,7 @@ import 'system_cubit.dart';
 import 'theme_cubit.dart';
 import 'trip_cubit.dart';
 import 'version_overlay_cubit.dart';
+import 'dashboard_cubit.dart';
 
 final List<SingleChildWidget> allCubits = [
   BlocProvider(create: ThemeCubit.create),
@@ -38,4 +39,5 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: DebugOverlayCubit.create),
   BlocProvider(create: ShortcutMenuCubit.create),
   BlocProvider(create: VersionOverlayCubit.create),
+  BlocProvider(create: DashboardSyncCubit.create),
 ];

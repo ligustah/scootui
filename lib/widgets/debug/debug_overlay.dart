@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../cubits/dashboard_cubit.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../repositories/mdb_repository.dart';
@@ -57,6 +58,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
     final battery1 = Battery2Sync.watch(context);
     final gps = GpsSync.watch(context);
     final internet = InternetSync.watch(context);
+    final dashboardData = DashboardSyncCubit.watch(context);
 
     final panelBackgroundColor = isDark ? Colors.black.withOpacity(0.6) : Colors.white.withOpacity(0.6);
     final borderColor = isDark ? Colors.white30 : Colors.black26;
@@ -199,7 +201,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // Batteries positioned between TRIP and TOTAL in a 2x2 grid
         Positioned(
-          bottom: 40,
+          bottom: 0,
           left: 0,
           right: 0,
           child: Center(
@@ -359,6 +361,27 @@ class _DebugOverlayState extends State<DebugOverlay> {
             borderColor: borderColor,
             textColor: textColor,
             alignRight: true,
+          ),
+        ),
+
+        // Dashboard Info Panel
+        Positioned(
+          top: 180, // Adjust position as needed
+          left: 10,
+          child: _buildDebugPanel(
+            context,
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDataPoint('BRI', '${dashboardData.brightness?.toStringAsFixed(1) ?? "N/A"} lx'),
+                _buildDataPoint('BLT', dashboardData.backlight?.toString() ?? 'N/A'),
+                _buildDataPoint('THM', dashboardData.theme ?? 'N/A'),
+              ],
+            ),
+            backgroundColor: panelBackgroundColor,
+            borderColor: borderColor,
+            textColor: textColor,
           ),
         ),
       ],
