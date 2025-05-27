@@ -21,7 +21,9 @@ import '../routing/models.dart';
 import '../routing/route_helpers.dart';
 import '../state/gps.dart';
 import '../state/navigation.dart';
+import '../repositories/mdb_repository.dart';
 import 'mdb_cubits.dart';
+import 'shutdown_cubit.dart';
 import 'theme_cubit.dart';
 
 part 'map_cubit.freezed.dart';
@@ -34,8 +36,12 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
   late final StreamSubscription<NavigationData> _navigationSub;
+  late final StreamSubscription<ShutdownState> _shutdownSub;
   final NavigationSync _navigationSync;
   final TilesRepository _tilesRepository;
+  final MDBRepository _mdbRepository;
+
+  static const double _arrivalProximityMeters = 100.0;
   static const double _offRouteTolerance = 50.0; // 50 meters
   static const double _maxZoom = 19.0;
   static const double _minZoom = 16.5;
@@ -50,22 +56,31 @@ class MapCubit extends Cubit<MapState> {
   bool _mapLocked = false;
 
   static MapCubit create(BuildContext context) => MapCubit(
-        context.read<GpsSync>().stream,
-        context.read<ThemeCubit>().stream,
-        context.read<NavigationSync>(),
-        context.read<TilesRepository>(),
+        gpsStream: context.read<GpsSync>().stream,
+        themeUpdates: context.read<ThemeCubit>().stream,
+        shutdownStream: context.read<ShutdownCubit>().stream, // Added
+        navigationSync: context.read<NavigationSync>(),
+        tilesRepository: context.read<TilesRepository>(),
+        mdbRepository: RepositoryProvider.of<MDBRepository>(context), // Added
       )
-        .._onGpsData(context.read<GpsSync>().state)
-        .._loadMap(context.read<ThemeCubit>().state);
+        .._onGpsData(context.read<GpsSync>().state) // Initial GPS data
+        .._loadMap(context.read<ThemeCubit>().state); // Initial theme
 
-  MapCubit(Stream<GpsData> gpsStream, Stream<ThemeState> themeUpdates, NavigationSync navigationSync,
-      TilesRepository tilesRepository)
-      : _tilesRepository = tilesRepository,
+  MapCubit({
+    required Stream<GpsData> gpsStream,
+    required Stream<ThemeState> themeUpdates,
+    required Stream<ShutdownState> shutdownStream, // Added
+    required NavigationSync navigationSync,
+    required TilesRepository tilesRepository,
+    required MDBRepository mdbRepository, // Added
+  })  : _tilesRepository = tilesRepository,
         _navigationSync = navigationSync,
+        _mdbRepository = mdbRepository, // Added
         super(MapLoading(controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = gpsStream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
-    _navigationSub = navigationSync.stream.listen(_onNavigationData);
+    _navigationSub = _navigationSync.stream.listen(_onNavigationData);
+    _shutdownSub = shutdownStream.listen(_onShutdownStateChange); // Added
   }
 
   @override
@@ -84,7 +99,52 @@ class MapCubit extends Cubit<MapState> {
     _themeSub.cancel();
     _gpsSub.cancel();
     _navigationSub.cancel();
+    _shutdownSub.cancel(); // Added
     return super.close();
+  }
+
+  Future<void> _onShutdownStateChange(ShutdownState shutdownState) async {
+    // Made async
+    if (shutdownState.status == ShutdownStatus.shuttingDown) {
+      final currentNavDestinationString = _navigationSync.state.destination;
+      if (currentNavDestinationString.isEmpty) {
+        return; // No active navigation destination
+      }
+
+      try {
+        final parts = currentNavDestinationString.split(',');
+        if (parts.length == 2) {
+          final destLat = double.tryParse(parts[0]);
+          final destLng = double.tryParse(parts[1]);
+
+          if (destLat != null && destLng != null) {
+            final destinationCoords = LatLng(destLat, destLng);
+            final currentGpsPosition = state.position; // From MapState, updated by GpsSync
+
+            final distanceToDestination = distanceCalculator.as(
+              LengthUnit.Meter,
+              currentGpsPosition,
+              destinationCoords,
+            );
+
+            if (distanceToDestination < _arrivalProximityMeters) {
+              print("Scooter shutting down near destination. Clearing navigation.");
+              // Clear navigation destination via NavigationSync
+              await _navigationSync.clearDestination();
+
+              // Also clear local map state for immediate UI update
+              // Note: NavigationSync.clearDestination() already emits an updated NavigationData state.
+              // MapCubit's _onNavigationData listener will pick this up if destination becomes empty.
+              // However, explicitly clearing map's route state here ensures immediate UI feedback
+              // related to the map's specific view of the route.
+              emit(state.copyWith(destination: null, route: null, nextInstruction: null));
+            }
+          }
+        }
+      } catch (e) {
+        print("Error processing destination string on shutdown: $e");
+      }
+    }
   }
 
   void _updateRoute(Route route) {

@@ -128,44 +128,33 @@ class RouteHelpers {
   /// Helper to find the next instruction after a given segment
   static RouteInstruction? _findNextInstructionAfterSegment(
     List<RouteInstruction> instructions,
-    List<LatLng> polyline,
-    int segmentIndex,
+    List<LatLng> polyline, // polyline is still needed for distance calculation if instructionPoint is not enough
+    int segmentIndexToCompareAgainst, // Renamed for clarity from 'segmentIndex'
     LatLng fromPoint,
   ) {
     for (final instruction in instructions) {
-      final instructionPoint = instruction.location;
+      // Use the stored originalShapeIndex directly
+      final int instructionShapeIndex = instruction.originalShapeIndex;
 
-      // Find the closest polyline point to this instruction
-      var minDistance = double.infinity;
-      var instructionIndex = -1;
-
-      for (var i = 0; i < polyline.length; i++) {
-        final point = polyline[i];
-        final latDiff = (point.latitude - instructionPoint.latitude).abs();
-        final lngDiff = (point.longitude - instructionPoint.longitude).abs();
-
-        if (latDiff < _coordinateMatchTolerance && lngDiff < _coordinateMatchTolerance) {
-          final dist = const Distance().as(
-            LengthUnit.Meter,
-            LatLng(point.latitude, point.longitude),
-            instructionPoint,
-          );
-          if (dist < minDistance) {
-            minDistance = dist;
-            instructionIndex = i;
-          }
-        }
+      // Ensure originalShapeIndex is valid before using (e.g. not -1 if we used that for null beginShapeIndex)
+      // Assuming current implementation results in non-negative originalShapeIndex from Valhalla.
+      if (instructionShapeIndex < 0) {
+        // Or any other sentinel for invalid/unmapped index
+        continue; // Skip instructions that couldn't be properly mapped to the shape
       }
 
-      if (instructionIndex > segmentIndex) {
-        // Calculate distance to the instruction
-        final distance = const Distance().as(
+      if (instructionShapeIndex > segmentIndexToCompareAgainst) {
+        // instructionPoint is still needed to calculate the distance to it
+        final instructionPoint = instruction.location;
+
+        // Calculate distance to the instruction's starting point
+        final distanceToManeuverStart = const Distance().as(
           LengthUnit.Meter,
           fromPoint,
           instructionPoint,
         );
 
-        return instruction.copyWith(distance: distance);
+        return instruction.copyWith(distance: distanceToManeuverStart);
       }
     }
 

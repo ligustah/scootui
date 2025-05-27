@@ -88,6 +88,7 @@ sealed class RouteInstruction with _$RouteInstruction {
     required KeepDirection direction,
     // required Duration duration,
     required LatLng location,
+    required int originalShapeIndex,
   }) = Keep;
 
   const factory RouteInstruction.turn({
@@ -95,12 +96,14 @@ sealed class RouteInstruction with _$RouteInstruction {
     required TurnDirection direction,
     // required Duration duration,
     required LatLng location,
+    required int originalShapeIndex,
   }) = Turn;
 
   const factory RouteInstruction.exit({
     required double distance,
     required ExitSide side,
     required LatLng location,
+    required int originalShapeIndex,
   }) = Exit;
 
   const factory RouteInstruction.roundabout({
@@ -108,11 +111,13 @@ sealed class RouteInstruction with _$RouteInstruction {
     required RoundaboutSide side,
     required int exitNumber,
     required LatLng location,
+    required int originalShapeIndex,
   }) = Roundabout;
 
   const factory RouteInstruction.other({
     required double distance,
     required LatLng location,
+    required int originalShapeIndex,
   }) = Other;
 
   factory RouteInstruction.fromHint(List<int> hint, List<LatLng> polyline) {
@@ -123,8 +128,7 @@ sealed class RouteInstruction with _$RouteInstruction {
     //  173.0,    hint.distanceToNext
     //  -89,      hint.angle
     // ]
-    final [indexInTrack, jsonCommandIndex, exitNumber, distanceToNext, angle] =
-        hint;
+    final [indexInTrack, jsonCommandIndex, exitNumber, distanceToNext, angle] = hint;
 
     final voiceHint = VoiceHint.fromCode(jsonCommandIndex);
     final location = polyline[indexInTrack];
@@ -154,11 +158,9 @@ sealed class RouteInstruction with _$RouteInstruction {
             _ => throw UnimplementedError(),
           },
           location: location,
+          originalShapeIndex: indexInTrack,
         ),
-      VoiceHint.straight ||
-      VoiceHint.keepLeft ||
-      VoiceHint.keepRight =>
-        RouteInstruction.keep(
+      VoiceHint.straight || VoiceHint.keepLeft || VoiceHint.keepRight => RouteInstruction.keep(
           distance: distanceToNext.toDouble(),
           direction: switch (voiceHint) {
             VoiceHint.straight => KeepDirection.straight,
@@ -167,10 +169,9 @@ sealed class RouteInstruction with _$RouteInstruction {
             _ => throw UnimplementedError(),
           },
           location: location,
+          originalShapeIndex: indexInTrack,
         ),
-      VoiceHint.roundabout ||
-      VoiceHint.roundaboutLeft =>
-        RouteInstruction.roundabout(
+      VoiceHint.roundabout || VoiceHint.roundaboutLeft => RouteInstruction.roundabout(
           distance: distanceToNext.toDouble(),
           side: switch (voiceHint) {
             VoiceHint.roundabout => RoundaboutSide.left,
@@ -179,10 +180,12 @@ sealed class RouteInstruction with _$RouteInstruction {
           },
           exitNumber: exitNumber,
           location: location,
+          originalShapeIndex: indexInTrack,
         ),
       VoiceHint.beelineRouting || VoiceHint.offRoute => RouteInstruction.other(
           distance: distanceToNext.toDouble(),
           location: location,
+          originalShapeIndex: indexInTrack,
         ),
       VoiceHint.exitLeft || VoiceHint.exitRight => RouteInstruction.exit(
           distance: distanceToNext.toDouble(),
@@ -192,12 +195,12 @@ sealed class RouteInstruction with _$RouteInstruction {
             _ => throw UnimplementedError(),
           },
           location: location,
+          originalShapeIndex: indexInTrack,
         )
     };
   }
 
-  factory RouteInstruction.fromJson(Map<String, dynamic> json) =>
-      _$RouteInstructionFromJson(json);
+  factory RouteInstruction.fromJson(Map<String, dynamic> json) => _$RouteInstructionFromJson(json);
 }
 
 @freezed

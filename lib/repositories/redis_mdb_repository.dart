@@ -225,6 +225,13 @@ class RedisMDBRepository implements MDBRepository {
     });
   }
 
+  @override
+  Future<void> hdel(String key, String field) {
+    return _withConnection((cmd) async {
+      await cmd.send_object(["HDEL", key, field]);
+    });
+  }
+
   Future<void> dispose() async {
     await _pool.dispose();
   }

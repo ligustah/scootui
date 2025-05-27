@@ -10,6 +10,7 @@ Keep _$KeepFromJson(Map<String, dynamic> json) => Keep(
       distance: (json['distance'] as num).toDouble(),
       direction: $enumDecode(_$KeepDirectionEnumMap, json['direction']),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
+      originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       $type: json['runtimeType'] as String?,
     );
 
@@ -17,6 +18,7 @@ Map<String, dynamic> _$KeepToJson(Keep instance) => <String, dynamic>{
       'distance': instance.distance,
       'direction': _$KeepDirectionEnumMap[instance.direction]!,
       'location': instance.location,
+      'originalShapeIndex': instance.originalShapeIndex,
       'runtimeType': instance.$type,
     };
 
@@ -30,6 +32,7 @@ Turn _$TurnFromJson(Map<String, dynamic> json) => Turn(
       distance: (json['distance'] as num).toDouble(),
       direction: $enumDecode(_$TurnDirectionEnumMap, json['direction']),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
+      originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       $type: json['runtimeType'] as String?,
     );
 
@@ -37,6 +40,7 @@ Map<String, dynamic> _$TurnToJson(Turn instance) => <String, dynamic>{
       'distance': instance.distance,
       'direction': _$TurnDirectionEnumMap[instance.direction]!,
       'location': instance.location,
+      'originalShapeIndex': instance.originalShapeIndex,
       'runtimeType': instance.$type,
     };
 
@@ -56,6 +60,7 @@ Exit _$ExitFromJson(Map<String, dynamic> json) => Exit(
       distance: (json['distance'] as num).toDouble(),
       side: $enumDecode(_$ExitSideEnumMap, json['side']),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
+      originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       $type: json['runtimeType'] as String?,
     );
 
@@ -63,6 +68,7 @@ Map<String, dynamic> _$ExitToJson(Exit instance) => <String, dynamic>{
       'distance': instance.distance,
       'side': _$ExitSideEnumMap[instance.side]!,
       'location': instance.location,
+      'originalShapeIndex': instance.originalShapeIndex,
       'runtimeType': instance.$type,
     };
 
@@ -76,6 +82,7 @@ Roundabout _$RoundaboutFromJson(Map<String, dynamic> json) => Roundabout(
       side: $enumDecode(_$RoundaboutSideEnumMap, json['side']),
       exitNumber: (json['exitNumber'] as num).toInt(),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
+      originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       $type: json['runtimeType'] as String?,
     );
 
@@ -85,6 +92,7 @@ Map<String, dynamic> _$RoundaboutToJson(Roundabout instance) =>
       'side': _$RoundaboutSideEnumMap[instance.side]!,
       'exitNumber': instance.exitNumber,
       'location': instance.location,
+      'originalShapeIndex': instance.originalShapeIndex,
       'runtimeType': instance.$type,
     };
 
@@ -96,12 +104,14 @@ const _$RoundaboutSideEnumMap = {
 Other _$OtherFromJson(Map<String, dynamic> json) => Other(
       distance: (json['distance'] as num).toDouble(),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
+      originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       $type: json['runtimeType'] as String?,
     );
 
 Map<String, dynamic> _$OtherToJson(Other instance) => <String, dynamic>{
       'distance': instance.distance,
       'location': instance.location,
+      'originalShapeIndex': instance.originalShapeIndex,
       'runtimeType': instance.$type,
     };
 

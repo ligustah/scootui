@@ -43,11 +43,14 @@ def main():
     lat = float(sys.argv[1])
     lon = float(sys.argv[2])
     course = random.randint(0, 359)  # Random initial course (0-359 degrees)
-    # Maximum course change per second (degrees)
-    max_course_change = 90
+    # Maximum course change per second (degrees) - much smaller for smoother movement
+    max_course_change = 5
+    # Direction bias - tends to continue in similar direction
+    direction_bias = 0
     max_speed = 57                   # Maximum speed in km/h
-    max_speed_delta = 25             # Maximum speed change per second (km/h)
+    max_speed_delta = 8              # Maximum speed change per second (km/h) - more realistic acceleration
     earth_radius = 6371.0            # Earth radius in km
+    target_speed = max_speed * 0.7   # Initial target speed
 
     # Engine variables
     current_speed = 0                # Current speed in km/h
@@ -72,15 +75,33 @@ def main():
             # Store previous speed for calculating delta
             prev_speed = current_speed
 
-            # Update course with random change (maximum of max_course_change degrees)
-            course_change = random.randint(-max_course_change,
-                                           max_course_change)
+            # Update course with smoother, more realistic changes
+            # 70% chance of small course correction, 30% chance of continuing straight
+            if random.random() < 0.7:
+                # Bias toward continuing in similar direction with small corrections
+                course_change = random.uniform(-max_course_change, max_course_change)
+                # Apply direction bias (momentum in current direction)
+                direction_bias = direction_bias * 0.8 + course_change * 0.2
+                course_change = direction_bias
+            else:
+                # Continue straight (no course change)
+                course_change = 0
+                direction_bias *= 0.9  # Gradually reduce bias when going straight
+            
             course = (course + course_change) % 360
 
-            # Calculate target speed based on course change (slower when turning more)
-            # Speed reduction factor: 1 (no reduction) to 0.3 (maximum reduction)
-            speed_factor = 1 - 0.7 * abs(course_change) / max_course_change
-            target_speed = max_speed * speed_factor
+            # Update target speed more gradually and independently
+            # Only change target speed occasionally (20% chance per second)
+            if random.random() < 0.2:
+                # Occasionally adjust target speed for variety
+                target_speed_change = random.uniform(-5, 5)
+                new_target = target_speed + target_speed_change
+                target_speed = max(20, min(max_speed, new_target))
+            
+            # Reduce target speed slightly when making sharp turns
+            if abs(course_change) > 2:
+                turn_speed_reduction = min(5, abs(course_change))
+                target_speed = max(target_speed - turn_speed_reduction, 20)
 
             # Limit speed change to max_speed_delta per second
             if target_speed > prev_speed:
