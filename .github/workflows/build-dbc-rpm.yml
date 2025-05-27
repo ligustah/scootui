@@ -1,0 +1,184 @@
+name: Build DBC ScootUI RPM
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check-changes:
+    name: Check for Changes
+    runs-on: self-hosted
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+      since_time: ${{ steps.time.outputs.since }}
+    steps:
+      - name: Get timestamp
+        id: time
+        run: |
+          SINCE=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
+          echo "since=${SINCE}" >> $GITHUB_OUTPUT
+
+      - name: Get latest commits
+        id: check
+        run: |
+          # Check for new commits in scootui repository
+          REPO="librescoot/scootui"
+          SINCE="${{ steps.time.outputs.since }}"
+
+          echo "Checking repo ${REPO}..."
+          COMMITS=$(curl -s "https://api.github.com/repos/${REPO}/commits?since=${SINCE}")
+          echo "Found $(echo "$COMMITS" | jq 'length') commits since $SINCE"
+
+          HAS_CHANGES=false
+          if [ "$(echo "$COMMITS" | jq 'length')" -gt 0 ]; then
+            HAS_CHANGES=true
+            echo "Found new commits in ${REPO}"
+          fi
+
+          echo "has_changes=${HAS_CHANGES}" >> $GITHUB_OUTPUT
+          echo "has_changes=${HAS_CHANGES}"
+
+  generate-timestamp:
+    name: Generate Build Timestamp
+    runs-on: self-hosted
+    outputs:
+      timestamp: ${{ steps.set-timestamp.outputs.timestamp }}
+    steps:
+      - name: Set timestamp
+        id: set-timestamp
+        run: |
+          # Generate timestamp in format YYYYMMDDThhmmss
+          TIMESTAMP=$(date -u '+%Y%m%dT%H%M%S')
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "Generated timestamp: $TIMESTAMP"
+
+  build-dbc-rpm:
+    name: Build ScootUI RPM for DBC
+    needs: [check-changes, generate-timestamp]
+    if: ${{ needs.check-changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: dbc
+    steps:
+      - name: Checkout librescoot repository
+        uses: actions/checkout@v4
+        with:
+          repository: librescoot/librescoot
+          fetch-depth: 0
+          clean: false
+          path: librescoot
+
+      - name: Checkout scootui repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: false
+          path: scootui
+
+      - name: Setup build environment
+        working-directory: librescoot
+        run: |
+          mkdir -p yocto
+          sudo chown 999:999 yocto
+
+      - name: Build scootui package for DBC
+        working-directory: librescoot
+        run: |
+          # Modify build scripts for non-interactive mode
+          sed -i 's/docker run -it/docker run -i/' build.sh
+          sed -i 's/docker run -it/docker run -i/' interactive.sh
+          sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
+
+          # Build only the scootui package for DBC target
+          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" ./build.sh dbc -c populate_sysroot && ./build.sh dbc -c do_rootfs scootui
+
+      - name: Extract ScootUI RPM
+        run: |
+          mkdir -p artifacts/dbc-rpm
+
+          # Find and copy scootui RPM from the DBC build
+          SCOOTUI_RPM=$(find librescoot/yocto/build/tmp/deploy/rpm -name "*scootui*.rpm" | head -1)
+          if [ -n "$SCOOTUI_RPM" ]; then
+            cp "$SCOOTUI_RPM" artifacts/dbc-rpm/scootui-dbc-${{ needs.generate-timestamp.outputs.timestamp }}.rpm
+            echo "Found ScootUI RPM: $SCOOTUI_RPM"
+            ls -la artifacts/dbc-rpm/
+          else
+            echo "ERROR: No ScootUI RPM found!"
+            find librescoot/yocto/build -name "*scootui*.rpm" | head -10
+            exit 1
+          fi
+
+      - name: Upload ScootUI RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scootui-dbc-rpm-${{ needs.generate-timestamp.outputs.timestamp }}
+          path: artifacts/dbc-rpm/*.rpm
+          retention-days: 30
+          compression-level: 0
+
+  create-release:
+    name: Create Release
+    needs: [check-changes, build-dbc-rpm, generate-timestamp]
+    if: ${{ needs.check-changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: self-hosted
+    steps:
+      - name: Download RPM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          CHANGELOG=""
+          REPO="librescoot/scootui"
+
+          COMMITS=$(curl -s "https://api.github.com/repos/${REPO}/commits?since=${{ needs.check-changes.outputs.since_time }}")
+
+          if [ "$(echo "$COMMITS" | jq 'length')" -gt 0 ]; then
+            CHANGELOG="${CHANGELOG}### ${REPO}\n\n"
+            while IFS= read -r commit; do
+              SHA=$(echo "$commit" | jq -r '.sha')
+              MESSAGE=$(echo "$commit" | jq -r '.commit.message' | sed 's/"/\\"/g')
+              URL=$(echo "$commit" | jq -r '.html_url')
+              AUTHOR=$(echo "$commit" | jq -r '.commit.author.name')
+              
+              SHORT_MESSAGE=$(echo "$MESSAGE" | head -n1)
+              
+              CHANGELOG="${CHANGELOG}* [\`${SHA:0:7}\`](${URL}) - ${SHORT_MESSAGE}\n"
+            done < <(echo "$COMMITS" | jq -c '.[]')
+            CHANGELOG="${CHANGELOG}\n"
+          fi
+
+          # Store raw changelog without URL encoding
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Set date tag
+        id: date
+        run: |
+          echo "value=${{ needs.generate-timestamp.outputs.timestamp }}" >> $GITHUB_OUTPUT
+
+      - name: Create Github release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ScootUI DBC RPM Build ${{ steps.date.outputs.value }}
+          tag_name: dbc-rpm-${{ steps.date.outputs.value }}
+          prerelease: true
+          files: |
+            artifacts/**/*.rpm
+          body: |
+            📦 ScootUI DBC RPM Build (version ${{ steps.date.outputs.value }})
+
+            This build contains the ScootUI RPM package specifically built for the DBC (Data Bus Controller) target platform.
+
+            ## Changelog
+            ${{ steps.changelog.outputs.content }}
+
+            Build completed at: ${{ github.event.repository.updated_at }}
+            Commit: ${{ github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
