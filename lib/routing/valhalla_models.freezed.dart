@@ -535,6 +535,8 @@ mixin _$Maneuver {
   int get type;
   double get length;
   int? get beginShapeIndex;
+  @JsonKey(name: 'roundabout_exit_count')
+  int? get roundaboutExitCount;
 
   /// Create a copy of Maneuver
   /// with the given fields replaced by the non-null parameter values.
@@ -554,16 +556,19 @@ mixin _$Maneuver {
             (identical(other.type, type) || other.type == type) &&
             (identical(other.length, length) || other.length == length) &&
             (identical(other.beginShapeIndex, beginShapeIndex) ||
-                other.beginShapeIndex == beginShapeIndex));
+                other.beginShapeIndex == beginShapeIndex) &&
+            (identical(other.roundaboutExitCount, roundaboutExitCount) ||
+                other.roundaboutExitCount == roundaboutExitCount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, type, length, beginShapeIndex);
+  int get hashCode => Object.hash(
+      runtimeType, type, length, beginShapeIndex, roundaboutExitCount);
 
   @override
   String toString() {
-    return 'Maneuver(type: $type, length: $length, beginShapeIndex: $beginShapeIndex)';
+    return 'Maneuver(type: $type, length: $length, beginShapeIndex: $beginShapeIndex, roundaboutExitCount: $roundaboutExitCount)';
   }
 }
 
@@ -572,7 +577,11 @@ abstract mixin class $ManeuverCopyWith<$Res> {
   factory $ManeuverCopyWith(Maneuver value, $Res Function(Maneuver) _then) =
       _$ManeuverCopyWithImpl;
   @useResult
-  $Res call({int type, double length, int? beginShapeIndex});
+  $Res call(
+      {int type,
+      double length,
+      int? beginShapeIndex,
+      @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount});
 }
 
 /// @nodoc
@@ -590,6 +599,7 @@ class _$ManeuverCopyWithImpl<$Res> implements $ManeuverCopyWith<$Res> {
     Object? type = null,
     Object? length = null,
     Object? beginShapeIndex = freezed,
+    Object? roundaboutExitCount = freezed,
   }) {
     return _then(_self.copyWith(
       type: null == type
@@ -604,6 +614,10 @@ class _$ManeuverCopyWithImpl<$Res> implements $ManeuverCopyWith<$Res> {
           ? _self.beginShapeIndex
           : beginShapeIndex // ignore: cast_nullable_to_non_nullable
               as int?,
+      roundaboutExitCount: freezed == roundaboutExitCount
+          ? _self.roundaboutExitCount
+          : roundaboutExitCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -612,7 +626,10 @@ class _$ManeuverCopyWithImpl<$Res> implements $ManeuverCopyWith<$Res> {
 @JsonSerializable()
 class _Maneuver implements Maneuver {
   const _Maneuver(
-      {required this.type, required this.length, this.beginShapeIndex});
+      {required this.type,
+      required this.length,
+      this.beginShapeIndex,
+      @JsonKey(name: 'roundabout_exit_count') this.roundaboutExitCount});
   factory _Maneuver.fromJson(Map<String, dynamic> json) =>
       _$ManeuverFromJson(json);
 
@@ -622,6 +639,9 @@ class _Maneuver implements Maneuver {
   final double length;
   @override
   final int? beginShapeIndex;
+  @override
+  @JsonKey(name: 'roundabout_exit_count')
+  final int? roundaboutExitCount;
 
   /// Create a copy of Maneuver
   /// with the given fields replaced by the non-null parameter values.
@@ -646,16 +666,19 @@ class _Maneuver implements Maneuver {
             (identical(other.type, type) || other.type == type) &&
             (identical(other.length, length) || other.length == length) &&
             (identical(other.beginShapeIndex, beginShapeIndex) ||
-                other.beginShapeIndex == beginShapeIndex));
+                other.beginShapeIndex == beginShapeIndex) &&
+            (identical(other.roundaboutExitCount, roundaboutExitCount) ||
+                other.roundaboutExitCount == roundaboutExitCount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, type, length, beginShapeIndex);
+  int get hashCode => Object.hash(
+      runtimeType, type, length, beginShapeIndex, roundaboutExitCount);
 
   @override
   String toString() {
-    return 'Maneuver(type: $type, length: $length, beginShapeIndex: $beginShapeIndex)';
+    return 'Maneuver(type: $type, length: $length, beginShapeIndex: $beginShapeIndex, roundaboutExitCount: $roundaboutExitCount)';
   }
 }
 
@@ -666,7 +689,11 @@ abstract mixin class _$ManeuverCopyWith<$Res>
       __$ManeuverCopyWithImpl;
   @override
   @useResult
-  $Res call({int type, double length, int? beginShapeIndex});
+  $Res call(
+      {int type,
+      double length,
+      int? beginShapeIndex,
+      @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount});
 }
 
 /// @nodoc
@@ -684,6 +711,7 @@ class __$ManeuverCopyWithImpl<$Res> implements _$ManeuverCopyWith<$Res> {
     Object? type = null,
     Object? length = null,
     Object? beginShapeIndex = freezed,
+    Object? roundaboutExitCount = freezed,
   }) {
     return _then(_Maneuver(
       type: null == type
@@ -697,6 +725,10 @@ class __$ManeuverCopyWithImpl<$Res> implements _$ManeuverCopyWith<$Res> {
       beginShapeIndex: freezed == beginShapeIndex
           ? _self.beginShapeIndex
           : beginShapeIndex // ignore: cast_nullable_to_non_nullable
+              as int?,
+      roundaboutExitCount: freezed == roundaboutExitCount
+          ? _self.roundaboutExitCount
+          : roundaboutExitCount // ignore: cast_nullable_to_non_nullable
               as int?,
     ));
   }

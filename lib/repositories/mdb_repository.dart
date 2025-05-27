@@ -21,6 +21,8 @@ abstract class MDBRepository {
 
   // For Redis sets
   Future<List<String>> getSetMembers(String setKey);
+
+  Future<void> hdel(String key, String field); // Added method
 }
 
 class InMemoryMDBRepository implements MDBRepository {
@@ -152,5 +154,29 @@ class InMemoryMDBRepository implements MDBRepository {
     // in our storage map: setKey -> {"member1": "1", "member2": "1", ...}
     final setData = _storage[setKey] ?? {};
     return setData.keys.toList();
+  }
+
+  @override
+  Future<void> hdel(String key, String field) async {
+    final channelData = _storage[key];
+    if (channelData != null) {
+      if (channelData.containsKey(field)) {
+        channelData.remove(field);
+        print('InMemoryMDBRepository: HDEL $key $field');
+
+        // Notify subscribers that the field effectively changed (to non-existent/empty)
+        // This helps SyncableCubit to refresh if it's listening.
+        // SyncableCubit's _doRefresh fetches the value; if null, it might not update.
+        // A common pattern after HDEL is to then HSET to "" if PUBSUB is desired for "empty".
+        // Or, the PUBSUB message could be special for deletions.
+        // For now, we can simulate what HSET field "" would do for PUBSUB.
+        if (_subscribers.containsKey(key)) {
+          for (var controller in _subscribers[key]!) {
+            // Sending the variable name implies it changed. SyncableCubit's get() will return null.
+            controller.add((key, field));
+          }
+        }
+      }
+    }
   }
 }

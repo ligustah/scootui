@@ -38,6 +38,7 @@ abstract class Maneuver with _$Maneuver {
     required int type,
     required double length,
     int? beginShapeIndex,
+    @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount,
   }) = _Maneuver;
 
   factory Maneuver.fromJson(Map<String, dynamic> json) => _$ManeuverFromJson(json);

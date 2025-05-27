@@ -109,6 +109,22 @@ class NavigationSync extends SyncableCubit<NavigationData> {
       NavigationSync(RepositoryProvider.of<MDBRepository>(context))..start();
 
   NavigationSync(MDBRepository repo) : super(redisRepository: repo, initialState: NavigationData());
+
+  Future<void> clearDestination() async {
+    // Get the channel name from syncSettings (e.g., "navigation")
+    final channel = state.syncSettings.channel;
+    const field = "destination";
+
+    // Delete the field from Redis
+    await redisRepository.hdel(channel, field);
+
+    // Update local state to reflect the change immediately
+    // This assumes NavigationData().update("destination", "") correctly clears the field.
+    // The PUBSUB mechanism in SyncableCubit might also pick this up if hdel in MDBRepository
+    // correctly notifies subscribers about the change (e.g., by sending the field name).
+    emit(state.update(field, ""));
+    print("NavigationSync: Cleared destination via HDEL and updated local state.");
+  }
 }
 
 class OtaSync extends SyncableCubit<OtaData> {
