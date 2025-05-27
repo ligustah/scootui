@@ -9,39 +9,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-changes:
-    name: Check for Changes
-    runs-on: self-hosted
-    outputs:
-      has_changes: ${{ steps.check.outputs.has_changes }}
-      since_time: ${{ steps.time.outputs.since }}
-    steps:
-      - name: Get timestamp
-        id: time
-        run: |
-          SINCE=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
-          echo "since=${SINCE}" >> $GITHUB_OUTPUT
-
-      - name: Get latest commits
-        id: check
-        run: |
-          # Check for new commits in scootui repository
-          REPO="librescoot/scootui"
-          SINCE="${{ steps.time.outputs.since }}"
-
-          echo "Checking repo ${REPO}..."
-          COMMITS=$(curl -s "https://api.github.com/repos/${REPO}/commits?since=${SINCE}")
-          echo "Found $(echo "$COMMITS" | jq 'length') commits since $SINCE"
-
-          HAS_CHANGES=false
-          if [ "$(echo "$COMMITS" | jq 'length')" -gt 0 ]; then
-            HAS_CHANGES=true
-            echo "Found new commits in ${REPO}"
-          fi
-
-          echo "has_changes=${HAS_CHANGES}" >> $GITHUB_OUTPUT
-          echo "has_changes=${HAS_CHANGES}"
-
   generate-timestamp:
     name: Generate Build Timestamp
     runs-on: self-hosted
@@ -58,8 +25,9 @@ jobs:
 
   build-dbc-rpm:
     name: Build ScootUI RPM for DBC
-    needs: [check-changes, generate-timestamp]
-    if: ${{ needs.check-changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch' }}
+    needs: [generate-timestamp]
+    # This job will now run on every push to main or workflow_dispatch,
+    # as the check-changes job and its conditional logic have been removed.
     runs-on: dbc
     steps:
       - name: Checkout librescoot repository
@@ -120,8 +88,9 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: [check-changes, build-dbc-rpm, generate-timestamp]
-    if: ${{ needs.check-changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch' }}
+    needs: [build-dbc-rpm, generate-timestamp]
+    # This job will now run on every push to main or workflow_dispatch,
+    # as the check-changes job and its conditional logic have been removed.
     runs-on: self-hosted
     steps:
       - name: Download RPM artifacts
@@ -132,27 +101,11 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          CHANGELOG=""
-          REPO="librescoot/scootui"
-
-          COMMITS=$(curl -s "https://api.github.com/repos/${REPO}/commits?since=${{ needs.check-changes.outputs.since_time }}")
-
-          if [ "$(echo "$COMMITS" | jq 'length')" -gt 0 ]; then
-            CHANGELOG="${CHANGELOG}### ${REPO}\n\n"
-            while IFS= read -r commit; do
-              SHA=$(echo "$commit" | jq -r '.sha')
-              MESSAGE=$(echo "$commit" | jq -r '.commit.message' | sed 's/"/\\"/g')
-              URL=$(echo "$commit" | jq -r '.html_url')
-              AUTHOR=$(echo "$commit" | jq -r '.commit.author.name')
-              
-              SHORT_MESSAGE=$(echo "$MESSAGE" | head -n1)
-              
-              CHANGELOG="${CHANGELOG}* [\`${SHA:0:7}\`](${URL}) - ${SHORT_MESSAGE}\n"
-            done < <(echo "$COMMITS" | jq -c '.[]')
-            CHANGELOG="${CHANGELOG}\n"
-          fi
-
-          # Store raw changelog without URL encoding
+          # Basic changelog content.
+          # The previous dynamic changelog based on 'since_time' from 'check-changes' job has been removed.
+          # You might want to implement a new strategy for changelog generation here,
+          # e.g., using git commits between the current and previous tag, or commits in the push.
+          CHANGELOG="Automated RPM build."
           echo "content<<EOF" >> $GITHUB_OUTPUT
           echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
