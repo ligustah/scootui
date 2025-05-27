@@ -534,6 +534,7 @@ class __$LegCopyWithImpl<$Res> implements _$LegCopyWith<$Res> {
 mixin _$Maneuver {
   int get type;
   double get length;
+  @JsonKey(name: 'begin_shape_index')
   int? get beginShapeIndex;
   @JsonKey(name: 'roundabout_exit_count')
   int? get roundaboutExitCount;
@@ -580,7 +581,7 @@ abstract mixin class $ManeuverCopyWith<$Res> {
   $Res call(
       {int type,
       double length,
-      int? beginShapeIndex,
+      @JsonKey(name: 'begin_shape_index') int? beginShapeIndex,
       @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount});
 }
 
@@ -628,7 +629,7 @@ class _Maneuver implements Maneuver {
   const _Maneuver(
       {required this.type,
       required this.length,
-      this.beginShapeIndex,
+      @JsonKey(name: 'begin_shape_index') this.beginShapeIndex,
       @JsonKey(name: 'roundabout_exit_count') this.roundaboutExitCount});
   factory _Maneuver.fromJson(Map<String, dynamic> json) =>
       _$ManeuverFromJson(json);
@@ -638,6 +639,7 @@ class _Maneuver implements Maneuver {
   @override
   final double length;
   @override
+  @JsonKey(name: 'begin_shape_index')
   final int? beginShapeIndex;
   @override
   @JsonKey(name: 'roundabout_exit_count')
@@ -692,7 +694,7 @@ abstract mixin class _$ManeuverCopyWith<$Res>
   $Res call(
       {int type,
       double length,
-      int? beginShapeIndex,
+      @JsonKey(name: 'begin_shape_index') int? beginShapeIndex,
       @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount});
 }
 

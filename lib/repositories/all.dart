@@ -11,7 +11,8 @@ import 'tiles_repository.dart';
 
 // Initialize the MDB repository first, then settings service which depends on it
 final List<SingleChildWidget> allRepositories = [
-  RepositoryProvider(
+  RepositoryProvider<MDBRepository>(
+      // Explicitly provide MDBRepository
       // use in-memory mdb repository for web
       create: kIsWeb ? InMemoryMDBRepository.create : RedisMDBRepository.create),
   RepositoryProvider(

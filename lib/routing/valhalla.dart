@@ -198,6 +198,30 @@ class ValhallaService {
       throw Exception('Failed to get route from Valhalla');
     }
 
+    // --------------- Diagnostic Print Block Start ---------------
+    if (response.data != null &&
+        response.data['trip'] != null &&
+        response.data['trip']['legs'] != null &&
+        (response.data['trip']['legs'] as List).isNotEmpty &&
+        response.data['trip']['legs'][0]['maneuvers'] != null) {
+      List<dynamic> rawManeuversJson = response.data['trip']['legs'][0]['maneuvers'];
+      print("ValhallaService: Raw maneuvers JSON count: ${rawManeuversJson.length}");
+      for (var i = 0; i < rawManeuversJson.length; i++) {
+        var rawManeuverJson = rawManeuversJson[i] as Map<String, dynamic>;
+        // Temporarily parse to log, actual parsing happens below via ValhallaResponse.fromJson
+        var tempParsedManeuver = Maneuver.fromJson(rawManeuverJson);
+        print(
+            "ValhallaService: Raw maneuver $i: JSON['begin_shape_index'] = ${rawManeuverJson['begin_shape_index']}, Parsed beginShapeIndex = ${tempParsedManeuver.beginShapeIndex}, Type = ${tempParsedManeuver.type}");
+        if (tempParsedManeuver.beginShapeIndex == null && rawManeuverJson['begin_shape_index'] != null) {
+          print(
+              "ValhallaService: !!!! MISMATCH DETECTED for maneuver $i: Raw JSON has 'begin_shape_index': ${rawManeuverJson['begin_shape_index']} but parsed Maneuver.beginShapeIndex is null. Raw JSON: $rawManeuverJson !!!!");
+        }
+      }
+    } else {
+      print("ValhallaService: Could not access raw maneuvers for diagnostics.");
+    }
+    // --------------- Diagnostic Print Block End ---------------
+
     final valhallaResponse = ValhallaResponse.fromJson(response.data);
     final leg = valhallaResponse.trip.legs.first;
 
@@ -221,7 +245,8 @@ class ValhallaService {
         // For now, skip creating an instruction if beginShapeIndex is null,
         // as it cannot be placed on the polyline for navigation sequence.
         // Alternatively, assign a special index like -1 if `RouteInstruction.originalShapeIndex` becomes nullable.
-        print("Skipping maneuver type ${maneuver.type} due to null beginShapeIndex.");
+        print(
+            "Skipping maneuver: Type=${maneuver.type}, Length=${maneuver.length}, roundaboutExitCount=${maneuver.roundaboutExitCount}. Full maneuver object: ${maneuver.toString()}");
         continue;
       }
 

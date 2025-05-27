@@ -37,7 +37,7 @@ abstract class Maneuver with _$Maneuver {
   const factory Maneuver({
     required int type,
     required double length,
-    int? beginShapeIndex,
+    @JsonKey(name: 'begin_shape_index') int? beginShapeIndex,
     @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount,
   }) = _Maneuver;
 

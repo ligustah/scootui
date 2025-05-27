@@ -43,14 +43,14 @@ Map<String, dynamic> _$LegToJson(_Leg instance) => <String, dynamic>{
 _Maneuver _$ManeuverFromJson(Map<String, dynamic> json) => _Maneuver(
       type: (json['type'] as num).toInt(),
       length: (json['length'] as num).toDouble(),
-      beginShapeIndex: (json['beginShapeIndex'] as num?)?.toInt(),
+      beginShapeIndex: (json['begin_shape_index'] as num?)?.toInt(),
       roundaboutExitCount: (json['roundabout_exit_count'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$ManeuverToJson(_Maneuver instance) => <String, dynamic>{
       'type': instance.type,
       'length': instance.length,
-      'beginShapeIndex': instance.beginShapeIndex,
+      'begin_shape_index': instance.beginShapeIndex,
       'roundabout_exit_count': instance.roundaboutExitCount,
     };
 

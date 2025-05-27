@@ -13,7 +13,7 @@ class AppConfig {
   static const String modeSettingKey = 'mode';
 
   /// Default Valhalla endpoint URL
-  static String valhallaEndpoint = 'http://localhost:8002';
+  static String valhallaEndpoint = 'https://valhalla1.openstreetmap.de/';
 
   // TODO: add to setting service
   /// Redis valhalla endpoint setting key
