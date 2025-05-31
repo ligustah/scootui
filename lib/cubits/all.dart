@@ -6,6 +6,7 @@ import 'debug_overlay_cubit.dart';
 import 'map_cubit.dart';
 import 'mdb_cubits.dart';
 import 'menu_cubit.dart';
+import 'navigation_cubit.dart';
 import 'ota_cubit.dart';
 import 'screen_cubit.dart';
 import 'shortcut_menu_cubit.dart';
@@ -26,6 +27,11 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: GpsSync.create),
   BlocProvider(create: InternetSync.create),
   BlocProvider(create: NavigationSync.create),
+  BlocProvider(
+      create: (context) => NavigationCubit(
+            gpsStream: context.read<GpsSync>().stream,
+            navigationSync: context.read<NavigationSync>(),
+          )),
   BlocProvider(create: SpeedLimitSync.create),
   BlocProvider(create: SystemCubit.create),
   BlocProvider(create: TripCubit.create),

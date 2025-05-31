@@ -12,6 +12,7 @@ import '../widgets/debug/debug_overlay.dart';
 import '../widgets/ota_info_widget.dart';
 import '../widgets/general/odometer_display.dart';
 import '../widgets/indicators/warning_indicators.dart';
+import '../widgets/navigation/turn_by_turn_widget.dart';
 import '../widgets/power/power_display.dart';
 import '../widgets/speedometer/speedometer_display.dart';
 import '../widgets/status_bars/top_status_bar.dart';
@@ -103,6 +104,15 @@ class _ClusterScreenState extends State<ClusterScreen> {
                     // Speedometer
                     SpeedometerDisplay(),
 
+                    // // Navigation instructions (compact view)
+                    // Positioned(
+                    //   top: 50,
+                    //   child: TurnByTurnWidget(
+                    //     compact: true,
+                    //     padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    //   ),
+                    // ),
+
                     // Power display at bottom of speedometer area
                     Positioned(
                       bottom: 10,
@@ -157,8 +167,16 @@ class _ClusterScreenState extends State<ClusterScreen> {
               ),
             ),
 
-          // OTA info widget (will only show when in minimal mode)
-          const OtaInfoWidget(),
+          // Turn-by-turn navigation overlay (positioned over warning indicators area)
+          Positioned(
+            top: 44, // After StatusBar (30px) + some spacing
+            left: 80, // Leave space for left turn signal
+            right: 80, // Leave space for right turn signal
+            child: TurnByTurnWidget(
+              compact: false, // Use full view for better visibility
+              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            ),
+          ),
 
           // Debug overlay - controlled by DebugOverlayCubit
           BlocBuilder<DebugOverlayCubit, DebugMode>(

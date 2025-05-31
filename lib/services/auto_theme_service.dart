@@ -26,7 +26,7 @@ class AutoThemeService {
 
   /// Initialize the auto theme service
   Future<void> initialize({Function(String)? themeCallback}) async {
-    debugPrint('🌞 AutoThemeService: Initializing');
+    // debugPrint('🌞 AutoThemeService: Initializing');
     onThemeChanged = themeCallback;
 
     // Subscribe to brightness changes
@@ -38,7 +38,7 @@ class AutoThemeService {
 
   /// Enable or disable auto theme mode
   void setAutoMode(bool enabled) {
-    debugPrint('🌞 AutoThemeService: Setting auto mode to $enabled');
+    // debugPrint('🌞 AutoThemeService: Setting auto mode to $enabled');
     _isAutoEnabled = enabled;
 
     if (enabled) {
@@ -52,7 +52,7 @@ class AutoThemeService {
 
   /// Subscribe to brightness sensor changes
   void _subscribeToBrightnessChanges() {
-    debugPrint('🌞 AutoThemeService: Subscribing to brightness changes');
+    // debugPrint('🌞 AutoThemeService: Subscribing to brightness changes');
     _brightnessSubscription = _mdbRepository.subscribe(AppConfig.redisSettingsCluster).listen(
       (event) {
         final (_, key) = event;
@@ -70,7 +70,7 @@ class AutoThemeService {
   void _startBrightnessMonitoring() {
     if (!_isAutoEnabled) return;
 
-    debugPrint('🌞 AutoThemeService: Starting brightness monitoring');
+    // debugPrint('🌞 AutoThemeService: Starting brightness monitoring');
     _brightnessTimer?.cancel();
     _brightnessTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _checkBrightness();
@@ -79,7 +79,7 @@ class AutoThemeService {
 
   /// Stop brightness monitoring
   void _stopBrightnessMonitoring() {
-    debugPrint('🌞 AutoThemeService: Stopping brightness monitoring');
+    // debugPrint('🌞 AutoThemeService: Stopping brightness monitoring');
     _brightnessTimer?.cancel();
     _brightnessTimer = null;
   }
@@ -101,7 +101,7 @@ class AutoThemeService {
       final brightness = double.tryParse(brightnessStr);
       if (brightness == null) return;
 
-      debugPrint('🌞 AutoThemeService: Current brightness: $brightness lux');
+      // debugPrint('🌞 AutoThemeService: Current brightness: $brightness lux');
 
       // Apply exponential smoothing
       if (_smoothedBrightness == null) {
@@ -112,7 +112,7 @@ class AutoThemeService {
         _smoothedBrightness = _smoothingFactor * brightness + (1 - _smoothingFactor) * _smoothedBrightness!;
       }
 
-      debugPrint('🌞 AutoThemeService: Smoothed brightness: ${_smoothedBrightness!.toStringAsFixed(2)} lux');
+      // debugPrint('🌞 AutoThemeService: Smoothed brightness: ${_smoothedBrightness!.toStringAsFixed(2)} lux');
 
       // Calculate theme using smoothed value
       _calculateTheme();
@@ -127,8 +127,8 @@ class AutoThemeService {
 
     final smoothedBrightness = _smoothedBrightness!;
 
-    debugPrint('🌞 AutoThemeService: Using smoothed brightness: ${smoothedBrightness.toStringAsFixed(2)} lux');
-    debugPrint('🌞 AutoThemeService: Current theme: $_currentTheme');
+    // debugPrint('🌞 AutoThemeService: Using smoothed brightness: ${smoothedBrightness.toStringAsFixed(2)} lux');
+    // debugPrint('🌞 AutoThemeService: Current theme: $_currentTheme');
 
     String newTheme = _currentTheme;
 
@@ -137,17 +137,17 @@ class AutoThemeService {
       // Switch to light theme if brightness is above light threshold
       if (smoothedBrightness > AppConfig.autoThemeLightThreshold) {
         newTheme = 'light';
-        debugPrint('🌞 AutoThemeService: Switching to LIGHT theme');
+        // debugPrint('🌞 AutoThemeService: Switching to LIGHT theme');
       } else {
-        debugPrint('🌞 AutoThemeService: Staying DARK');
+        // debugPrint('🌞 AutoThemeService: Staying DARK');
       }
     } else if (_currentTheme == 'light') {
       // Switch to dark theme if brightness is below dark threshold
       if (smoothedBrightness < AppConfig.autoThemeDarkThreshold) {
         newTheme = 'dark';
-        debugPrint('🌞 AutoThemeService: Switching to DARK theme');
+        // debugPrint('🌞 AutoThemeService: Switching to DARK theme');
       } else {
-        debugPrint('🌞 AutoThemeService: Staying LIGHT');
+        // debugPrint('🌞 AutoThemeService: Staying LIGHT');
       }
     }
 
@@ -169,7 +169,7 @@ class AutoThemeService {
 
   /// Dispose resources
   void dispose() {
-    debugPrint('🌞 AutoThemeService: Disposing');
+    // debugPrint('🌞 AutoThemeService: Disposing');
     _brightnessTimer?.cancel();
     _brightnessSubscription?.cancel();
   }

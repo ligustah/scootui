@@ -7,15 +7,10 @@ import time
 import sys
 
 
-def publish_redis_value(channel, payload):
-    """Set a value in Redis using redis-cli"""
-    subprocess.run(["redis-cli", "PUBLISH", channel, str(payload)], check=True)
-
-
-def set_redis_value(hash_name, field, value):
-    """Set a value in Redis using redis-cli"""
-    subprocess.run(["redis-cli", "HSET", hash_name,
-                   field, str(value)], check=True)
+def execute_redis_batch(commands):
+    """Execute multiple Redis commands in a single MULTI transaction"""
+    redis_input = "MULTI\n" + "\n".join(commands) + "\nEXEC"
+    subprocess.run(["redis-cli"], input=redis_input, text=True, check=True, stdout=subprocess.DEVNULL)
 
 
 def get_redis_value(hash_name, field, default=None):
@@ -34,17 +29,29 @@ def get_redis_value(hash_name, field, default=None):
 
 
 def main():
+    # Simulation timing - easily adjustable
+    updates_per_second = 1.0  # Change this to adjust update frequency
+    update_interval = 1.0 / updates_per_second
+    
     # Check command line arguments
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <starting_latitude> <starting_longitude>")
+    if len(sys.argv) not in [3, 4]:
+        print(f"Usage: {sys.argv[0]} <starting_latitude> <starting_longitude> [bearing]")
+        print("  bearing: optional fixed bearing in degrees (0-359), disables course changes")
         sys.exit(1)
 
     # Initialize variables
     lat = float(sys.argv[1])
     lon = float(sys.argv[2])
-    course = random.randint(0, 359)  # Random initial course (0-359 degrees)
-    # Maximum course change per second (degrees) - much smaller for smoother movement
-    max_course_change = 5
+    
+    if len(sys.argv) == 4:
+        # Fixed bearing mode - travel in straight line
+        course = float(sys.argv[3]) % 360
+        max_course_change = 0  # No course changes
+        print(f"Fixed bearing mode: {course}°")
+    else:
+        # Random course mode
+        course = random.randint(0, 359)  # Random initial course (0-359 degrees)
+        max_course_change = 5  # Maximum course change per second (degrees)
     # Direction bias - tends to continue in similar direction
     direction_bias = 0
     max_speed = 57                   # Maximum speed in km/h
@@ -150,8 +157,8 @@ def main():
             # Format voltage to 1 decimal place
             motor_voltage = round(voltage, 1) * 100
 
-            # Calculate distance traveled in 1 second (km)
-            distance_km = current_speed / 3600
+            # Calculate distance traveled in this update interval (km)
+            distance_km = (current_speed / 3600) * update_interval
 
             # Calculate distance in meters for odometer
             distance_meters = distance_km * 1000
@@ -168,22 +175,24 @@ def main():
             course_rad = math.radians(course)
             angular_distance = distance_km / earth_radius
 
-            # Calculate new position
-            sin_lat1 = math.sin(lat_rad)
-            cos_lat1 = math.cos(lat_rad)
-            sin_d = math.sin(angular_distance)
-            cos_d = math.cos(angular_distance)
-            sin_course = math.sin(course_rad)
-            cos_course = math.cos(course_rad)
-
-            lat2_rad = math.asin(sin_lat1 * cos_d +
-                                 cos_lat1 * sin_d * cos_course)
-            lon2_rad = lon_rad + math.atan2(sin_course * sin_d * cos_lat1,
-                                            cos_d - sin_lat1 * math.sin(lat2_rad))
-
-            # Convert back to degrees
-            lat = math.degrees(lat2_rad)
-            lon = math.degrees(lon2_rad)
+            # Simple coordinate update using direct trigonometry
+            # GPS course: 0° = North, 90° = East, 180° = South, 270° = West
+            # Convert to standard math coordinates where 0° = East, 90° = North
+            math_bearing = (90 - course) % 360
+            math_bearing_rad = math.radians(math_bearing)
+            
+            # Calculate displacement in meters
+            displacement_m = distance_km * 1000
+            
+            # Approximate coordinate changes (good enough for short distances)
+            # 1 degree latitude ≈ 111,111 meters
+            # 1 degree longitude ≈ 111,111 * cos(latitude) meters
+            lat_change = (displacement_m * math.sin(math_bearing_rad)) / 111111
+            lon_change = (displacement_m * math.cos(math_bearing_rad)) / (111111 * math.cos(math.radians(lat)))
+            
+            # Update position
+            lat += lat_change
+            lon += lon_change
 
             # Normalize longitude to -180 to 180
             lon = ((lon + 180) % 360) - 180
@@ -192,18 +201,22 @@ def main():
             lat_formatted = f"{lat:.6f}"
             lon_formatted = f"{lon:.6f}"
 
-            # Set GPS values in Redis
-            set_redis_value("gps", "latitude", lat_formatted)
-            set_redis_value("gps", "longitude", lon_formatted)
-            set_redis_value("gps", "course", course)
-
-            # Set engine-ecu values in Redis
+            # Batch all Redis updates in a single transaction
             engine_speed = int(round(current_speed))
-            set_redis_value("engine-ecu", "speed", engine_speed)
             engine_power = round(power, 1)
-            set_redis_value("engine-ecu", "motor:current", engine_power * 100)
-            set_redis_value("engine-ecu", "motor:voltage", motor_voltage * 100)
-            set_redis_value("engine-ecu", "odometer", int(rounded_odometer))
+            
+            redis_commands = [
+                f"HSET gps latitude {lat_formatted}",
+                f"HSET gps longitude {lon_formatted}",
+                f"HSET gps course {course}",
+                f"PUBLISH gps course",
+                f"HSET engine-ecu speed {engine_speed}",
+                f"HSET engine-ecu motor:current {engine_power * 100}",
+                f"HSET engine-ecu motor:voltage {motor_voltage * 100}",
+                f"HSET engine-ecu odometer {int(rounded_odometer)}"
+            ]
+            
+            execute_redis_batch(redis_commands)
 
             # Calculate target speed for display
             target_speed_int = int(round(target_speed))
@@ -217,8 +230,8 @@ def main():
             print(
                 f"Odometer: {int(rounded_odometer)}m (traveled {int(distance_meters)}m this tick)")
 
-            # Wait for one second
-            time.sleep(1)
+            # Wait for the update interval
+            time.sleep(update_interval)
 
     except KeyboardInterrupt:
         print("\nSimulation stopped")

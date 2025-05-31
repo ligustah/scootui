@@ -13,74 +13,64 @@ import 'package:mbtiles/mbtiles.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
-import '../config.dart';
 import '../map/mbtiles_provider.dart';
 import '../repositories/tiles_repository.dart';
-import '../routing/valhalla.dart';
-import '../routing/models.dart';
-import '../routing/route_helpers.dart';
 import '../state/gps.dart';
-import '../state/navigation.dart';
 import '../repositories/mdb_repository.dart';
-import 'mdb_cubits.dart';
+import 'mdb_cubits.dart'; // Added GpsSync
 import 'shutdown_cubit.dart';
 import 'theme_cubit.dart';
+import 'navigation_cubit.dart'; // Added for NavigationCubit
+import 'navigation_state.dart'; // Added for NavigationState
 
 part 'map_cubit.freezed.dart';
 part 'map_state.dart';
 
-final distanceCalculator = Distance();
+final distanceCalculator = Distance(); // Consider moving if only used by NavigationCubit
 const defaultCoordinates = LatLng(52.52437, 13.41053);
 
 class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
-  late final StreamSubscription<NavigationData> _navigationSub;
   late final StreamSubscription<ShutdownState> _shutdownSub;
-  final NavigationSync _navigationSync;
+  late final StreamSubscription<NavigationState> _navigationStateSub; // Added
   final TilesRepository _tilesRepository;
-  final MDBRepository _mdbRepository;
+  final MDBRepository _mdbRepository; // Keep if used for other map features
 
-  static const double _arrivalProximityMeters = 100.0;
-  static const double _offRouteTolerance = 50.0; // 50 meters
   static const double _maxZoom = 19.0;
   static const double _minZoom = 16.5;
-  static const double _zoomInStart = 220.0;
-  static const double _zoomInEnd = 30.0;
-  static const Offset _navigationOffset = Offset(0, 120);
-  DateTime? _lastReroute;
-  AnimatedMapController? _animatedController;
-  Future<void>? _currentAnimation;
-  LatLng? _pendingDestination;
+  // static const double _zoomInStart = 220.0; // Moved to NavigationCubit
+  // static const double _zoomInEnd = 30.0; // Moved to NavigationCubit
+  static const Offset _mapCenterOffset = Offset(0, 120); // Restored original offset Y value
 
-  bool _mapLocked = false;
+  AnimatedMapController? _animatedController;
+  bool _mapLocked = false; // Keep if map interactions need locking
 
   static MapCubit create(BuildContext context) => MapCubit(
         gpsStream: context.read<GpsSync>().stream,
         themeUpdates: context.read<ThemeCubit>().stream,
-        shutdownStream: context.read<ShutdownCubit>().stream, // Added
-        navigationSync: context.read<NavigationSync>(),
+        shutdownStream: context.read<ShutdownCubit>().stream,
+        navigationStateStream: context.read<NavigationCubit>().stream, // Added
         tilesRepository: context.read<TilesRepository>(),
-        mdbRepository: RepositoryProvider.of<MDBRepository>(context), // Added
+        mdbRepository: RepositoryProvider.of<MDBRepository>(context),
       )
-        .._onGpsData(context.read<GpsSync>().state) // Initial GPS data
-        .._loadMap(context.read<ThemeCubit>().state); // Initial theme
+        .._onGpsData(context.read<GpsSync>().state)
+        .._loadMap(context.read<ThemeCubit>().state);
 
   MapCubit({
     required Stream<GpsData> gpsStream,
     required Stream<ThemeState> themeUpdates,
-    required Stream<ShutdownState> shutdownStream, // Added
-    required NavigationSync navigationSync,
+    required Stream<ShutdownState> shutdownStream,
+    required Stream<NavigationState> navigationStateStream, // Added
     required TilesRepository tilesRepository,
-    required MDBRepository mdbRepository, // Added
+    required MDBRepository mdbRepository,
   })  : _tilesRepository = tilesRepository,
-        _navigationSync = navigationSync,
-        _mdbRepository = mdbRepository, // Added
+        _mdbRepository = mdbRepository,
         super(MapLoading(controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = gpsStream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
-    _navigationSub = _navigationSync.stream.listen(_onNavigationData);
-    _shutdownSub = shutdownStream.listen(_onShutdownStateChange); // Added
+    _shutdownSub = shutdownStream.listen(_onShutdownStateChange);
+    _navigationStateSub = navigationStateStream.listen(_onNavigationStateChanged); // Added
   }
 
   @override
@@ -98,349 +88,128 @@ class MapCubit extends Cubit<MapState> {
     }
     _themeSub.cancel();
     _gpsSub.cancel();
-    _navigationSub.cancel();
-    _shutdownSub.cancel(); // Added
+    _shutdownSub.cancel();
+    _navigationStateSub.cancel(); // Added
     return super.close();
   }
 
   Future<void> _onShutdownStateChange(ShutdownState shutdownState) async {
-    // Made async
+    // This logic might need to move to NavigationCubit if it's purely about navigation state
+    // For now, keeping it here if it affects map display during shutdown
     if (shutdownState.status == ShutdownStatus.shuttingDown) {
-      final currentNavDestinationString = _navigationSync.state.destination;
-      if (currentNavDestinationString.isEmpty) {
-        return; // No active navigation destination
-      }
-
-      try {
-        final parts = currentNavDestinationString.split(',');
-        if (parts.length == 2) {
-          final destLat = double.tryParse(parts[0]);
-          final destLng = double.tryParse(parts[1]);
-
-          if (destLat != null && destLng != null) {
-            final destinationCoords = LatLng(destLat, destLng);
-            final currentGpsPosition = state.position; // From MapState, updated by GpsSync
-
-            final distanceToDestination = distanceCalculator.as(
-              LengthUnit.Meter,
-              currentGpsPosition,
-              destinationCoords,
-            );
-
-            if (distanceToDestination < _arrivalProximityMeters) {
-              print("Scooter shutting down near destination. Clearing navigation.");
-              // Clear navigation destination via NavigationSync
-              await _navigationSync.clearDestination();
-
-              // Also clear local map state for immediate UI update
-              // Note: NavigationSync.clearDestination() already emits an updated NavigationData state.
-              // MapCubit's _onNavigationData listener will pick this up if destination becomes empty.
-              // However, explicitly clearing map's route state here ensures immediate UI feedback
-              // related to the map's specific view of the route.
-              emit(state.copyWith(destination: null, route: null, nextInstruction: null));
-            }
-          }
-        }
-      } catch (e) {
-        print("Error processing destination string on shutdown: $e");
-      }
+      // Potentially clear map-specific route display if NavigationCubit handles clearing the actual route
+      print("MapCubit: Scooter shutting down. Consider map state adjustments.");
     }
   }
 
-  void _updateRoute(Route route) {
-    final current = state;
-
-    emit(switch (current) {
-      MapOnline() => current.copyWith(route: route),
-      MapOffline() => current.copyWith(route: route),
-      _ => current,
-    });
-  }
-
-  Future<void> startNavigation(LatLng destination) async {
-    // if the map is locked during animation, don't do anything
-    if (_mapLocked) return;
-
-    if (state.destination == destination) {
-      return;
+  void _onNavigationStateChanged(NavigationState navState) {
+    // Potentially update map display based on navigation state
+    // e.g., show/hide route, update markers, etc.
+    // For now, this cubit will primarily focus on camera and position.
+    // Route drawing will be handled by a widget listening to NavigationCubit.
+    if (navState.isNavigating && navState.hasDestination) {
+      // Example: if map should follow user during navigation
+      // _moveAndRotate(state.position, state.orientation);
     }
-
-    await setDestination(destination);
-
-    final current = state;
-    final route = current.route;
-    if (route == null) {
-      return;
-    }
-
-    // play an animation that first shows the destination, then the whole route,
-    // then the current position
-    _mapLocked = true;
-    final lastWaypoint = route.waypoints.last;
-
-    // if the destination is more than 10 meters away from the last waypoint,
-    // show both the destination and the last waypoint, otherwise just center
-    // on the destination
-    if (distanceCalculator.as(LengthUnit.Meter, lastWaypoint, destination) > 15) {
-      _animatedController?.mapController.fitCamera(
-        CameraFit.coordinates(
-          coordinates: [lastWaypoint, destination],
-          padding: const EdgeInsets.all(100),
-        ),
-      );
-    } else {
-      _animatedController?.mapController.moveAndRotate(
-        destination,
-        _minZoom,
-        0,
-      );
-    }
-    await Future.delayed(const Duration(milliseconds: 5000));
-    await _animatedController?.animatedFitCamera(
-      cameraFit: CameraFit.coordinates(coordinates: [current.position, destination], padding: const EdgeInsets.all(50)),
-      rotation: 0,
-      cancelPreviousAnimations: true,
-      curve: Curves.easeInOut,
-      duration: const Duration(milliseconds: 2000),
-    );
-    await Future.delayed(const Duration(milliseconds: 4000));
-    _mapLocked = false;
-
-    _moveAndRotate(current.position, current.orientation, duration: const Duration(milliseconds: 2000));
-  }
-
-  Future<void> setDestination(LatLng destination) async {
-    if (state is! MapOffline && state is! MapOnline) {
-      return;
-    }
-
-    emit(state.copyWith(destination: destination));
-
-    final valhallaService = ValhallaService(serverURL: AppConfig.valhallaEndpoint);
-    final route = await valhallaService.getRoute(
-      state.position,
-      destination,
-    );
-
-    emit(state.copyWith(
-      route: route,
-      nextInstruction: route.instructions.isNotEmpty ? route.instructions.first : null,
-    ));
   }
 
   void _moveAndRotate(LatLng center, double course, {Duration? duration}) {
-    if (_mapLocked) return;
-    final ctrl = _animatedController;
-
-    if (ctrl == null) return;
-
-    final route = state.route;
-    final instruction = state.nextInstruction;
-    double bearing = course;
-    double zoom = _minZoom;
-
-    if (route != null && route.waypoints.isNotEmpty) {
-      // Find the closest point and next point on route
-      final (point, segmentIndex, distance) = RouteHelpers.findClosestPointOnRoute(
-        center,
-        route.waypoints,
-      );
-
-      // Only use route bearing if we're close enough to the route
-      if (distance < _offRouteTolerance) {
-        // 50 meters tolerance
-        // Get next point to calculate bearing
-        final nextPointIndex = math.min(segmentIndex + 1, route.waypoints.length - 1);
-        if (nextPointIndex > segmentIndex) {
-          final currentPoint = route.waypoints[segmentIndex];
-          final nextPoint = route.waypoints[nextPointIndex];
-
-          // Calculate bearing between points
-          final y = math.sin(nextPoint.longitude - currentPoint.longitude) * math.cos(nextPoint.latitude);
-          final x = math.cos(currentPoint.latitude) * math.sin(nextPoint.latitude) -
-              math.sin(currentPoint.latitude) *
-                  math.cos(nextPoint.latitude) *
-                  math.cos(nextPoint.longitude - currentPoint.longitude);
-          final routeBearing = math.atan2(y, x) * (180 / math.pi);
-
-          // Normalize to 0-360
-          bearing = (routeBearing + 360) % 360;
-        }
-
-        center = point;
-        if (instruction != null) {
-          if (instruction.distance >= _zoomInStart) {
-            zoom = _minZoom;
-          } else if (instruction.distance <= _zoomInEnd) {
-            zoom = _maxZoom;
-          } else {
-            zoom = _minZoom +
-                (_maxZoom - _minZoom) * (1 - (instruction.distance - _zoomInEnd) / (_zoomInStart - _zoomInEnd));
-          }
-        }
-      }
+    if (_mapLocked) {
+      print("MapCubit: Map is locked, skipping _moveAndRotate.");
+      return;
     }
-
-    ctrl.mapController.move(center, zoom, offset: _navigationOffset);
-    ctrl.mapController.rotateAroundPoint(bearing, offset: _navigationOffset);
-  }
-
-  Future<void> _checkRouteDeviation(LatLng position) async {
-    final current = state;
-    final route = current.route;
-
-    if (route == null || route.waypoints.isEmpty) {
+    final ctrl = _animatedController;
+    if (ctrl == null) {
+      print("MapCubit: AnimatedMapController is null in _moveAndRotate. Map not ready or not initialized yet.");
       return;
     }
 
-    final (_, _, distance) = RouteHelpers.findClosestPointOnRoute(
-      position,
-      route.waypoints,
-    );
+    // Simplified zoom logic, or make it dependent on NavigationState if needed
+    double zoom = _minZoom;
+    // Potentially adjust zoom based on navState.nextInstruction.distance if that info is passed here
+    // or if MapCubit directly listens to NavigationCubit for zoom adjustments.
 
-    // If we're too far from the route and haven't rerouted recently
-    if (distance > _offRouteTolerance &&
-        (_lastReroute == null || DateTime.now().difference(_lastReroute!) > const Duration(seconds: 5))) {
-      _lastReroute = DateTime.now();
+    print("MapCubit: Attempting to move to $center, zoom $zoom with offset $_mapCenterOffset");
+    ctrl.mapController.move(center, zoom, offset: _mapCenterOffset);
 
-      if (route.waypoints.isEmpty) {
-        return;
-      }
+    final baseMapController = ctrl.mapController; // AnimatedMapController.mapController is the base MapController
+    // For heading-up: rotate map so travel direction points up on screen
+    // GPS course 0° = North, 90° = East, 180° = South, 270° = West
+    // MapController.rotate() expects degrees, where 0° = North pointing up
+    // To make course direction point up, rotate map by -course
+    final rotationInDegrees = -course;
+    print(
+        "MapCubit: Attempting to rotate map to rotation (degrees): $rotationInDegrees");
+    baseMapController.rotate(rotationInDegrees);
 
-      // Find the last instruction point in the route
-      final destination = route.waypoints.last;
-
-      // Recalculate route
-      await setDestination(destination);
-    }
-  }
-
-  RouteInstruction? _nextInstruction(Route? route, LatLng position) {
-    if (route == null) return null;
-    return RouteHelpers.findNextInstruction(position, route);
-  }
-
-  void _onNavigationData(NavigationData data) {
-    try {
-      if (data.destination.isEmpty) {
-        print("Skipping empty navigation data");
-        _pendingDestination = null; // Clear pending if destination is cleared
-        // Optionally, cancel existing navigation if needed
-        return;
-      }
-
-      final coordinates = data.destination.split(",").map(double.parse).toList();
-      final destination = LatLng(coordinates[0], coordinates[1]);
-
-      // Check if map is ready before starting navigation
-      if (state is MapOffline || state is MapOnline) {
-        print("Map ready, starting navigation to $destination");
-        startNavigation(destination);
-        _pendingDestination = null; // Clear pending once processed
-      } else {
-        print("Map not ready, pending destination set to $destination");
-        _pendingDestination = destination; // Store for later
-      }
-    } catch (e) {
-      print("Error processing navigation data: $e");
-      _pendingDestination = null; // Clear pending on error
-      // TODO: show error UI
-    }
+    final currentRotationInDegrees = baseMapController.camera.rotation * (180 / math.pi);
+    print("MapCubit: baseMapController.rotate called. Current map rotation (degrees): $currentRotationInDegrees");
   }
 
   void _onGpsData(GpsData data) {
+    print(
+        "MapCubit: _onGpsData received GpsData: lat=${data.latitude}, lon=${data.longitude}, course=${data.course}, speed=${data.speed}, state=${data.state}");
     final current = state;
-    final course = (360 - data.course);
+
+    // Map should rotate by the vehicle's actual course.
+    final courseForMapRotation = data.course;
+
+    // Marker should counter-rotate by the same amount to stay screen-upright.
+    final orientationForMarker = data.course;
+
+    print(
+        "MapCubit: GPS course: ${data.course}, Using courseForMapRotation: $courseForMapRotation, orientationForMarker: $orientationForMarker");
     final position = LatLng(data.latitude, data.longitude);
-    final instruction = _nextInstruction(current.route, position);
 
     emit(current.copyWith(
       position: position,
-      orientation: course,
-      nextInstruction: instruction,
+      orientation: orientationForMarker,
     ));
-    _moveAndRotate(position, course);
-    _checkRouteDeviation(position);
+    _moveAndRotate(position, courseForMapRotation);
   }
 
   void _onThemeUpdate(ThemeState event) {
     final current = state;
-
     emit(MapState.loading(controller: state.controller, position: state.position));
     _getTheme(event.isDark).then((theme) => emit(switch (current) {
           MapOffline() => current.copyWith(theme: theme),
-          _ => current,
+          _ => current, // Should not happen if map is loaded
         }));
   }
 
   Future<void> _onMapReady(TickerProvider vsync) async {
     final current = state;
-    // TODO: the animation shouldn't really be in here, because it's a purely
-    //  visual thing and not related to the map state. eventually this should
-    //  be moved back into the map widget.
     _animatedController = AnimatedMapController(
         vsync: vsync,
         mapController: current.controller,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut);
 
-    // Ensure the state is updated correctly even if it was MapLoading
-    // when the callback was triggered. Assume offline context based on _loadMap logic.
     emit(switch (current) {
       MapOffline() => current.copyWith(isReady: true),
       MapOnline() => current.copyWith(isReady: true),
-      // If it was loading, transition to offline ready state
-      MapLoading(:final position, :final controller, :final route, :final nextInstruction, :final destination) =>
-        MapOffline(
+      MapLoading(:final position, :final controller) => MapOffline(
+          // Default to offline if was loading
           position: position,
-          orientation: 0, // Assuming default orientation initially
+          orientation: 0,
           controller: controller,
-          tiles: state is MapOffline
-              ? (state as MapOffline).tiles
-              : AsyncMbTilesProvider(_tilesRepository), // Need to handle this better if online is possible
-          theme:
-              state is MapOffline ? (state as MapOffline).theme : await _getTheme(false), // Need to handle this better
+          tiles: AsyncMbTilesProvider(_tilesRepository), // Re-init or ensure it's available
+          theme: await _getTheme(false), // Default theme
           onReady: _onMapReady,
           isReady: true,
-          route: route,
-          nextInstruction: nextInstruction,
-          destination: destination,
         ),
-      MapUnavailable() => current, // Stay unavailable if it was unavailable
+      MapUnavailable() => current,
     });
 
-    // Only move if the map is actually ready now
     final mapIsReady = state is MapOffline || state is MapOnline;
     if (mapIsReady) {
       _moveAndRotate(state.position, state.orientation);
-
-      // Check if there was a pending destination and process it now
-      if (_pendingDestination != null) {
-        print("Map is ready, processing pending destination: $_pendingDestination");
-        startNavigation(_pendingDestination!);
-        _pendingDestination = null; // Clear pending once processed
-      } else {
-        // No pending destination from recent PUBLISH, check initial state
-        final initialData = _navigationSync.state;
-        if (initialData.destination.isNotEmpty) {
-          try {
-            final coordinates = initialData.destination.split(",").map(double.parse).toList();
-            final initialDestination = LatLng(coordinates[0], coordinates[1]);
-            print("Map is ready, processing initial destination from Redis: $initialDestination");
-            startNavigation(initialDestination);
-          } catch (e) {
-            print("Error processing initial navigation data: $e");
-            // Optionally handle error
-          }
-        }
-      }
     }
   }
 
   Future<Theme> _getTheme(bool isDark) async {
     final mapTheme = isDark ? 'assets/mapdark.json' : 'assets/maplight.json';
     final themeStr = await rootBundle.loadString(mapTheme);
-
     return ThemeReader().read(jsonDecode(themeStr));
   }
 
@@ -451,15 +220,11 @@ class MapCubit extends Cubit<MapState> {
             bounds.right < state.position.longitude ||
             bounds.top < state.position.latitude ||
             bounds.bottom > state.position.latitude)) {
-      // if current position is out of bounds of the map,
-      // use the center of the map instead
       return LatLng(
         (bounds.top + bounds.bottom) / 2,
         (bounds.right + bounds.left) / 2,
       );
     }
-
-    // if no bounds are set, just use the coordinates we were given
     return state.position;
   }
 
@@ -482,7 +247,6 @@ class MapCubit extends Cubit<MapState> {
           theme: theme,
           onReady: _onMapReady,
         ));
-
       case InitError(:final message):
         emit(MapState.unavailable(message, controller: ctrl, position: state.position));
     }
