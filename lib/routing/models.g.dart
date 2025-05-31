@@ -11,6 +11,8 @@ Keep _$KeepFromJson(Map<String, dynamic> json) => Keep(
       direction: $enumDecode(_$KeepDirectionEnumMap, json['direction']),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
+      streetName: json['streetName'] as String?,
+      instructionText: json['instructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -19,6 +21,8 @@ Map<String, dynamic> _$KeepToJson(Keep instance) => <String, dynamic>{
       'direction': _$KeepDirectionEnumMap[instance.direction]!,
       'location': instance.location,
       'originalShapeIndex': instance.originalShapeIndex,
+      'streetName': instance.streetName,
+      'instructionText': instance.instructionText,
       'runtimeType': instance.$type,
     };
 
@@ -33,6 +37,8 @@ Turn _$TurnFromJson(Map<String, dynamic> json) => Turn(
       direction: $enumDecode(_$TurnDirectionEnumMap, json['direction']),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
+      streetName: json['streetName'] as String?,
+      instructionText: json['instructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -41,6 +47,8 @@ Map<String, dynamic> _$TurnToJson(Turn instance) => <String, dynamic>{
       'direction': _$TurnDirectionEnumMap[instance.direction]!,
       'location': instance.location,
       'originalShapeIndex': instance.originalShapeIndex,
+      'streetName': instance.streetName,
+      'instructionText': instance.instructionText,
       'runtimeType': instance.$type,
     };
 
@@ -61,6 +69,8 @@ Exit _$ExitFromJson(Map<String, dynamic> json) => Exit(
       side: $enumDecode(_$ExitSideEnumMap, json['side']),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
+      streetName: json['streetName'] as String?,
+      instructionText: json['instructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -69,6 +79,8 @@ Map<String, dynamic> _$ExitToJson(Exit instance) => <String, dynamic>{
       'side': _$ExitSideEnumMap[instance.side]!,
       'location': instance.location,
       'originalShapeIndex': instance.originalShapeIndex,
+      'streetName': instance.streetName,
+      'instructionText': instance.instructionText,
       'runtimeType': instance.$type,
     };
 
@@ -83,6 +95,8 @@ Roundabout _$RoundaboutFromJson(Map<String, dynamic> json) => Roundabout(
       exitNumber: (json['exitNumber'] as num).toInt(),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
+      streetName: json['streetName'] as String?,
+      instructionText: json['instructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -93,6 +107,8 @@ Map<String, dynamic> _$RoundaboutToJson(Roundabout instance) =>
       'exitNumber': instance.exitNumber,
       'location': instance.location,
       'originalShapeIndex': instance.originalShapeIndex,
+      'streetName': instance.streetName,
+      'instructionText': instance.instructionText,
       'runtimeType': instance.$type,
     };
 
@@ -105,6 +121,8 @@ Other _$OtherFromJson(Map<String, dynamic> json) => Other(
       distance: (json['distance'] as num).toDouble(),
       location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
+      streetName: json['streetName'] as String?,
+      instructionText: json['instructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -112,6 +130,8 @@ Map<String, dynamic> _$OtherToJson(Other instance) => <String, dynamic>{
       'distance': instance.distance,
       'location': instance.location,
       'originalShapeIndex': instance.originalShapeIndex,
+      'streetName': instance.streetName,
+      'instructionText': instance.instructionText,
       'runtimeType': instance.$type,
     };
 

@@ -45,6 +45,17 @@ _Maneuver _$ManeuverFromJson(Map<String, dynamic> json) => _Maneuver(
       length: (json['length'] as num).toDouble(),
       beginShapeIndex: (json['begin_shape_index'] as num?)?.toInt(),
       roundaboutExitCount: (json['roundabout_exit_count'] as num?)?.toInt(),
+      instruction: json['instruction'] as String?,
+      verbalPreTransitionInstruction:
+          json['verbal_pre_transition_instruction'] as String?,
+      verbalSuccinctTransitionInstruction:
+          json['verbal_succinct_transition_instruction'] as String?,
+      streetNames: (json['street_names'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      beginStreetNames: (json['begin_street_names'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$ManeuverToJson(_Maneuver instance) => <String, dynamic>{
@@ -52,6 +63,13 @@ Map<String, dynamic> _$ManeuverToJson(_Maneuver instance) => <String, dynamic>{
       'length': instance.length,
       'begin_shape_index': instance.beginShapeIndex,
       'roundabout_exit_count': instance.roundaboutExitCount,
+      'instruction': instance.instruction,
+      'verbal_pre_transition_instruction':
+          instance.verbalPreTransitionInstruction,
+      'verbal_succinct_transition_instruction':
+          instance.verbalSuccinctTransitionInstruction,
+      'street_names': instance.streetNames,
+      'begin_street_names': instance.beginStreetNames,
     };
 
 _Summary _$SummaryFromJson(Map<String, dynamic> json) => _Summary(

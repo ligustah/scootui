@@ -6,9 +6,6 @@ sealed class MapState with _$MapState {
     required LatLng position,
     @Default(0) double orientation,
     required MapController controller,
-    @Default(null) Route? route,
-    @Default(null) RouteInstruction? nextInstruction,
-    @Default(null) LatLng? destination,
     @Default(false) bool isWorking,
   }) = MapLoading;
 
@@ -17,9 +14,6 @@ sealed class MapState with _$MapState {
     required LatLng position,
     @Default(0) double orientation,
     required MapController controller,
-    @Default(null) Route? route,
-    @Default(null) RouteInstruction? nextInstruction,
-    @Default(null) LatLng? destination,
   }) = MapUnavailable;
 
   const factory MapState.offline({
@@ -30,9 +24,6 @@ sealed class MapState with _$MapState {
     required Theme theme,
     void Function(TickerProvider)? onReady,
     @Default(false) bool isReady,
-    @Default(null) Route? route,
-    @Default(null) RouteInstruction? nextInstruction,
-    @Default(null) LatLng? destination,
   }) = MapOffline;
 
   const factory MapState.online({
@@ -41,8 +32,5 @@ sealed class MapState with _$MapState {
     required MapController controller,
     void Function(TickerProvider)? onReady,
     @Default(false) bool isReady,
-    @Default(null) Route? route,
-    @Default(null) RouteInstruction? nextInstruction,
-    @Default(null) LatLng? destination,
   }) = MapOnline;
 }

@@ -14,138 +14,182 @@ class ValhallaService {
   static const int _receiveTimeoutSeconds = 5;
 
   // Valhalla maneuver types that map to our instruction types
-  static final Map<int, RouteInstruction Function(double, LatLng, int)> _maneuverMap = {
-    2: (distance, location, index) => RouteInstruction.turn(
+  static final Map<int, RouteInstruction Function(double, LatLng, int, String?, String?)> _maneuverMap = {
+    2: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.right,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    3: (distance, location, index) => RouteInstruction.turn(
+    3: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.left,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    5: (distance, location, index) => RouteInstruction.turn(
+    5: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.right,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    6: (distance, location, index) => RouteInstruction.turn(
+    6: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.left,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    7: (distance, location, index) => RouteInstruction.keep(
+    7: (distance, location, index, streetName, instructionText) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.straight,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    8: (distance, location, index) => RouteInstruction.keep(
+    8: (distance, location, index, streetName, instructionText) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.straight,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    9: (distance, location, index) => RouteInstruction.turn(
+    9: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.slightRight,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    10: (distance, location, index) => RouteInstruction.turn(
+    10: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.right,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    11: (distance, location, index) => RouteInstruction.turn(
+    11: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.sharpRight,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    12: (distance, location, index) => RouteInstruction.turn(
+    12: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.rightUTurn,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    13: (distance, location, index) => RouteInstruction.turn(
+    13: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.uTurn,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    14: (distance, location, index) => RouteInstruction.turn(
+    14: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.sharpLeft,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    15: (distance, location, index) => RouteInstruction.turn(
+    15: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.left,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    16: (distance, location, index) => RouteInstruction.turn(
+    16: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.slightLeft,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    17: (distance, location, index) => RouteInstruction.keep(
+    17: (distance, location, index, streetName, instructionText) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.straight,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    18: (distance, location, index) => RouteInstruction.turn(
+    18: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.right,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    19: (distance, location, index) => RouteInstruction.turn(
+    19: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.left,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    20: (distance, location, index) => RouteInstruction.exit(
+    20: (distance, location, index, streetName, instructionText) => RouteInstruction.exit(
           distance: distance,
           side: ExitSide.right,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    21: (distance, location, index) => RouteInstruction.exit(
+    21: (distance, location, index, streetName, instructionText) => RouteInstruction.exit(
           distance: distance,
           side: ExitSide.left,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    22: (distance, location, index) => RouteInstruction.keep(
+    22: (distance, location, index, streetName, instructionText) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.straight,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    23: (distance, location, index) => RouteInstruction.keep(
+    23: (distance, location, index, streetName, instructionText) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.right,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
-    24: (distance, location, index) => RouteInstruction.keep(
+    24: (distance, location, index, streetName, instructionText) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.left,
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
     // Note: Valhalla maneuver type 26 (RoundaboutEnter) has roundabout_exit_count.
     // Our RouteInstruction.roundabout expects exitNumber.
@@ -157,12 +201,14 @@ class ValhallaService {
     // This might be a slight mismatch or requires interpretation.
     // For type 26, Valhalla docs say "The number of exits to take from the roundabout."
     // The example JSON has "roundabout_exit_count": 2 for type 26. This should be the exit number.
-    26: (distance, location, index) => RouteInstruction.roundabout(
+    26: (distance, location, index, streetName, instructionText) => RouteInstruction.roundabout(
           distance: distance,
           side: RoundaboutSide.right, // Assuming right-hand traffic default for roundabout side
           exitNumber: 1, // Placeholder - this needs to come from maneuver.roundabout_exit_count if available
           location: location,
           originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
         ),
   };
 
@@ -177,50 +223,34 @@ class ValhallaService {
         ));
 
   Future<Route> getRoute(LatLng start, LatLng end) async {
-    final response = await _dio.post(
-      _routeEndpoint,
-      data: {
-        'locations': [
-          {'lat': start.latitude, 'lon': start.longitude},
-          {'lat': end.latitude, 'lon': end.longitude}
-        ],
-        'costing': _motorScooterCosting,
+    final requestData = {
+      'locations': [
+        {'lat': start.latitude, 'lon': start.longitude},
+        {'lat': end.latitude, 'lon': end.longitude}
+      ],
+      'costing': _motorScooterCosting,
+      'units': _units,
+      'language': _language,
+      'directions_options': {
         'units': _units,
         'language': _language,
-        'directions_options': {
-          'units': _units,
-          'language': _language,
-        }
-      },
+      }
+    };
+
+    // print('ValhallaService: Request to $serverURL$_routeEndpoint');
+    // print('ValhallaService: Request data: $requestData');
+
+    final response = await _dio.post(
+      _routeEndpoint,
+      data: requestData,
     );
+
+    // print('ValhallaService: Response status: ${response.statusCode}');
+    // print('ValhallaService: Response data: ${response.data}');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to get route from Valhalla');
     }
-
-    // --------------- Diagnostic Print Block Start ---------------
-    if (response.data != null &&
-        response.data['trip'] != null &&
-        response.data['trip']['legs'] != null &&
-        (response.data['trip']['legs'] as List).isNotEmpty &&
-        response.data['trip']['legs'][0]['maneuvers'] != null) {
-      List<dynamic> rawManeuversJson = response.data['trip']['legs'][0]['maneuvers'];
-      print("ValhallaService: Raw maneuvers JSON count: ${rawManeuversJson.length}");
-      for (var i = 0; i < rawManeuversJson.length; i++) {
-        var rawManeuverJson = rawManeuversJson[i] as Map<String, dynamic>;
-        // Temporarily parse to log, actual parsing happens below via ValhallaResponse.fromJson
-        var tempParsedManeuver = Maneuver.fromJson(rawManeuverJson);
-        print(
-            "ValhallaService: Raw maneuver $i: JSON['begin_shape_index'] = ${rawManeuverJson['begin_shape_index']}, Parsed beginShapeIndex = ${tempParsedManeuver.beginShapeIndex}, Type = ${tempParsedManeuver.type}");
-        if (tempParsedManeuver.beginShapeIndex == null && rawManeuverJson['begin_shape_index'] != null) {
-          print(
-              "ValhallaService: !!!! MISMATCH DETECTED for maneuver $i: Raw JSON has 'begin_shape_index': ${rawManeuverJson['begin_shape_index']} but parsed Maneuver.beginShapeIndex is null. Raw JSON: $rawManeuverJson !!!!");
-        }
-      }
-    } else {
-      print("ValhallaService: Could not access raw maneuvers for diagnostics.");
-    }
-    // --------------- Diagnostic Print Block End ---------------
 
     final valhallaResponse = ValhallaResponse.fromJson(response.data);
     final leg = valhallaResponse.trip.legs.first;
@@ -260,8 +290,12 @@ class ValhallaService {
       // Special handling for roundabout exit number if needed
       int exitCountForRoundabout = maneuver.roundaboutExitCount ?? 1; // Default to 1 if null
 
-      final instruction =
-          _createInstruction(maneuver.type, distance, location, maneuver.beginShapeIndex!, exitCountForRoundabout);
+      // Extract street name and instruction text from maneuver
+      final streetName = _extractStreetName(maneuver);
+      final instructionText = _extractInstructionText(maneuver);
+
+      final instruction = _createInstruction(maneuver.type, distance, location, maneuver.beginShapeIndex!,
+          exitCountForRoundabout, streetName, instructionText);
       if (instruction != null) {
         instructions.add(instruction);
       }
@@ -275,8 +309,8 @@ class ValhallaService {
     );
   }
 
-  RouteInstruction? _createInstruction(
-      int type, double distance, LatLng location, int beginShapeIndex, int roundaboutExitCount) {
+  RouteInstruction? _createInstruction(int type, double distance, LatLng location, int beginShapeIndex,
+      int roundaboutExitCount, String? streetName, String? instructionText) {
     final instructionCreator = _maneuverMap[type];
     if (instructionCreator != null) {
       // For roundabout type 26, we need to pass the exit count.
@@ -294,10 +328,35 @@ class ValhallaService {
             side: RoundaboutSide.right, // Default, Valhalla might not specify side for enter
             exitNumber: roundaboutExitCount,
             location: location,
-            originalShapeIndex: beginShapeIndex);
+            originalShapeIndex: beginShapeIndex,
+            streetName: streetName,
+            instructionText: instructionText);
       }
-      return instructionCreator(distance, location, beginShapeIndex);
+      return instructionCreator(distance, location, beginShapeIndex, streetName, instructionText);
     }
-    return RouteInstruction.other(distance: distance, location: location, originalShapeIndex: beginShapeIndex);
+    return RouteInstruction.other(
+        distance: distance,
+        location: location,
+        originalShapeIndex: beginShapeIndex,
+        streetName: streetName,
+        instructionText: instructionText);
+  }
+
+  String? _extractStreetName(Maneuver maneuver) {
+    // Try to get street name from streetNames first, fallback to beginStreetNames
+    if (maneuver.streetNames?.isNotEmpty == true) {
+      return maneuver.streetNames!.first;
+    }
+    if (maneuver.beginStreetNames?.isNotEmpty == true) {
+      return maneuver.beginStreetNames!.first;
+    }
+    return null;
+  }
+
+  String? _extractInstructionText(Maneuver maneuver) {
+    // Use verbal succinct instruction for turn-by-turn display, fallback to other options
+    return maneuver.verbalSuccinctTransitionInstruction ??
+        maneuver.verbalPreTransitionInstruction ??
+        maneuver.instruction;
   }
 }

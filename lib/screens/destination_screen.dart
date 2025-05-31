@@ -77,7 +77,7 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
         break;
     }
 
-    final MapOffline(:tiles, :position, :controller, :theme, :onReady, :orientation, :route, :nextInstruction) =
+    final MapOffline(:tiles, :position, :controller, :theme, :onReady, :orientation) = // Removed route, nextInstruction
         mapState;
 
     return FlutterMap(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/address_cubit.dart';
-import '../cubits/map_cubit.dart';
+// import '../cubits/navigation_cubit.dart'; // Not needed directly for setting destination via Redis
 import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
@@ -28,7 +28,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     super.dispose();
   }
 
-  Widget _buildDialInput(MapCubit mapCubit, ScreenCubit screenCubit, Map<String, Address> addresses) {
+  Widget _buildDialInput(ScreenCubit screenCubit, Map<String, Address> addresses) {
+    // Removed mapCubit
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
       onLeftPress: () => _controller.scroll(),
@@ -43,8 +44,9 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
           if (address != null) {
             final mdbRepo = context.read<MDBRepository>();
             final coordinates = "${address.coordinates.latitude},${address.coordinates.longitude}";
+            // Set destination via Redis, NavigationCubit will pick it up
             mdbRepo.set("navigation", "destination", coordinates);
-            mapCubit.startNavigation(address.coordinates);
+            // context.read<NavigationCubit>().setDestination(address.coordinates); // Removed
           }
           screenCubit.showMap();
         },
@@ -55,13 +57,13 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final screenCubit = context.read<ScreenCubit>();
-    final mapCubit = context.read<MapCubit>();
+    // final mapCubit = context.read<MapCubit>(); // Removed
     final addressCubit = context.watch<AddressCubit>();
 
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
     final child = switch (addressCubit.state) {
-      AddressStateLoaded(:final addresses) => _buildDialInput(mapCubit, screenCubit, addresses),
+      AddressStateLoaded(:final addresses) => _buildDialInput(screenCubit, addresses), // Removed mapCubit
       AddressStateLoading(:final message) => Center(
             child: Column(
           children: [
