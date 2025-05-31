@@ -129,7 +129,6 @@ class MapCubit extends Cubit<MapState> {
     // Potentially adjust zoom based on navState.nextInstruction.distance if that info is passed here
     // or if MapCubit directly listens to NavigationCubit for zoom adjustments.
 
-    print("MapCubit: Attempting to move to $center, zoom $zoom with offset $_mapCenterOffset");
     ctrl.mapController.move(center, zoom, offset: _mapCenterOffset);
 
     final baseMapController = ctrl.mapController; // AnimatedMapController.mapController is the base MapController
@@ -138,17 +137,12 @@ class MapCubit extends Cubit<MapState> {
     // MapController.rotate() expects degrees, where 0° = North pointing up
     // To make course direction point up, rotate map by -course
     final rotationInDegrees = -course;
-    print(
-        "MapCubit: Attempting to rotate map to rotation (degrees): $rotationInDegrees");
     baseMapController.rotate(rotationInDegrees);
 
     final currentRotationInDegrees = baseMapController.camera.rotation * (180 / math.pi);
-    print("MapCubit: baseMapController.rotate called. Current map rotation (degrees): $currentRotationInDegrees");
   }
 
   void _onGpsData(GpsData data) {
-    print(
-        "MapCubit: _onGpsData received GpsData: lat=${data.latitude}, lon=${data.longitude}, course=${data.course}, speed=${data.speed}, state=${data.state}");
     final current = state;
 
     // Map should rotate by the vehicle's actual course.
@@ -157,8 +151,6 @@ class MapCubit extends Cubit<MapState> {
     // Marker should counter-rotate by the same amount to stay screen-upright.
     final orientationForMarker = data.course;
 
-    print(
-        "MapCubit: GPS course: ${data.course}, Using courseForMapRotation: $courseForMapRotation, orientationForMarker: $orientationForMarker");
     final position = LatLng(data.latitude, data.longitude);
 
     emit(current.copyWith(

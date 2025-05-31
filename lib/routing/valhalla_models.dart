@@ -39,6 +39,11 @@ abstract class Maneuver with _$Maneuver {
     required double length,
     @JsonKey(name: 'begin_shape_index') int? beginShapeIndex,
     @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount,
+    String? instruction,
+    @JsonKey(name: 'verbal_pre_transition_instruction') String? verbalPreTransitionInstruction,
+    @JsonKey(name: 'verbal_succinct_transition_instruction') String? verbalSuccinctTransitionInstruction,
+    @JsonKey(name: 'street_names') List<String>? streetNames,
+    @JsonKey(name: 'begin_street_names') List<String>? beginStreetNames,
   }) = _Maneuver;
 
   factory Maneuver.fromJson(Map<String, dynamic> json) => _$ManeuverFromJson(json);

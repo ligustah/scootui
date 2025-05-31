@@ -169,9 +169,9 @@ class TurnByTurnWidget extends StatelessWidget {
           TurnDirection.rightUTurn => Icons.u_turn_right,
         };
         break;
-      case Roundabout():
-        iconData = Icons.roundabout_left;
-        break;
+      case Roundabout(side: final side, exitNumber: final exitNumber):
+        // Handle roundabout with custom widget below
+        return _buildRoundaboutIcon(side, exitNumber, size);
       case Exit(side: final side):
         iconData = side == ExitSide.left ? Icons.exit_to_app : Icons.exit_to_app;
         break;
@@ -200,26 +200,76 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   String _getInstructionText(RouteInstruction instruction) {
+    // Use Valhalla's instruction text if available
+    if (instruction.instructionText?.isNotEmpty == true) {
+      return instruction.instructionText!;
+    }
+
+    // Generate instruction text with street name if available
     return switch (instruction) {
-      Keep(direction: final direction) => switch (direction) {
-          KeepDirection.straight => 'Continue straight',
-          _ => 'Keep ${direction.name}',
+      Keep(direction: final direction, streetName: final streetName) => switch (direction) {
+          KeepDirection.straight => streetName != null ? 'Continue straight on $streetName' : 'Continue straight',
+          _ => streetName != null ? 'Keep ${direction.name} on $streetName' : 'Keep ${direction.name}',
         },
-      Turn(direction: final direction) => switch (direction) {
-          TurnDirection.left => 'Turn left',
-          TurnDirection.right => 'Turn right',
-          TurnDirection.slightLeft => 'Turn slightly left',
-          TurnDirection.slightRight => 'Turn slightly right',
-          TurnDirection.sharpLeft => 'Turn sharply left',
-          TurnDirection.sharpRight => 'Turn sharply right',
+      Turn(direction: final direction, streetName: final streetName) => switch (direction) {
+          TurnDirection.left => streetName != null ? 'Turn left onto $streetName' : 'Turn left',
+          TurnDirection.right => streetName != null ? 'Turn right onto $streetName' : 'Turn right',
+          TurnDirection.slightLeft => streetName != null ? 'Turn slightly left onto $streetName' : 'Turn slightly left',
+          TurnDirection.slightRight => streetName != null ? 'Turn slightly right onto $streetName' : 'Turn slightly right',
+          TurnDirection.sharpLeft => streetName != null ? 'Turn sharply left onto $streetName' : 'Turn sharply left',
+          TurnDirection.sharpRight => streetName != null ? 'Turn sharply right onto $streetName' : 'Turn sharply right',
           TurnDirection.uTurn180 => 'Turn 180 degrees',
           TurnDirection.rightUTurn => 'Perform right u-turn',
           TurnDirection.uTurn => 'Perform u-turn',
         },
-      Roundabout(side: final side, exitNumber: final exitNumber) =>
-        'In the roundabout, take the ${side.name} exit $exitNumber',
-      Other() => 'Continue',
-      Exit(side: final side) => 'Take the ${side.name} exit',
+      Roundabout(exitNumber: final exitNumber, streetName: final streetName) =>
+        streetName != null 
+          ? 'In the roundabout, take the ${exitNumber == 1 ? '1st' : exitNumber == 2 ? '2nd' : exitNumber == 3 ? '3rd' : '${exitNumber}th'} exit onto $streetName'
+          : 'In the roundabout, take the ${exitNumber == 1 ? '1st' : exitNumber == 2 ? '2nd' : exitNumber == 3 ? '3rd' : '${exitNumber}th'} exit',
+      Other(streetName: final streetName) => streetName != null ? 'Continue on $streetName' : 'Continue',
+      Exit(side: final side, streetName: final streetName) => 
+        streetName != null ? 'Take the ${side.name} exit to $streetName' : 'Take the ${side.name} exit',
     };
+  }
+
+  Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double size) {
+    // Use appropriate directional icon based on side
+    final IconData roundaboutIcon = side == RoundaboutSide.left 
+        ? Icons.roundabout_left 
+        : Icons.roundabout_right;
+    
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            roundaboutIcon,
+            color: Colors.white,
+            size: size,
+          ),
+          Container(
+            width: size * 0.35,
+            height: size * 0.35,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 1.5),
+            ),
+            child: Center(
+              child: Text(
+                exitNumber.toString(),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: size * 0.2,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

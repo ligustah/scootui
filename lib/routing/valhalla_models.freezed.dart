@@ -538,6 +538,15 @@ mixin _$Maneuver {
   int? get beginShapeIndex;
   @JsonKey(name: 'roundabout_exit_count')
   int? get roundaboutExitCount;
+  String? get instruction;
+  @JsonKey(name: 'verbal_pre_transition_instruction')
+  String? get verbalPreTransitionInstruction;
+  @JsonKey(name: 'verbal_succinct_transition_instruction')
+  String? get verbalSuccinctTransitionInstruction;
+  @JsonKey(name: 'street_names')
+  List<String>? get streetNames;
+  @JsonKey(name: 'begin_street_names')
+  List<String>? get beginStreetNames;
 
   /// Create a copy of Maneuver
   /// with the given fields replaced by the non-null parameter values.
@@ -559,17 +568,40 @@ mixin _$Maneuver {
             (identical(other.beginShapeIndex, beginShapeIndex) ||
                 other.beginShapeIndex == beginShapeIndex) &&
             (identical(other.roundaboutExitCount, roundaboutExitCount) ||
-                other.roundaboutExitCount == roundaboutExitCount));
+                other.roundaboutExitCount == roundaboutExitCount) &&
+            (identical(other.instruction, instruction) ||
+                other.instruction == instruction) &&
+            (identical(other.verbalPreTransitionInstruction,
+                    verbalPreTransitionInstruction) ||
+                other.verbalPreTransitionInstruction ==
+                    verbalPreTransitionInstruction) &&
+            (identical(other.verbalSuccinctTransitionInstruction,
+                    verbalSuccinctTransitionInstruction) ||
+                other.verbalSuccinctTransitionInstruction ==
+                    verbalSuccinctTransitionInstruction) &&
+            const DeepCollectionEquality()
+                .equals(other.streetNames, streetNames) &&
+            const DeepCollectionEquality()
+                .equals(other.beginStreetNames, beginStreetNames));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, type, length, beginShapeIndex, roundaboutExitCount);
+      runtimeType,
+      type,
+      length,
+      beginShapeIndex,
+      roundaboutExitCount,
+      instruction,
+      verbalPreTransitionInstruction,
+      verbalSuccinctTransitionInstruction,
+      const DeepCollectionEquality().hash(streetNames),
+      const DeepCollectionEquality().hash(beginStreetNames));
 
   @override
   String toString() {
-    return 'Maneuver(type: $type, length: $length, beginShapeIndex: $beginShapeIndex, roundaboutExitCount: $roundaboutExitCount)';
+    return 'Maneuver(type: $type, length: $length, beginShapeIndex: $beginShapeIndex, roundaboutExitCount: $roundaboutExitCount, instruction: $instruction, verbalPreTransitionInstruction: $verbalPreTransitionInstruction, verbalSuccinctTransitionInstruction: $verbalSuccinctTransitionInstruction, streetNames: $streetNames, beginStreetNames: $beginStreetNames)';
   }
 }
 
@@ -582,7 +614,14 @@ abstract mixin class $ManeuverCopyWith<$Res> {
       {int type,
       double length,
       @JsonKey(name: 'begin_shape_index') int? beginShapeIndex,
-      @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount});
+      @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount,
+      String? instruction,
+      @JsonKey(name: 'verbal_pre_transition_instruction')
+      String? verbalPreTransitionInstruction,
+      @JsonKey(name: 'verbal_succinct_transition_instruction')
+      String? verbalSuccinctTransitionInstruction,
+      @JsonKey(name: 'street_names') List<String>? streetNames,
+      @JsonKey(name: 'begin_street_names') List<String>? beginStreetNames});
 }
 
 /// @nodoc
@@ -601,6 +640,11 @@ class _$ManeuverCopyWithImpl<$Res> implements $ManeuverCopyWith<$Res> {
     Object? length = null,
     Object? beginShapeIndex = freezed,
     Object? roundaboutExitCount = freezed,
+    Object? instruction = freezed,
+    Object? verbalPreTransitionInstruction = freezed,
+    Object? verbalSuccinctTransitionInstruction = freezed,
+    Object? streetNames = freezed,
+    Object? beginStreetNames = freezed,
   }) {
     return _then(_self.copyWith(
       type: null == type
@@ -619,6 +663,27 @@ class _$ManeuverCopyWithImpl<$Res> implements $ManeuverCopyWith<$Res> {
           ? _self.roundaboutExitCount
           : roundaboutExitCount // ignore: cast_nullable_to_non_nullable
               as int?,
+      instruction: freezed == instruction
+          ? _self.instruction
+          : instruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalPreTransitionInstruction: freezed == verbalPreTransitionInstruction
+          ? _self.verbalPreTransitionInstruction
+          : verbalPreTransitionInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalSuccinctTransitionInstruction: freezed ==
+              verbalSuccinctTransitionInstruction
+          ? _self.verbalSuccinctTransitionInstruction
+          : verbalSuccinctTransitionInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      streetNames: freezed == streetNames
+          ? _self.streetNames
+          : streetNames // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      beginStreetNames: freezed == beginStreetNames
+          ? _self.beginStreetNames
+          : beginStreetNames // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ));
   }
 }
@@ -630,7 +695,17 @@ class _Maneuver implements Maneuver {
       {required this.type,
       required this.length,
       @JsonKey(name: 'begin_shape_index') this.beginShapeIndex,
-      @JsonKey(name: 'roundabout_exit_count') this.roundaboutExitCount});
+      @JsonKey(name: 'roundabout_exit_count') this.roundaboutExitCount,
+      this.instruction,
+      @JsonKey(name: 'verbal_pre_transition_instruction')
+      this.verbalPreTransitionInstruction,
+      @JsonKey(name: 'verbal_succinct_transition_instruction')
+      this.verbalSuccinctTransitionInstruction,
+      @JsonKey(name: 'street_names') final List<String>? streetNames,
+      @JsonKey(name: 'begin_street_names')
+      final List<String>? beginStreetNames})
+      : _streetNames = streetNames,
+        _beginStreetNames = beginStreetNames;
   factory _Maneuver.fromJson(Map<String, dynamic> json) =>
       _$ManeuverFromJson(json);
 
@@ -644,6 +719,36 @@ class _Maneuver implements Maneuver {
   @override
   @JsonKey(name: 'roundabout_exit_count')
   final int? roundaboutExitCount;
+  @override
+  final String? instruction;
+  @override
+  @JsonKey(name: 'verbal_pre_transition_instruction')
+  final String? verbalPreTransitionInstruction;
+  @override
+  @JsonKey(name: 'verbal_succinct_transition_instruction')
+  final String? verbalSuccinctTransitionInstruction;
+  final List<String>? _streetNames;
+  @override
+  @JsonKey(name: 'street_names')
+  List<String>? get streetNames {
+    final value = _streetNames;
+    if (value == null) return null;
+    if (_streetNames is EqualUnmodifiableListView) return _streetNames;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _beginStreetNames;
+  @override
+  @JsonKey(name: 'begin_street_names')
+  List<String>? get beginStreetNames {
+    final value = _beginStreetNames;
+    if (value == null) return null;
+    if (_beginStreetNames is EqualUnmodifiableListView)
+      return _beginStreetNames;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   /// Create a copy of Maneuver
   /// with the given fields replaced by the non-null parameter values.
@@ -670,17 +775,40 @@ class _Maneuver implements Maneuver {
             (identical(other.beginShapeIndex, beginShapeIndex) ||
                 other.beginShapeIndex == beginShapeIndex) &&
             (identical(other.roundaboutExitCount, roundaboutExitCount) ||
-                other.roundaboutExitCount == roundaboutExitCount));
+                other.roundaboutExitCount == roundaboutExitCount) &&
+            (identical(other.instruction, instruction) ||
+                other.instruction == instruction) &&
+            (identical(other.verbalPreTransitionInstruction,
+                    verbalPreTransitionInstruction) ||
+                other.verbalPreTransitionInstruction ==
+                    verbalPreTransitionInstruction) &&
+            (identical(other.verbalSuccinctTransitionInstruction,
+                    verbalSuccinctTransitionInstruction) ||
+                other.verbalSuccinctTransitionInstruction ==
+                    verbalSuccinctTransitionInstruction) &&
+            const DeepCollectionEquality()
+                .equals(other._streetNames, _streetNames) &&
+            const DeepCollectionEquality()
+                .equals(other._beginStreetNames, _beginStreetNames));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, type, length, beginShapeIndex, roundaboutExitCount);
+      runtimeType,
+      type,
+      length,
+      beginShapeIndex,
+      roundaboutExitCount,
+      instruction,
+      verbalPreTransitionInstruction,
+      verbalSuccinctTransitionInstruction,
+      const DeepCollectionEquality().hash(_streetNames),
+      const DeepCollectionEquality().hash(_beginStreetNames));
 
   @override
   String toString() {
-    return 'Maneuver(type: $type, length: $length, beginShapeIndex: $beginShapeIndex, roundaboutExitCount: $roundaboutExitCount)';
+    return 'Maneuver(type: $type, length: $length, beginShapeIndex: $beginShapeIndex, roundaboutExitCount: $roundaboutExitCount, instruction: $instruction, verbalPreTransitionInstruction: $verbalPreTransitionInstruction, verbalSuccinctTransitionInstruction: $verbalSuccinctTransitionInstruction, streetNames: $streetNames, beginStreetNames: $beginStreetNames)';
   }
 }
 
@@ -695,7 +823,14 @@ abstract mixin class _$ManeuverCopyWith<$Res>
       {int type,
       double length,
       @JsonKey(name: 'begin_shape_index') int? beginShapeIndex,
-      @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount});
+      @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount,
+      String? instruction,
+      @JsonKey(name: 'verbal_pre_transition_instruction')
+      String? verbalPreTransitionInstruction,
+      @JsonKey(name: 'verbal_succinct_transition_instruction')
+      String? verbalSuccinctTransitionInstruction,
+      @JsonKey(name: 'street_names') List<String>? streetNames,
+      @JsonKey(name: 'begin_street_names') List<String>? beginStreetNames});
 }
 
 /// @nodoc
@@ -714,6 +849,11 @@ class __$ManeuverCopyWithImpl<$Res> implements _$ManeuverCopyWith<$Res> {
     Object? length = null,
     Object? beginShapeIndex = freezed,
     Object? roundaboutExitCount = freezed,
+    Object? instruction = freezed,
+    Object? verbalPreTransitionInstruction = freezed,
+    Object? verbalSuccinctTransitionInstruction = freezed,
+    Object? streetNames = freezed,
+    Object? beginStreetNames = freezed,
   }) {
     return _then(_Maneuver(
       type: null == type
@@ -732,6 +872,27 @@ class __$ManeuverCopyWithImpl<$Res> implements _$ManeuverCopyWith<$Res> {
           ? _self.roundaboutExitCount
           : roundaboutExitCount // ignore: cast_nullable_to_non_nullable
               as int?,
+      instruction: freezed == instruction
+          ? _self.instruction
+          : instruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalPreTransitionInstruction: freezed == verbalPreTransitionInstruction
+          ? _self.verbalPreTransitionInstruction
+          : verbalPreTransitionInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalSuccinctTransitionInstruction: freezed ==
+              verbalSuccinctTransitionInstruction
+          ? _self.verbalSuccinctTransitionInstruction
+          : verbalSuccinctTransitionInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      streetNames: freezed == streetNames
+          ? _self._streetNames
+          : streetNames // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      beginStreetNames: freezed == beginStreetNames
+          ? _self._beginStreetNames
+          : beginStreetNames // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ));
   }
 }

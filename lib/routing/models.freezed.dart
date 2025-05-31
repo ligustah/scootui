@@ -36,6 +36,8 @@ mixin _$RouteInstruction {
   double get distance; // required Duration duration,
   LatLng get location;
   int get originalShapeIndex;
+  String? get streetName;
+  String? get instructionText;
 
   /// Create a copy of RouteInstruction
   /// with the given fields replaced by the non-null parameter values.
@@ -58,17 +60,21 @@ mixin _$RouteInstruction {
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
-                other.originalShapeIndex == originalShapeIndex));
+                other.originalShapeIndex == originalShapeIndex) &&
+            (identical(other.streetName, streetName) ||
+                other.streetName == streetName) &&
+            (identical(other.instructionText, instructionText) ||
+                other.instructionText == instructionText));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, distance, location, originalShapeIndex);
+  int get hashCode => Object.hash(runtimeType, distance, location,
+      originalShapeIndex, streetName, instructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction(distance: $distance, location: $location, originalShapeIndex: $originalShapeIndex)';
+    return 'RouteInstruction(distance: $distance, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText)';
   }
 }
 
@@ -78,7 +84,12 @@ abstract mixin class $RouteInstructionCopyWith<$Res> {
           RouteInstruction value, $Res Function(RouteInstruction) _then) =
       _$RouteInstructionCopyWithImpl;
   @useResult
-  $Res call({double distance, LatLng location, int originalShapeIndex});
+  $Res call(
+      {double distance,
+      LatLng location,
+      int originalShapeIndex,
+      String? streetName,
+      String? instructionText});
 }
 
 /// @nodoc
@@ -97,6 +108,8 @@ class _$RouteInstructionCopyWithImpl<$Res>
     Object? distance = null,
     Object? location = null,
     Object? originalShapeIndex = null,
+    Object? streetName = freezed,
+    Object? instructionText = freezed,
   }) {
     return _then(_self.copyWith(
       distance: null == distance
@@ -111,6 +124,14 @@ class _$RouteInstructionCopyWithImpl<$Res>
           ? _self.originalShapeIndex
           : originalShapeIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      streetName: freezed == streetName
+          ? _self.streetName
+          : streetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instructionText: freezed == instructionText
+          ? _self.instructionText
+          : instructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -123,6 +144,8 @@ class Keep extends RouteInstruction {
       required this.direction,
       required this.location,
       required this.originalShapeIndex,
+      this.streetName,
+      this.instructionText,
       final String? $type})
       : $type = $type ?? 'keep',
         super._();
@@ -136,6 +159,10 @@ class Keep extends RouteInstruction {
   final LatLng location;
   @override
   final int originalShapeIndex;
+  @override
+  final String? streetName;
+  @override
+  final String? instructionText;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -167,17 +194,21 @@ class Keep extends RouteInstruction {
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
-                other.originalShapeIndex == originalShapeIndex));
+                other.originalShapeIndex == originalShapeIndex) &&
+            (identical(other.streetName, streetName) ||
+                other.streetName == streetName) &&
+            (identical(other.instructionText, instructionText) ||
+                other.instructionText == instructionText));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, distance, direction, location, originalShapeIndex);
+  int get hashCode => Object.hash(runtimeType, distance, direction, location,
+      originalShapeIndex, streetName, instructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.keep(distance: $distance, direction: $direction, location: $location, originalShapeIndex: $originalShapeIndex)';
+    return 'RouteInstruction.keep(distance: $distance, direction: $direction, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText)';
   }
 }
 
@@ -192,7 +223,9 @@ abstract mixin class $KeepCopyWith<$Res>
       {double distance,
       KeepDirection direction,
       LatLng location,
-      int originalShapeIndex});
+      int originalShapeIndex,
+      String? streetName,
+      String? instructionText});
 }
 
 /// @nodoc
@@ -211,6 +244,8 @@ class _$KeepCopyWithImpl<$Res> implements $KeepCopyWith<$Res> {
     Object? direction = null,
     Object? location = null,
     Object? originalShapeIndex = null,
+    Object? streetName = freezed,
+    Object? instructionText = freezed,
   }) {
     return _then(Keep(
       distance: null == distance
@@ -229,6 +264,14 @@ class _$KeepCopyWithImpl<$Res> implements $KeepCopyWith<$Res> {
           ? _self.originalShapeIndex
           : originalShapeIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      streetName: freezed == streetName
+          ? _self.streetName
+          : streetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instructionText: freezed == instructionText
+          ? _self.instructionText
+          : instructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -241,6 +284,8 @@ class Turn extends RouteInstruction {
       required this.direction,
       required this.location,
       required this.originalShapeIndex,
+      this.streetName,
+      this.instructionText,
       final String? $type})
       : $type = $type ?? 'turn',
         super._();
@@ -254,6 +299,10 @@ class Turn extends RouteInstruction {
   final LatLng location;
   @override
   final int originalShapeIndex;
+  @override
+  final String? streetName;
+  @override
+  final String? instructionText;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -285,17 +334,21 @@ class Turn extends RouteInstruction {
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
-                other.originalShapeIndex == originalShapeIndex));
+                other.originalShapeIndex == originalShapeIndex) &&
+            (identical(other.streetName, streetName) ||
+                other.streetName == streetName) &&
+            (identical(other.instructionText, instructionText) ||
+                other.instructionText == instructionText));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, distance, direction, location, originalShapeIndex);
+  int get hashCode => Object.hash(runtimeType, distance, direction, location,
+      originalShapeIndex, streetName, instructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.turn(distance: $distance, direction: $direction, location: $location, originalShapeIndex: $originalShapeIndex)';
+    return 'RouteInstruction.turn(distance: $distance, direction: $direction, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText)';
   }
 }
 
@@ -310,7 +363,9 @@ abstract mixin class $TurnCopyWith<$Res>
       {double distance,
       TurnDirection direction,
       LatLng location,
-      int originalShapeIndex});
+      int originalShapeIndex,
+      String? streetName,
+      String? instructionText});
 }
 
 /// @nodoc
@@ -329,6 +384,8 @@ class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
     Object? direction = null,
     Object? location = null,
     Object? originalShapeIndex = null,
+    Object? streetName = freezed,
+    Object? instructionText = freezed,
   }) {
     return _then(Turn(
       distance: null == distance
@@ -347,6 +404,14 @@ class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
           ? _self.originalShapeIndex
           : originalShapeIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      streetName: freezed == streetName
+          ? _self.streetName
+          : streetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instructionText: freezed == instructionText
+          ? _self.instructionText
+          : instructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -359,6 +424,8 @@ class Exit extends RouteInstruction {
       required this.side,
       required this.location,
       required this.originalShapeIndex,
+      this.streetName,
+      this.instructionText,
       final String? $type})
       : $type = $type ?? 'exit',
         super._();
@@ -371,6 +438,10 @@ class Exit extends RouteInstruction {
   final LatLng location;
   @override
   final int originalShapeIndex;
+  @override
+  final String? streetName;
+  @override
+  final String? instructionText;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -401,17 +472,21 @@ class Exit extends RouteInstruction {
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
-                other.originalShapeIndex == originalShapeIndex));
+                other.originalShapeIndex == originalShapeIndex) &&
+            (identical(other.streetName, streetName) ||
+                other.streetName == streetName) &&
+            (identical(other.instructionText, instructionText) ||
+                other.instructionText == instructionText));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, distance, side, location, originalShapeIndex);
+  int get hashCode => Object.hash(runtimeType, distance, side, location,
+      originalShapeIndex, streetName, instructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.exit(distance: $distance, side: $side, location: $location, originalShapeIndex: $originalShapeIndex)';
+    return 'RouteInstruction.exit(distance: $distance, side: $side, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText)';
   }
 }
 
@@ -426,7 +501,9 @@ abstract mixin class $ExitCopyWith<$Res>
       {double distance,
       ExitSide side,
       LatLng location,
-      int originalShapeIndex});
+      int originalShapeIndex,
+      String? streetName,
+      String? instructionText});
 }
 
 /// @nodoc
@@ -445,6 +522,8 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
     Object? side = null,
     Object? location = null,
     Object? originalShapeIndex = null,
+    Object? streetName = freezed,
+    Object? instructionText = freezed,
   }) {
     return _then(Exit(
       distance: null == distance
@@ -463,6 +542,14 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
           ? _self.originalShapeIndex
           : originalShapeIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      streetName: freezed == streetName
+          ? _self.streetName
+          : streetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instructionText: freezed == instructionText
+          ? _self.instructionText
+          : instructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -476,6 +563,8 @@ class Roundabout extends RouteInstruction {
       required this.exitNumber,
       required this.location,
       required this.originalShapeIndex,
+      this.streetName,
+      this.instructionText,
       final String? $type})
       : $type = $type ?? 'roundabout',
         super._();
@@ -490,6 +579,10 @@ class Roundabout extends RouteInstruction {
   final LatLng location;
   @override
   final int originalShapeIndex;
+  @override
+  final String? streetName;
+  @override
+  final String? instructionText;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -522,17 +615,21 @@ class Roundabout extends RouteInstruction {
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
-                other.originalShapeIndex == originalShapeIndex));
+                other.originalShapeIndex == originalShapeIndex) &&
+            (identical(other.streetName, streetName) ||
+                other.streetName == streetName) &&
+            (identical(other.instructionText, instructionText) ||
+                other.instructionText == instructionText));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, distance, side, exitNumber, location, originalShapeIndex);
+  int get hashCode => Object.hash(runtimeType, distance, side, exitNumber,
+      location, originalShapeIndex, streetName, instructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, location: $location, originalShapeIndex: $originalShapeIndex)';
+    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText)';
   }
 }
 
@@ -549,7 +646,9 @@ abstract mixin class $RoundaboutCopyWith<$Res>
       RoundaboutSide side,
       int exitNumber,
       LatLng location,
-      int originalShapeIndex});
+      int originalShapeIndex,
+      String? streetName,
+      String? instructionText});
 }
 
 /// @nodoc
@@ -569,6 +668,8 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
     Object? exitNumber = null,
     Object? location = null,
     Object? originalShapeIndex = null,
+    Object? streetName = freezed,
+    Object? instructionText = freezed,
   }) {
     return _then(Roundabout(
       distance: null == distance
@@ -591,6 +692,14 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
           ? _self.originalShapeIndex
           : originalShapeIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      streetName: freezed == streetName
+          ? _self.streetName
+          : streetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instructionText: freezed == instructionText
+          ? _self.instructionText
+          : instructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -602,6 +711,8 @@ class Other extends RouteInstruction {
       {required this.distance,
       required this.location,
       required this.originalShapeIndex,
+      this.streetName,
+      this.instructionText,
       final String? $type})
       : $type = $type ?? 'other',
         super._();
@@ -613,6 +724,10 @@ class Other extends RouteInstruction {
   final LatLng location;
   @override
   final int originalShapeIndex;
+  @override
+  final String? streetName;
+  @override
+  final String? instructionText;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -642,17 +757,21 @@ class Other extends RouteInstruction {
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
-                other.originalShapeIndex == originalShapeIndex));
+                other.originalShapeIndex == originalShapeIndex) &&
+            (identical(other.streetName, streetName) ||
+                other.streetName == streetName) &&
+            (identical(other.instructionText, instructionText) ||
+                other.instructionText == instructionText));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, distance, location, originalShapeIndex);
+  int get hashCode => Object.hash(runtimeType, distance, location,
+      originalShapeIndex, streetName, instructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.other(distance: $distance, location: $location, originalShapeIndex: $originalShapeIndex)';
+    return 'RouteInstruction.other(distance: $distance, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText)';
   }
 }
 
@@ -663,7 +782,12 @@ abstract mixin class $OtherCopyWith<$Res>
       _$OtherCopyWithImpl;
   @override
   @useResult
-  $Res call({double distance, LatLng location, int originalShapeIndex});
+  $Res call(
+      {double distance,
+      LatLng location,
+      int originalShapeIndex,
+      String? streetName,
+      String? instructionText});
 }
 
 /// @nodoc
@@ -681,6 +805,8 @@ class _$OtherCopyWithImpl<$Res> implements $OtherCopyWith<$Res> {
     Object? distance = null,
     Object? location = null,
     Object? originalShapeIndex = null,
+    Object? streetName = freezed,
+    Object? instructionText = freezed,
   }) {
     return _then(Other(
       distance: null == distance
@@ -695,6 +821,14 @@ class _$OtherCopyWithImpl<$Res> implements $OtherCopyWith<$Res> {
           ? _self.originalShapeIndex
           : originalShapeIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      streetName: freezed == streetName
+          ? _self.streetName
+          : streetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instructionText: freezed == instructionText
+          ? _self.instructionText
+          : instructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

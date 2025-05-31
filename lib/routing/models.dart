@@ -89,6 +89,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     // required Duration duration,
     required LatLng location,
     required int originalShapeIndex,
+    String? streetName,
+    String? instructionText,
   }) = Keep;
 
   const factory RouteInstruction.turn({
@@ -97,6 +99,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     // required Duration duration,
     required LatLng location,
     required int originalShapeIndex,
+    String? streetName,
+    String? instructionText,
   }) = Turn;
 
   const factory RouteInstruction.exit({
@@ -104,6 +108,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     required ExitSide side,
     required LatLng location,
     required int originalShapeIndex,
+    String? streetName,
+    String? instructionText,
   }) = Exit;
 
   const factory RouteInstruction.roundabout({
@@ -112,12 +118,16 @@ sealed class RouteInstruction with _$RouteInstruction {
     required int exitNumber,
     required LatLng location,
     required int originalShapeIndex,
+    String? streetName,
+    String? instructionText,
   }) = Roundabout;
 
   const factory RouteInstruction.other({
     required double distance,
     required LatLng location,
     required int originalShapeIndex,
+    String? streetName,
+    String? instructionText,
   }) = Other;
 
   factory RouteInstruction.fromHint(List<int> hint, List<LatLng> polyline) {
