@@ -96,7 +96,7 @@ jobs:
 
       - name: Extract ScootUI RPM
         run: |
-          rm -rf artifacts/dbc-rpm
+          rm -rf artifacts
           mkdir -p artifacts/dbc-rpm
 
           # Find and copy scootui RPM from the DBC build
