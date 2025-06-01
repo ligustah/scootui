@@ -58,8 +58,18 @@ jobs:
           cp ../scootui/docker-entrypoint-with-version-update.sh docker/entrypoint-with-version-update.sh
           chmod +x docker/entrypoint-with-version-update.sh
           
-          # Modify build.sh to use the custom entrypoint script
-          sed -i 's|docker/entrypoint.sh|docker/entrypoint-with-version-update.sh|g' build.sh
+          echo "=== DEBUG: Checking if custom entrypoint was copied ==="
+          ls -la docker/entrypoint*
+          
+          # Replace the original entrypoint with our custom one in the docker directory
+          # This ensures the Docker build uses our custom script
+          cp docker/entrypoint-with-version-update.sh docker/entrypoint.sh
+          
+          echo "=== DEBUG: Verifying entrypoint.sh contains our custom logic ==="
+          grep -n "SCOOTUI_VERSION_UPDATE" docker/entrypoint.sh || echo "ERROR: Custom logic not found in entrypoint.sh"
+          
+          echo "=== DEBUG: Checking build.sh content before modification ==="
+          grep "docker/entrypoint" build.sh || echo "No entrypoint references found"
           
           echo "Custom entrypoint script setup complete"
 
@@ -73,6 +83,13 @@ jobs:
           
           # Add SCOOTUI_VERSION_UPDATE environment variable to Docker run command
           sed -i 's/docker run -i -e EULA=1/docker run -i -e EULA=1 -e SCOOTUI_VERSION_UPDATE/' build.sh
+          
+          echo "=== DEBUG: Environment variables to be passed ==="
+          echo "LIBRESCOOT_VERSION=${{ needs.generate-timestamp.outputs.timestamp }}"
+          echo "SCOOTUI_VERSION_UPDATE=0.4.7+git${{ needs.generate-timestamp.outputs.timestamp }}"
+          
+          echo "=== DEBUG: Modified build.sh content ==="
+          grep "docker run" build.sh
 
           # Build only the scootui package for DBC target with version update
           LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" SCOOTUI_VERSION_UPDATE="0.4.7+git${{ needs.generate-timestamp.outputs.timestamp }}" PACKAGE="scootui" ./build.sh dbc
