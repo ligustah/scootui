@@ -15,6 +15,7 @@ import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import '../map/mbtiles_provider.dart';
 import '../repositories/tiles_repository.dart';
+import '../routing/models.dart'; // Added for RouteInstruction types
 import '../state/gps.dart';
 import '../repositories/mdb_repository.dart';
 import 'mdb_cubits.dart'; // Added GpsSync
@@ -39,6 +40,12 @@ class MapCubit extends Cubit<MapState> {
 
   static const double _maxZoom = 19.0;
   static const double _minZoom = 16.5;
+  
+  // Dynamic zoom constants based on navigation context
+  static const double _zoomLongStraight = 15.5; // Long straight sections (>2km)
+  static const double _zoomDefault = 17.0; // Default navigation zoom
+  static const double _zoomApproachingTurn = 18.0; // Approaching turn (<500m)
+  static const double _zoomComplexTurn = 19.0; // Complex intersections/roundabouts
   // static const double _zoomInStart = 220.0; // Moved to NavigationCubit
   // static const double _zoomInEnd = 30.0; // Moved to NavigationCubit
   static const Offset _mapCenterOffset = Offset(0, 120); // Restored original offset Y value
@@ -46,6 +53,7 @@ class MapCubit extends Cubit<MapState> {
   AnimatedMapController? _animatedController;
   bool _mapLocked = false; // Keep if map interactions need locking
   Timer? _updateTimer; // For throttling GPS updates
+  NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
 
   static MapCubit create(BuildContext context) => MapCubit(
         gpsStream: context.read<GpsSync>().stream,
@@ -105,13 +113,13 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _onNavigationStateChanged(NavigationState navState) {
-    // Potentially update map display based on navigation state
-    // e.g., show/hide route, update markers, etc.
-    // For now, this cubit will primarily focus on camera and position.
-    // Route drawing will be handled by a widget listening to NavigationCubit.
-    if (navState.isNavigating && navState.hasDestination) {
-      // Example: if map should follow user during navigation
-      // _moveAndRotate(state.position, state.orientation);
+    // Update dynamic zoom based on navigation context
+    // Store the current navigation state for zoom calculations
+    _currentNavigationState = navState;
+    
+    // Trigger map update with new zoom if currently navigating
+    if (navState.isNavigating && state.position != defaultCoordinates) {
+      _moveAndRotate(state.position, state.orientation);
     }
   }
 
@@ -126,10 +134,8 @@ class MapCubit extends Cubit<MapState> {
       return;
     }
 
-    // Simplified zoom logic, or make it dependent on NavigationState if needed
-    double zoom = _minZoom;
-    // Potentially adjust zoom based on navState.nextInstruction.distance if that info is passed here
-    // or if MapCubit directly listens to NavigationCubit for zoom adjustments.
+    // Dynamic zoom based on navigation context
+    double zoom = _calculateDynamicZoom();
 
     ctrl.mapController.move(center, zoom, offset: _mapCenterOffset);
 
@@ -142,6 +148,35 @@ class MapCubit extends Cubit<MapState> {
     baseMapController.rotate(rotationInDegrees);
 
     final currentRotationInDegrees = baseMapController.camera.rotation * (180 / math.pi);
+  }
+
+  double _calculateDynamicZoom() {
+    final navState = _currentNavigationState;
+    
+    // If not navigating, use default zoom
+    if (navState == null || !navState.isNavigating) {
+      return _zoomDefault;
+    }
+    
+    final nextInstruction = navState.nextInstruction;
+    if (nextInstruction == null) {
+      return _zoomDefault;
+    }
+    
+    
+    // Determine zoom based on instruction type and distance
+    return switch (nextInstruction) {
+      Turn(:final distance) => distance < 200 ? _zoomComplexTurn // Very close to turn
+                                : distance < 500 ? _zoomApproachingTurn // Approaching turn
+                                : distance > 2000 ? _zoomLongStraight // Long straight before turn
+                                : _zoomDefault,
+      Keep(:final distance) => distance > 3000 ? _zoomLongStraight : _zoomDefault,
+      Roundabout(:final distance) => distance < 300 ? _zoomComplexTurn // Close to roundabout
+                                      : distance < 800 ? _zoomApproachingTurn // Approaching roundabout
+                                      : _zoomDefault,
+      Exit(:final distance) => distance < 500 ? _zoomComplexTurn : _zoomDefault,
+      Other() => _zoomDefault,
+    };
   }
 
   void _onGpsData(GpsData data) {
