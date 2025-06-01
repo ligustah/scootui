@@ -4,8 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart'
     show Alignment, BuildContext, Colors, Icon, Icons, Widget, TickerProviderStateMixin;
 import 'package:flutter/widgets.dart' hide Route;
-import 'package:flutter_bloc/flutter_bloc.dart'; // Added
-import '../../repositories/mdb_repository.dart'; // Added
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../repositories/mdb_repository.dart';
 import 'package:flutter_map/flutter_map.dart'
     show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, Polyline, PolylineLayer, StrokePattern, TileLayer;
 import 'package:latlong2/latlong.dart';
@@ -13,6 +13,7 @@ import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, Vect
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
 
 import '../../routing/models.dart';
+import '../../utils/theme_aware_cache.dart';
 
 final distanceCalculator = Distance();
 
@@ -153,6 +154,7 @@ class OfflineMapView extends StatefulWidget {
   final VectorTileProvider tiles;
   final LatLng position;
   final double orientation;
+  final String themeMode;
   final void Function(TickerProvider)? mapReady;
   // final FutureOr<void> Function(LatLng)? setDestination; // Removed, handled by MDBRepository
   final Route? route;
@@ -166,6 +168,7 @@ class OfflineMapView extends StatefulWidget {
     required this.tiles,
     required this.position,
     required this.orientation,
+    required this.themeMode,
     // this.setDestination, // Removed
     this.route,
     this.mapReady,
@@ -238,11 +241,13 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
                 'versatiles-shortbread': widget.tiles,
               }),
               maximumZoom: 20,
-              fileCacheTtl: const Duration(seconds: 1),
-              memoryTileCacheMaxSize: 0,
-              memoryTileDataCacheMaxSize: 0,
-              fileCacheMaximumSizeInBytes: 1024 * 1024,
+              // Optimized cache settings for better performance
+              fileCacheTtl: const Duration(hours: 24), // Cache tiles for 24 hours
+              memoryTileCacheMaxSize: 10 * 1024 * 1024, // 10MB memory cache (bytes)
+              memoryTileDataCacheMaxSize: 99, // 99 parsed tiles in memory (max < 100)
+              fileCacheMaximumSizeInBytes: 500 * 1024 * 1024, // 500MB file cache
               tileDelay: Duration.zero,
+              cacheFolder: ThemeAwareCache.getCacheFolderProvider(widget.themeMode),
             ),
             if (routeLayer != null) routeLayer,
             MarkerLayer(markers: [

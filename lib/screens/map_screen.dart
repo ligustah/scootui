@@ -111,6 +111,7 @@ class MapScreen extends StatelessWidget {
         :final position,
         :final controller,
         :final theme,
+        :final themeMode,
         :final onReady,
         :final orientation,
       ) =>
@@ -118,6 +119,7 @@ class MapScreen extends StatelessWidget {
           tiles: tiles,
           mapController: controller,
           theme: theme,
+          themeMode: themeMode,
           position: position,
           mapReady: onReady,
           orientation: orientation,

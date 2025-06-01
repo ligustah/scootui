@@ -45,6 +45,7 @@ class MapCubit extends Cubit<MapState> {
 
   AnimatedMapController? _animatedController;
   bool _mapLocked = false; // Keep if map interactions need locking
+  Timer? _updateTimer; // For throttling GPS updates
 
   static MapCubit create(BuildContext context) => MapCubit(
         gpsStream: context.read<GpsSync>().stream,
@@ -90,6 +91,7 @@ class MapCubit extends Cubit<MapState> {
     _gpsSub.cancel();
     _shutdownSub.cancel();
     _navigationStateSub.cancel(); // Added
+    _updateTimer?.cancel(); // Cancel GPS throttling timer
     return super.close();
   }
 
@@ -157,14 +159,19 @@ class MapCubit extends Cubit<MapState> {
       position: position,
       orientation: orientationForMarker,
     ));
-    _moveAndRotate(position, courseForMapRotation);
+    
+    // Throttle map updates to reduce performance impact
+    _updateTimer?.cancel();
+    _updateTimer = Timer(const Duration(milliseconds: 100), () {
+      _moveAndRotate(position, courseForMapRotation);
+    });
   }
 
   void _onThemeUpdate(ThemeState event) {
     final current = state;
     emit(MapState.loading(controller: state.controller, position: state.position));
     _getTheme(event.isDark).then((theme) => emit(switch (current) {
-          MapOffline() => current.copyWith(theme: theme),
+          MapOffline() => current.copyWith(theme: theme, themeMode: event.isDark ? 'dark' : 'light'),
           _ => current, // Should not happen if map is loaded
         }));
   }
@@ -186,7 +193,8 @@ class MapCubit extends Cubit<MapState> {
           orientation: 0,
           controller: controller,
           tiles: AsyncMbTilesProvider(_tilesRepository), // Re-init or ensure it's available
-          theme: await _getTheme(false), // Default theme
+          theme: await _getTheme(true), // Default theme
+          themeMode: 'dark', // Default to dark
           onReady: _onMapReady,
           isReady: true,
         ),
@@ -237,6 +245,7 @@ class MapCubit extends Cubit<MapState> {
           orientation: 0,
           controller: ctrl,
           theme: theme,
+          themeMode: themeState.isDark ? 'dark' : 'light',
           onReady: _onMapReady,
         ));
       case InitError(:final message):

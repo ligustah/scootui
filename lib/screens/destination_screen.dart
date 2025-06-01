@@ -8,6 +8,7 @@ import '../cubits/address_cubit.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../repositories/address_repository.dart';
+import '../utils/theme_aware_cache.dart';
 
 class DestinationScreen extends StatefulWidget {
   const DestinationScreen({super.key});
@@ -77,7 +78,7 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
         break;
     }
 
-    final MapOffline(:tiles, :position, :controller, :theme, :onReady, :orientation) = // Removed route, nextInstruction
+    final MapOffline(:tiles, :position, :controller, :theme, :themeMode, :onReady, :orientation) = // Removed route, nextInstruction
         mapState;
 
     return FlutterMap(
@@ -107,6 +108,7 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
           memoryTileDataCacheMaxSize: 0,
           fileCacheMaximumSizeInBytes: 1024 * 1024,
           tileDelay: Duration.zero,
+          cacheFolder: ThemeAwareCache.getCacheFolderProvider(themeMode),
         ),
         // MarkerClusterLayerWidget(
         //   options: MarkerClusterLayerOptions(
