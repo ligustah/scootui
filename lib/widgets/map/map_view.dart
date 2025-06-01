@@ -226,6 +226,12 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
             maxZoom: 20,
             initialCenter: widget.position,
             initialZoom: 17,
+            onTap: (tapPosition, latLng) {
+              // Set GPS location via MDBRepository in simulator mode
+              final mdbRepo = RepositoryProvider.of<MDBRepository>(context);
+              mdbRepo.set("gps", "latitude", latLng.latitude.toString());
+              mdbRepo.set("gps", "longitude", latLng.longitude.toString());
+            },
             onSecondaryTap: (tapPosition, latLng) {
               // Set destination via MDBRepository, NavigationCubit will pick it up
               final mdbRepo = RepositoryProvider.of<MDBRepository>(context);
