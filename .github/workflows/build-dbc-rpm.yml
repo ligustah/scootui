@@ -58,10 +58,10 @@ jobs:
           NEW_VERSION="0.4.7+git-${{ needs.generate-timestamp.outputs.timestamp }}"
           
           # Backup the original file
-          cp "$SCOOTUI_BB_FILE" "$SCOOTUI_BB_FILE.backup"
+          sudo cp "$SCOOTUI_BB_FILE" "$SCOOTUI_BB_FILE.backup"
           
           # Update the PV line with the new timestamped version
-          sed -i "s/^PV = \".*\"/PV = \"$NEW_VERSION\"/" "$SCOOTUI_BB_FILE"
+          sudo sed -i "s/^PV = \".*\"/PV = \"$NEW_VERSION\"/" "$SCOOTUI_BB_FILE"
           
           echo "Updated PV version to: $NEW_VERSION"
           echo "Updated line:"
@@ -100,7 +100,7 @@ jobs:
           # Restore the original scootui.bb file
           SCOOTUI_BB_FILE="librescoot/yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
           if [ -f "$SCOOTUI_BB_FILE.backup" ]; then
-            mv "$SCOOTUI_BB_FILE.backup" "$SCOOTUI_BB_FILE"
+            sudo mv "$SCOOTUI_BB_FILE.backup" "$SCOOTUI_BB_FILE"
             echo "Restored original scootui.bb file"
           fi
 
