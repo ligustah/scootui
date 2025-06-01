@@ -35,7 +35,7 @@
 			"id": "background",
 			"type": "background",
 			"paint": {
-				"background-color": "#f9f4ee"
+				"background-color": "#f0e9e6"
 			}
 		},
 		{
@@ -53,7 +53,7 @@
 			"source": "versatiles-shortbread",
 			"source-layer": "land",
 			"paint": {
-				"fill-color": "#f0e7d1"
+				"fill-color": "#e0d7c1"
 			}
 		},
 		{
