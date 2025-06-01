@@ -137,17 +137,13 @@ class MapCubit extends Cubit<MapState> {
     // Dynamic zoom based on navigation context
     double zoom = _calculateDynamicZoom();
 
-    ctrl.mapController.move(center, zoom, offset: _mapCenterOffset);
-
-    final baseMapController = ctrl.mapController; // AnimatedMapController.mapController is the base MapController
-    // For heading-up: rotate map so travel direction points up on screen
-    // GPS course 0° = North, 90° = East, 180° = South, 270° = West
-    // MapController.rotate() expects degrees, where 0° = North pointing up
-    // To make course direction point up, rotate map by -course
-    final rotationInDegrees = -course;
-    baseMapController.rotate(rotationInDegrees);
-
-    final currentRotationInDegrees = baseMapController.camera.rotation * (180 / math.pi);
+    // Use animated controller for smooth transitions
+    ctrl.animateTo(
+      dest: center,
+      zoom: zoom,
+      rotation: -course, // For heading-up: rotate map so travel direction points up
+      offset: _mapCenterOffset,
+    );
   }
 
   double _calculateDynamicZoom() {
