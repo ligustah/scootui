@@ -51,21 +51,17 @@ jobs:
           mkdir -p yocto
           sudo chown 999:999 yocto
 
-      - name: Update scootui version in bitbake recipe
+      - name: Setup custom entrypoint script with version update
+        working-directory: librescoot
         run: |
-          # Update the PV version in the scootui bitbake recipe
-          SCOOTUI_BB_FILE="librescoot/yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
-          NEW_VERSION="0.4.7+git-${{ needs.generate-timestamp.outputs.timestamp }}"
+          # Copy custom entrypoint script from scootui repository
+          cp ../scootui/docker-entrypoint-with-version-update.sh docker/entrypoint-with-version-update.sh
+          chmod +x docker/entrypoint-with-version-update.sh
           
-          # Backup the original file
-          sudo cp "$SCOOTUI_BB_FILE" "$SCOOTUI_BB_FILE.backup"
+          # Modify build.sh to use the custom entrypoint script
+          sed -i 's|docker/entrypoint.sh|docker/entrypoint-with-version-update.sh|g' build.sh
           
-          # Update the PV line with the new timestamped version
-          sudo sed -i "s/^PV = \".*\"/PV = \"$NEW_VERSION\"/" "$SCOOTUI_BB_FILE"
-          
-          echo "Updated PV version to: $NEW_VERSION"
-          echo "Updated line:"
-          grep "^PV = " "$SCOOTUI_BB_FILE"
+          echo "Custom entrypoint script setup complete"
 
       - name: Build scootui package for DBC
         working-directory: librescoot
@@ -74,9 +70,12 @@ jobs:
           sed -i 's/docker run -it/docker run -i/' build.sh
           sed -i 's/docker run -it/docker run -i/' interactive.sh
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
+          
+          # Add SCOOTUI_VERSION_UPDATE environment variable to Docker run command
+          sed -i 's/docker run -i -e EULA=1/docker run -i -e EULA=1 -e SCOOTUI_VERSION_UPDATE/' build.sh
 
-          # Build only the scootui package for DBC target
-          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" PACKAGE="scootui" ./build.sh dbc
+          # Build only the scootui package for DBC target with version update
+          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" SCOOTUI_VERSION_UPDATE="0.4.7+git${{ needs.generate-timestamp.outputs.timestamp }}" PACKAGE="scootui" ./build.sh dbc
 
       - name: Extract ScootUI RPM
         run: |
@@ -92,16 +91,6 @@ jobs:
             echo "ERROR: No ScootUI RPM found!"
             find librescoot/yocto/build -name "*scootui*.rpm" | head -10
             exit 1
-          fi
-
-      - name: Restore original bitbake recipe
-        if: always()
-        run: |
-          # Restore the original scootui.bb file
-          SCOOTUI_BB_FILE="librescoot/yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
-          if [ -f "$SCOOTUI_BB_FILE.backup" ]; then
-            sudo mv "$SCOOTUI_BB_FILE.backup" "$SCOOTUI_BB_FILE"
-            echo "Restored original scootui.bb file"
           fi
 
       - name: Upload ScootUI RPM artifact
