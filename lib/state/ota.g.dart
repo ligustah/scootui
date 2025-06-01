@@ -11,6 +11,7 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
   String get updateType;
   String get dbcStatus;
   String get mdbStatus;
+  String get dbcUpdateVersion;
   get syncSettings => SyncSettings(
       "ota",
       Duration(microseconds: 5000000),
@@ -43,6 +44,13 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
             typeName: "String",
             defaultValue: "",
             interval: null),
+        SyncFieldSettings(
+            name: "dbcUpdateVersion",
+            variable: "update-version:dbc",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
+            interval: null),
       ],
       "null");
 
@@ -53,10 +61,12 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       updateType: "update-type" != name ? updateType : value,
       dbcStatus: "status:dbc" != name ? dbcStatus : value,
       mdbStatus: "status:mdb" != name ? mdbStatus : value,
+      dbcUpdateVersion: "update-version:dbc" != name ? dbcUpdateVersion : value,
     );
   }
 
-  List<Object?> get props => [otaStatus, updateType, dbcStatus, mdbStatus];
+  List<Object?> get props =>
+      [otaStatus, updateType, dbcStatus, mdbStatus, dbcUpdateVersion];
   @override
   String toString() {
     final buf = StringBuffer();
@@ -66,6 +76,7 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
     buf.writeln("	updateType = $updateType");
     buf.writeln("	dbcStatus = $dbcStatus");
     buf.writeln("	mdbStatus = $mdbStatus");
+    buf.writeln("	dbcUpdateVersion = $dbcUpdateVersion");
     buf.writeln(")");
 
     return buf.toString();

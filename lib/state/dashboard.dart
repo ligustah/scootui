@@ -1,19 +1,23 @@
 import 'package:scooter_cluster/builders/sync/annotations.dart';
 import 'package:scooter_cluster/builders/sync/settings.dart';
 
-part 'dashboard.g.dart'; // For StateGenerator
+part 'dashboard.g.dart';
 
-// Removed @freezed
 @StateClass('dashboard', Duration(seconds: 1))
 class DashboardData with $DashboardData implements Syncable<DashboardData> {
+  @override
   @StateField()
   double? brightness;
+  @override
   @StateField()
   int? backlight;
+  @override
   @StateField()
   String? theme;
+  @override
   @StateField()
   String? mode;
+  @override
   @StateField()
   String? debug;
 

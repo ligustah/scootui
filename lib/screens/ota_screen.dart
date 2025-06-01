@@ -13,7 +13,7 @@ class OtaScreen extends StatelessWidget {
       builder: (context, state) {
         return switch (state) {
           OtaInactive() => const SizedBox.shrink(), // Should not happen, but just in case
-          OtaMinimal() => const SizedBox.shrink(), // Should not happen in this screen
+          OtaStatusBar() => const SizedBox.shrink(), // Should not happen in this screen
           OtaFullScreen(:final status, :final statusText, :final isParked) => Container(
               color: isParked ? Colors.black.withOpacity(0.7) : Colors.black, // 70% opacity in parked, 100% otherwise
               child: Center(

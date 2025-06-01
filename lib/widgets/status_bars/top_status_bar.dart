@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../cubits/system_cubit.dart';
 import '../../cubits/theme_cubit.dart';
-import '../indicators/connectivity_indicators.dart';
+import '../indicators/status_indicators.dart';
 import 'battery_display.dart';
 
 class StatusBar extends StatelessWidget {
@@ -52,10 +52,10 @@ class StatusBar extends StatelessWidget {
             ),
           ),
 
-          // Right side - Bluetooth icon
+          // Right side - Status Icons
           Expanded(
             flex: 2,
-            child: ConnectivityIndicators(),
+            child: StatusIndicators(),
           ),
         ],
       ),

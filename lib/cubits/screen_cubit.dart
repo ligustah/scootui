@@ -20,6 +20,9 @@ class ScreenCubit extends Cubit<ScreenState> {
   StreamSubscription? _otaSubscription;
   late StreamSubscription _vehicleSubscription;
 
+  // Remember the screen state before shutdown/OTA transitions
+  ScreenState? _previousNormalState;
+
   ScreenCubit(this._settingsService, this._vehicleSync, [this._otaCubit])
       : super(_getInitialState(_settingsService.getScreenSetting())) {
     // Subscribe to settings updates
@@ -30,12 +33,43 @@ class ScreenCubit extends Cubit<ScreenState> {
 
     // Subscribe to vehicle state updates
     _vehicleSubscription = _vehicleSync.stream.listen((vehicleData) {
-      // When vehicle state is updating, switch to OTA screen
+      final currentState = state;
+      final isOtaFullScreen = _otaCubit?.state is OtaFullScreen;
+
+      // Store current normal state if we're about to enter a special state
+      if (currentState is ScreenCluster || currentState is ScreenMap) {
+        if (vehicleData.state == ScooterState.updating ||
+            isOtaFullScreen) {
+          _previousNormalState = currentState;
+        }
+      }
+
+      // Priority order: OTA Full Screen > Shutting Down > Vehicle Updating > Normal states
+
+      // Highest priority: OTA is handled by OTA subscription, don't override
+      if (isOtaFullScreen) {
+        return; // Let OTA subscription handle screen changes
+      }
+
+      // Second priority: Shutting down state - DON'T change screen, let overlay handle it
+      // if (vehicleData.state == ScooterState.shuttingDown) {
+      //   emit(const ScreenState.shuttingDown());
+      //   return;
+      // }
+
+      // Third priority: Vehicle updating state
       if (vehicleData.state == ScooterState.updating) {
         emit(const ScreenState.ota());
-      } else if (state is ScreenOta && vehicleData.state != ScooterState.updating) {
-        // When vehicle exits updating state, switch back to cluster
-        emit(const ScreenState.cluster());
+        return;
+      }
+
+      // When exiting special states, restore previous state if available
+      if (currentState is ScreenOta &&
+          vehicleData.state != ScooterState.updating) {
+        // Restore previous state or default to cluster
+        final stateToRestore = _previousNormalState ?? const ScreenState.cluster();
+        _previousNormalState = null; // Clear the stored state
+        emit(stateToRestore);
       }
     });
 

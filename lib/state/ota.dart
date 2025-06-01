@@ -21,10 +21,15 @@ class OtaData with $OtaData {
   @StateField(name: "status:mdb", defaultValue: "")
   String mdbStatus;
 
+  @override
+  @StateField(name: "update-version:dbc", defaultValue: "")
+  String dbcUpdateVersion;
+
   OtaData({
     this.otaStatus = "none",
     this.updateType = "none",
     this.dbcStatus = "",
     this.mdbStatus = "",
+    this.dbcUpdateVersion = "",
   });
 }

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Route;
@@ -14,20 +13,20 @@ import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import '../map/mbtiles_provider.dart';
-import '../repositories/tiles_repository.dart';
-import '../routing/models.dart'; // Added for RouteInstruction types
-import '../state/gps.dart';
 import '../repositories/mdb_repository.dart';
-import 'mdb_cubits.dart'; // Added GpsSync
+import '../repositories/tiles_repository.dart';
+import '../routing/models.dart';
+import '../state/gps.dart';
+import 'mdb_cubits.dart';
+import 'navigation_cubit.dart';
+import 'navigation_state.dart';
 import 'shutdown_cubit.dart';
 import 'theme_cubit.dart';
-import 'navigation_cubit.dart'; // Added for NavigationCubit
-import 'navigation_state.dart'; // Added for NavigationState
 
 part 'map_cubit.freezed.dart';
 part 'map_state.dart';
 
-final distanceCalculator = Distance(); // Consider moving if only used by NavigationCubit
+final distanceCalculator = Distance();
 const defaultCoordinates = LatLng(52.52437, 13.41053);
 
 class MapCubit extends Cubit<MapState> {
@@ -36,22 +35,16 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<ShutdownState> _shutdownSub;
   late final StreamSubscription<NavigationState> _navigationStateSub; // Added
   final TilesRepository _tilesRepository;
-  final MDBRepository _mdbRepository; // Keep if used for other map features
 
-  static const double _maxZoom = 19.0;
-  static const double _minZoom = 16.5;
-  
   // Dynamic zoom constants based on navigation context
   static const double _zoomLongStraight = 15.5; // Long straight sections (>2km)
   static const double _zoomDefault = 17.0; // Default navigation zoom
   static const double _zoomApproachingTurn = 18.0; // Approaching turn (<500m)
   static const double _zoomComplexTurn = 19.0; // Complex intersections/roundabouts
-  // static const double _zoomInStart = 220.0; // Moved to NavigationCubit
-  // static const double _zoomInEnd = 30.0; // Moved to NavigationCubit
   static const Offset _mapCenterOffset = Offset(0, 120); // Restored original offset Y value
 
   AnimatedMapController? _animatedController;
-  bool _mapLocked = false; // Keep if map interactions need locking
+  final bool _mapLocked = false;
   Timer? _updateTimer; // For throttling GPS updates
   NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
 
@@ -74,7 +67,6 @@ class MapCubit extends Cubit<MapState> {
     required TilesRepository tilesRepository,
     required MDBRepository mdbRepository,
   })  : _tilesRepository = tilesRepository,
-        _mdbRepository = mdbRepository,
         super(MapLoading(controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = gpsStream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
@@ -116,7 +108,7 @@ class MapCubit extends Cubit<MapState> {
     // Update dynamic zoom based on navigation context
     // Store the current navigation state for zoom calculations
     _currentNavigationState = navState;
-    
+
     // Trigger map update with new zoom if currently navigating
     if (navState.isNavigating && state.position != defaultCoordinates) {
       _moveAndRotate(state.position, state.orientation);
@@ -155,34 +147,39 @@ class MapCubit extends Cubit<MapState> {
 
   double _calculateDynamicZoom() {
     final navState = _currentNavigationState;
-    
+
     // If not navigating, use default zoom
     if (navState == null || !navState.isNavigating) {
       return _zoomDefault;
     }
-    
+
     // If off-route, use wider zoom to show both position and route
     if (navState.isOffRoute) {
       return _zoomLongStraight; // Use wider zoom when off-route
     }
-    
+
     final upcomingInstructions = navState.upcomingInstructions;
     if (upcomingInstructions.isEmpty) {
       return _zoomDefault;
     }
-    
+
     final nextInstruction = upcomingInstructions.first;
-    
+
     // Determine zoom based on instruction type and distance
     return switch (nextInstruction) {
-      Turn(:final distance) => distance < 200 ? _zoomComplexTurn // Very close to turn
-                                : distance < 500 ? _zoomApproachingTurn // Approaching turn
-                                : distance > 2000 ? _zoomLongStraight // Long straight before turn
-                                : _zoomDefault,
+      Turn(:final distance) => distance < 200
+          ? _zoomComplexTurn // Very close to turn
+          : distance < 500
+              ? _zoomApproachingTurn // Approaching turn
+              : distance > 2000
+                  ? _zoomLongStraight // Long straight before turn
+                  : _zoomDefault,
       Keep(:final distance) => distance > 3000 ? _zoomLongStraight : _zoomDefault,
-      Roundabout(:final distance) => distance < 300 ? _zoomComplexTurn // Close to roundabout
-                                      : distance < 800 ? _zoomApproachingTurn // Approaching roundabout
-                                      : _zoomDefault,
+      Roundabout(:final distance) => distance < 300
+          ? _zoomComplexTurn // Close to roundabout
+          : distance < 800
+              ? _zoomApproachingTurn // Approaching roundabout
+              : _zoomDefault,
       Exit(:final distance) => distance < 500 ? _zoomComplexTurn : _zoomDefault,
       Other() => _zoomDefault,
     };
@@ -203,7 +200,7 @@ class MapCubit extends Cubit<MapState> {
       position: position,
       orientation: orientationForMarker,
     ));
-    
+
     // Throttle map updates to reduce performance impact
     _updateTimer?.cancel();
     _updateTimer = Timer(const Duration(milliseconds: 100), () {

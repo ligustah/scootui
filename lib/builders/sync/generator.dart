@@ -37,8 +37,8 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
     BuildStep buildStep,
   ) sync* {
     final fields = List<SyncFieldSettings>.empty(growable: true);
-    final enumsFields = Map<String, _EnumType>();
-    String? discriminator = null;
+    final enumsFields = <String, _EnumType>{};
+    String? discriminator;
 
     for (final child in element.children) {
       if (child is FieldElement) {
@@ -61,7 +61,7 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
         }
 
         for (final ann in _stateDiscriminatorChecker.annotationsOf(child)) {
-          if(discriminator != null) {
+          if (discriminator != null) {
             throw ArgumentError("There can only be one discriminator in a state class");
           }
 
@@ -92,14 +92,14 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
     abstract mixin class \$${element.name} implements Syncable<${element.name}> {
     ''');
 
-    if(discriminator != null) {
-      buf.writeln("dynamic get ${discriminator};");
+    if (discriminator != null) {
+      buf.writeln("dynamic get $discriminator;");
     }
     for (final f in fields) {
       buf.writeln("${f.typeName} get ${f.name};");
     }
 
-    buf.writeln('''    
+    buf.writeln('''
       get syncSettings => ${state.toString()};
 
       @override
@@ -107,7 +107,7 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
        return ${element.name}(
         ''');
 
-    if(discriminator != null) {
+    if (discriminator != null) {
       buf.writeln("$discriminator:$discriminator,");
     }
 
@@ -141,7 +141,7 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
       "List<Object?> get props => [${state.fields.map((f) => f.name).join(",")}];",
     );
 
-    buf.writeln('''      
+    buf.writeln('''
       @override
       String toString() {
         final buf = StringBuffer();

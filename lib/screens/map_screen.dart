@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../cubits/map_cubit.dart'; // Keep for map display
-import '../cubits/navigation_cubit.dart'; // Added for listening to navigation state
-import '../cubits/navigation_state.dart'; // Added
+import '../cubits/map_cubit.dart';
+import '../cubits/navigation_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../widgets/map/map_view.dart';
-import '../widgets/navigation/turn_by_turn_widget.dart'; // Added
-import '../widgets/ota_info_widget.dart';
+import '../widgets/navigation/turn_by_turn_widget.dart';
 import '../widgets/status_bars/map_bottom_status_bar.dart';
 import '../widgets/status_bars/top_status_bar.dart';
 
@@ -49,9 +47,6 @@ class MapScreen extends StatelessWidget {
             right: 10,
             child: TurnByTurnWidget(),
           ),
-
-          // OTA info widget (will only show when in minimal mode)
-          const OtaInfoWidget(),
         ],
       ),
     );

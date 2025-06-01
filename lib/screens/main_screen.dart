@@ -64,6 +64,7 @@ class MainScreen extends StatelessWidget {
             ScreenOtaBackground() => const OtaBackgroundScreen(),
             ScreenOta() => const OtaScreen(),
             ScreenDebug() => const DebugScreen(),
+            ScreenShuttingDown() => menuTrigger(const ClusterScreen()), // Fallback (shouldn't happen)
           },
 
           // Menu overlay
@@ -72,7 +73,7 @@ class MainScreen extends StatelessWidget {
           // Shortcut menu overlay
           const ShortcutMenuOverlay(),
 
-          // Shutdown animation overlay
+          // Shutdown overlay (with translucency over active screen)
           ShutdownOverlay(),
 
           // Bluetooth pin code overlay

@@ -8,4 +8,5 @@ sealed class ScreenState with _$ScreenState {
   const factory ScreenState.otaBackground() = ScreenOtaBackground;
   const factory ScreenState.ota() = ScreenOta;
   const factory ScreenState.debug() = ScreenDebug;
+  const factory ScreenState.shuttingDown() = ScreenShuttingDown;
 }

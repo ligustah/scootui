@@ -26,7 +26,6 @@ class _DebugScreenState extends State<DebugScreen> {
   Map<String, String> _powerManagerData = {};
   Map<String, String> _powerMuxData = {};
   Map<String, String> _gpsData = {};
-  Map<String, String> _versionData = {};
   Map<String, String> _internetData = {};
   Map<String, String> _modemData = {};
   Map<String, String> _otaData = {};
@@ -64,15 +63,6 @@ class _DebugScreenState extends State<DebugScreen> {
     _internetData = await _getRedisData(mdbRepository, 'internet');
     _modemData = await _getRedisData(mdbRepository, 'modem');
     _otaData = await _getRedisData(mdbRepository, 'ota');
-
-    // Get version data
-    final dbcVersion = await mdbRepository.get('version:dbc', 'version_id');
-    final mdbVersion = await mdbRepository.get('version:mdb', 'version_id');
-
-    _versionData = {
-      'dbc': dbcVersion ?? 'unknown',
-      'mdb': mdbVersion ?? 'unknown',
-    };
 
     if (mounted) {
       setState(() {});

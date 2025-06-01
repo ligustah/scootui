@@ -53,7 +53,7 @@ class SpeedLimitData extends Equatable with $SpeedLimitData {
       // Use the blank template with custom text
       return "speedlimit_blank";
     } catch (e) {
-      print("SpeedLimit iconName Exception: ${e}");
+      print("SpeedLimit iconName Exception: $e");
       return "speedlimit_unknown";
     }
   }

@@ -5,11 +5,11 @@ sealed class OtaState with _$OtaState {
   // No OTA update is active or visible
   const factory OtaState.inactive() = OtaInactive;
 
-  // Minimal OTA info (shown at bottom of screen in ready-to-drive mode)
-  const factory OtaState.minimal({
+  // Status bar icon for OTA updates (shown in unlocked states)
+  const factory OtaState.statusBar({
     required OtaStatus status,
     required String statusText,
-  }) = OtaMinimal;
+  }) = OtaStatusBar;
 
   // Full-screen OTA display (shown in parked or standby mode)
   const factory OtaState.fullScreen({

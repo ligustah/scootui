@@ -57,8 +57,8 @@ class OtaInactive implements OtaState {
 
 /// @nodoc
 
-class OtaMinimal implements OtaState {
-  const OtaMinimal({required this.status, required this.statusText});
+class OtaStatusBar implements OtaState {
+  const OtaStatusBar({required this.status, required this.statusText});
 
   final OtaStatus status;
   final String statusText;
@@ -67,14 +67,14 @@ class OtaMinimal implements OtaState {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  $OtaMinimalCopyWith<OtaMinimal> get copyWith =>
-      _$OtaMinimalCopyWithImpl<OtaMinimal>(this, _$identity);
+  $OtaStatusBarCopyWith<OtaStatusBar> get copyWith =>
+      _$OtaStatusBarCopyWithImpl<OtaStatusBar>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is OtaMinimal &&
+            other is OtaStatusBar &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.statusText, statusText) ||
                 other.statusText == statusText));
@@ -85,26 +85,26 @@ class OtaMinimal implements OtaState {
 
   @override
   String toString() {
-    return 'OtaState.minimal(status: $status, statusText: $statusText)';
+    return 'OtaState.statusBar(status: $status, statusText: $statusText)';
   }
 }
 
 /// @nodoc
-abstract mixin class $OtaMinimalCopyWith<$Res>
+abstract mixin class $OtaStatusBarCopyWith<$Res>
     implements $OtaStateCopyWith<$Res> {
-  factory $OtaMinimalCopyWith(
-          OtaMinimal value, $Res Function(OtaMinimal) _then) =
-      _$OtaMinimalCopyWithImpl;
+  factory $OtaStatusBarCopyWith(
+          OtaStatusBar value, $Res Function(OtaStatusBar) _then) =
+      _$OtaStatusBarCopyWithImpl;
   @useResult
   $Res call({OtaStatus status, String statusText});
 }
 
 /// @nodoc
-class _$OtaMinimalCopyWithImpl<$Res> implements $OtaMinimalCopyWith<$Res> {
-  _$OtaMinimalCopyWithImpl(this._self, this._then);
+class _$OtaStatusBarCopyWithImpl<$Res> implements $OtaStatusBarCopyWith<$Res> {
+  _$OtaStatusBarCopyWithImpl(this._self, this._then);
 
-  final OtaMinimal _self;
-  final $Res Function(OtaMinimal) _then;
+  final OtaStatusBar _self;
+  final $Res Function(OtaStatusBar) _then;
 
   /// Create a copy of OtaState
   /// with the given fields replaced by the non-null parameter values.
@@ -113,7 +113,7 @@ class _$OtaMinimalCopyWithImpl<$Res> implements $OtaMinimalCopyWith<$Res> {
     Object? status = null,
     Object? statusText = null,
   }) {
-    return _then(OtaMinimal(
+    return _then(OtaStatusBar(
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable

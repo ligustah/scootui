@@ -9,7 +9,6 @@ import '../cubits/mdb_cubits.dart';
 import '../cubits/theme_cubit.dart';
 import '../cubits/trip_cubit.dart';
 import '../widgets/debug/debug_overlay.dart';
-import '../widgets/ota_info_widget.dart';
 import '../widgets/general/odometer_display.dart';
 import '../widgets/indicators/warning_indicators.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';

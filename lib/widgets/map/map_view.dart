@@ -1,17 +1,16 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
     show Alignment, BuildContext, Colors, Icon, Icons, Widget, TickerProviderStateMixin;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../repositories/mdb_repository.dart';
 import 'package:flutter_map/flutter_map.dart'
-    show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, Polyline, PolylineLayer, StrokePattern, TileLayer;
+    show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, Polyline, PolylineLayer, TileLayer;
 import 'package:latlong2/latlong.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer, VectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
 
+import '../../repositories/mdb_repository.dart';
 import '../../routing/models.dart';
 import '../../utils/theme_aware_cache.dart';
 
@@ -181,8 +180,6 @@ class OfflineMapView extends StatefulWidget {
 }
 
 class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStateMixin {
-  bool _isReady = false;
-
   Widget? _routeLayer() {
     final waypoints = widget.route?.waypoints;
     if (waypoints == null || waypoints.isEmpty) {

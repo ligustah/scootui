@@ -47,6 +47,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   String _cloudStatus = 'disconnected';
   String _gpsState = 'off';
   String _otaStatus = 'none';
+  String _dbcStatus = '';
+  String _mdbStatus = '';
+  String _updateType = 'none';
 
   // Battery states
   String _battery0State = 'unknown';
@@ -87,6 +90,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       final cloudStatus = await widget.repository.get('internet', 'unu-cloud');
       final gpsState = await widget.repository.get('gps', 'state');
       final otaStatus = await widget.repository.get('ota', 'status');
+      final dbcStatus = await widget.repository.get('ota', 'status:dbc');
+      final mdbStatus = await widget.repository.get('ota', 'status:mdb');
+      final updateType = await widget.repository.get('ota', 'update-type');
 
       // Load battery states
       final battery0Present = await widget.repository.get('battery:0', 'present');
@@ -117,6 +123,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (cloudStatus != null) _cloudStatus = cloudStatus;
         if (gpsState != null) _gpsState = gpsState;
         if (otaStatus != null) _otaStatus = otaStatus;
+        if (dbcStatus != null) _dbcStatus = dbcStatus;
+        if (mdbStatus != null) _mdbStatus = mdbStatus;
+        if (updateType != null) _updateType = updateType;
 
         if (battery0Present != null) _battery0Present = battery0Present.toLowerCase() == 'true';
         if (battery0Charge != null) _simulatedBatteryCharge0 = int.tryParse(battery0Charge) ?? 100;
@@ -693,6 +702,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         return _buildSection(
           'OTA Status',
           [
+            Text('General OTA Status:', style: TextStyle(fontWeight: FontWeight.bold)),
             _buildSegmentedButton(
               '',
               ['none', 'initializing', 'checking-updates', 'device-updated', 'waiting-dashboard'],
@@ -732,6 +742,39 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 setState(() => _otaStatusExpanded = !_otaStatusExpanded);
               },
               child: Text(_otaStatusExpanded ? 'Show Less' : 'Show More'),
+            ),
+            SizedBox(height: 16),
+            Text('DBC Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['', 'downloading', 'installing'],
+              _dbcStatus,
+              (value) {
+                setState(() => _dbcStatus = value);
+                _publishEvent('ota', 'status:dbc', value);
+              },
+            ),
+            SizedBox(height: 8),
+            Text('MDB Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['', 'downloading', 'installing'],
+              _mdbStatus,
+              (value) {
+                setState(() => _mdbStatus = value);
+                _publishEvent('ota', 'status:mdb', value);
+              },
+            ),
+            SizedBox(height: 8),
+            Text('Update Type:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['none', 'blocking', 'non-blocking'],
+              _updateType,
+              (value) {
+                setState(() => _updateType = value);
+                _publishEvent('ota', 'update-type', value);
+              },
             ),
           ],
         );
