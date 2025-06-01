@@ -154,11 +154,12 @@ class MapCubit extends Cubit<MapState> {
       return _zoomDefault;
     }
     
-    final nextInstruction = navState.nextInstruction;
-    if (nextInstruction == null) {
+    final upcomingInstructions = navState.upcomingInstructions;
+    if (upcomingInstructions.isEmpty) {
       return _zoomDefault;
     }
     
+    final nextInstruction = upcomingInstructions.first;
     
     // Determine zoom based on instruction type and distance
     return switch (nextInstruction) {

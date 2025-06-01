@@ -77,7 +77,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         return;
       }
 
-      final nextInstruction = route.instructions.isNotEmpty ? route.instructions.first : null;
+      final upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
       final distanceToDestination = distanceCalculator.as(
         LengthUnit.Meter,
         position,
@@ -86,7 +86,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
       emit(state.copyWith(
         route: route,
-        nextInstruction: nextInstruction,
+        upcomingInstructions: upcomingInstructions,
         status: NavigationStatus.navigating,
         distanceToDestination: distanceToDestination,
         error: null,
@@ -201,11 +201,11 @@ class NavigationCubit extends Cubit<NavigationState> {
     // Check if we're off route
     final isOffRoute = distanceFromRoute > _offRouteTolerance;
 
-    // Find next instruction
-    final nextInstruction = RouteHelpers.findNextInstruction(position, route);
+    // Find upcoming instructions
+    final upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
 
     emit(state.copyWith(
-      nextInstruction: nextInstruction,
+      upcomingInstructions: upcomingInstructions,
       distanceToDestination: distanceToDestination,
       distanceFromRoute: distanceFromRoute,
       isOffRoute: isOffRoute,
@@ -234,7 +234,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         return;
       }
 
-      final nextInstruction = route.instructions.isNotEmpty ? route.instructions.first : null;
+      final upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
       final distanceToDestination = distanceCalculator.as(
         LengthUnit.Meter,
         position,
@@ -243,7 +243,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
       emit(state.copyWith(
         route: route,
-        nextInstruction: nextInstruction,
+        upcomingInstructions: upcomingInstructions,
         status: NavigationStatus.navigating,
         distanceToDestination: distanceToDestination,
         distanceFromRoute: 0.0,

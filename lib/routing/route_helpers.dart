@@ -83,13 +83,14 @@ class RouteHelpers {
     return (closestPoint, closestSegmentIndex, closestDistance);
   }
 
-  /// Finds the next instruction based on the current position and route
-  static RouteInstruction? findNextInstruction(
+  /// Finds upcoming instructions based on the current position and route
+  static List<RouteInstruction> findUpcomingInstructions(
     LatLng currentPosition,
-    Route route,
-  ) {
+    Route route, {
+    int maxInstructions = 3,
+  }) {
     if (route.waypoints.isEmpty) {
-      return null;
+      return [];
     }
 
     // Find the closest point on the route
@@ -100,64 +101,83 @@ class RouteHelpers {
 
     // If we're too far from the route, don't show instructions
     if (distanceFromRoute > _offRouteTolerance) {
-      return null;
+      return [];
     }
 
-    // Find the next instruction after the current segment
-    var nextInstruction = _findNextInstructionAfterSegment(
+    // Find upcoming instructions after the current segment
+    return _findUpcomingInstructionsAfterSegment(
       route.instructions,
       route.waypoints,
       segmentIndex,
       closestPoint,
+      maxInstructions,
     );
-
-    // If we didn't find a next instruction, we might be very close to or past the last one
-    if (nextInstruction == null && segmentIndex > 0) {
-      // Try looking from the previous segment
-      nextInstruction = _findNextInstructionAfterSegment(
-        route.instructions,
-        route.waypoints,
-        segmentIndex - 1,
-        closestPoint,
-      );
-    }
-
-    return nextInstruction;
   }
 
-  /// Helper to find the next instruction after a given segment
-  static RouteInstruction? _findNextInstructionAfterSegment(
-    List<RouteInstruction> instructions,
-    List<LatLng> polyline, // polyline is still needed for distance calculation if instructionPoint is not enough
-    int segmentIndexToCompareAgainst, // Renamed for clarity from 'segmentIndex'
-    LatLng fromPoint,
+  /// Finds the next instruction based on the current position and route
+  /// Kept for backwards compatibility, returns first upcoming instruction
+  static RouteInstruction? findNextInstruction(
+    LatLng currentPosition,
+    Route route,
   ) {
+    final upcoming = findUpcomingInstructions(currentPosition, route, maxInstructions: 1);
+    return upcoming.isNotEmpty ? upcoming.first : null;
+  }
+
+  /// Helper to find upcoming instructions after a given segment
+  static List<RouteInstruction> _findUpcomingInstructionsAfterSegment(
+    List<RouteInstruction> instructions,
+    List<LatLng> polyline,
+    int segmentIndexToCompareAgainst,
+    LatLng fromPoint,
+    int maxInstructions,
+  ) {
+    final List<RouteInstruction> upcomingInstructions = [];
+
     for (final instruction in instructions) {
+      if (upcomingInstructions.length >= maxInstructions) {
+        break;
+      }
+
       // Use the stored originalShapeIndex directly
       final int instructionShapeIndex = instruction.originalShapeIndex;
 
-      // Ensure originalShapeIndex is valid before using (e.g. not -1 if we used that for null beginShapeIndex)
-      // Assuming current implementation results in non-negative originalShapeIndex from Valhalla.
+      // Ensure originalShapeIndex is valid before using
       if (instructionShapeIndex < 0) {
-        // Or any other sentinel for invalid/unmapped index
         continue; // Skip instructions that couldn't be properly mapped to the shape
       }
 
       if (instructionShapeIndex > segmentIndexToCompareAgainst) {
-        // instructionPoint is still needed to calculate the distance to it
-        final instructionPoint = instruction.location;
-
         // Calculate distance to the instruction's starting point
+        final instructionPoint = instruction.location;
         final distanceToManeuverStart = const Distance().as(
           LengthUnit.Meter,
           fromPoint,
           instructionPoint,
         );
 
-        return instruction.copyWith(distance: distanceToManeuverStart);
+        upcomingInstructions.add(instruction.copyWith(distance: distanceToManeuverStart));
       }
     }
 
-    return null;
+    return upcomingInstructions;
+  }
+
+  /// Helper to find the next instruction after a given segment
+  /// Kept for backwards compatibility
+  static RouteInstruction? _findNextInstructionAfterSegment(
+    List<RouteInstruction> instructions,
+    List<LatLng> polyline,
+    int segmentIndexToCompareAgainst,
+    LatLng fromPoint,
+  ) {
+    final upcoming = _findUpcomingInstructionsAfterSegment(
+      instructions,
+      polyline,
+      segmentIndexToCompareAgainst,
+      fromPoint,
+      1,
+    );
+    return upcoming.isNotEmpty ? upcoming.first : null;
   }
 }

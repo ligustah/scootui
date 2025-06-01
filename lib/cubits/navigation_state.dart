@@ -21,7 +21,7 @@ abstract class NavigationState with _$NavigationState {
   const factory NavigationState({
     @Default(null) Route? route,
     @Default(null) RouteInstruction? currentInstruction,
-    @Default(null) RouteInstruction? nextInstruction,
+    @Default([]) List<RouteInstruction> upcomingInstructions,
     @Default(null) LatLng? destination,
     @Default(NavigationStatus.idle) NavigationStatus status,
     @Default(null) String? error,
@@ -33,5 +33,5 @@ abstract class NavigationState with _$NavigationState {
   bool get isNavigating => status == NavigationStatus.navigating;
   bool get hasRoute => route != null;
   bool get hasDestination => destination != null;
-  bool get hasInstructions => currentInstruction != null || nextInstruction != null;
+  bool get hasInstructions => currentInstruction != null || upcomingInstructions.isNotEmpty;
 }

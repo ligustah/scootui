@@ -17,7 +17,7 @@ T _$identity<T>(T value) => value;
 mixin _$NavigationState {
   Route? get route;
   RouteInstruction? get currentInstruction;
-  RouteInstruction? get nextInstruction;
+  List<RouteInstruction> get upcomingInstructions;
   LatLng? get destination;
   NavigationStatus get status;
   String? get error;
@@ -41,8 +41,8 @@ mixin _$NavigationState {
             (identical(other.route, route) || other.route == route) &&
             (identical(other.currentInstruction, currentInstruction) ||
                 other.currentInstruction == currentInstruction) &&
-            (identical(other.nextInstruction, nextInstruction) ||
-                other.nextInstruction == nextInstruction) &&
+            const DeepCollectionEquality()
+                .equals(other.upcomingInstructions, upcomingInstructions) &&
             (identical(other.destination, destination) ||
                 other.destination == destination) &&
             (identical(other.status, status) || other.status == status) &&
@@ -60,7 +60,7 @@ mixin _$NavigationState {
       runtimeType,
       route,
       currentInstruction,
-      nextInstruction,
+      const DeepCollectionEquality().hash(upcomingInstructions),
       destination,
       status,
       error,
@@ -70,7 +70,7 @@ mixin _$NavigationState {
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, nextInstruction: $nextInstruction, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute)';
   }
 }
 
@@ -83,7 +83,7 @@ abstract mixin class $NavigationStateCopyWith<$Res> {
   $Res call(
       {Route? route,
       RouteInstruction? currentInstruction,
-      RouteInstruction? nextInstruction,
+      List<RouteInstruction> upcomingInstructions,
       LatLng? destination,
       NavigationStatus status,
       String? error,
@@ -93,7 +93,6 @@ abstract mixin class $NavigationStateCopyWith<$Res> {
 
   $RouteCopyWith<$Res>? get route;
   $RouteInstructionCopyWith<$Res>? get currentInstruction;
-  $RouteInstructionCopyWith<$Res>? get nextInstruction;
 }
 
 /// @nodoc
@@ -111,7 +110,7 @@ class _$NavigationStateCopyWithImpl<$Res>
   $Res call({
     Object? route = freezed,
     Object? currentInstruction = freezed,
-    Object? nextInstruction = freezed,
+    Object? upcomingInstructions = null,
     Object? destination = freezed,
     Object? status = null,
     Object? error = freezed,
@@ -128,10 +127,10 @@ class _$NavigationStateCopyWithImpl<$Res>
           ? _self.currentInstruction
           : currentInstruction // ignore: cast_nullable_to_non_nullable
               as RouteInstruction?,
-      nextInstruction: freezed == nextInstruction
-          ? _self.nextInstruction
-          : nextInstruction // ignore: cast_nullable_to_non_nullable
-              as RouteInstruction?,
+      upcomingInstructions: null == upcomingInstructions
+          ? _self.upcomingInstructions
+          : upcomingInstructions // ignore: cast_nullable_to_non_nullable
+              as List<RouteInstruction>,
       destination: freezed == destination
           ? _self.destination
           : destination // ignore: cast_nullable_to_non_nullable
@@ -186,20 +185,6 @@ class _$NavigationStateCopyWithImpl<$Res>
       return _then(_self.copyWith(currentInstruction: value));
     });
   }
-
-  /// Create a copy of NavigationState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $RouteInstructionCopyWith<$Res>? get nextInstruction {
-    if (_self.nextInstruction == null) {
-      return null;
-    }
-
-    return $RouteInstructionCopyWith<$Res>(_self.nextInstruction!, (value) {
-      return _then(_self.copyWith(nextInstruction: value));
-    });
-  }
 }
 
 /// @nodoc
@@ -208,14 +193,15 @@ class _NavigationState extends NavigationState {
   const _NavigationState(
       {this.route = null,
       this.currentInstruction = null,
-      this.nextInstruction = null,
+      final List<RouteInstruction> upcomingInstructions = const [],
       this.destination = null,
       this.status = NavigationStatus.idle,
       this.error = null,
       this.distanceToDestination = 0.0,
       this.distanceFromRoute = 0.0,
       this.isOffRoute = false})
-      : super._();
+      : _upcomingInstructions = upcomingInstructions,
+        super._();
 
   @override
   @JsonKey()
@@ -223,9 +209,16 @@ class _NavigationState extends NavigationState {
   @override
   @JsonKey()
   final RouteInstruction? currentInstruction;
+  final List<RouteInstruction> _upcomingInstructions;
   @override
   @JsonKey()
-  final RouteInstruction? nextInstruction;
+  List<RouteInstruction> get upcomingInstructions {
+    if (_upcomingInstructions is EqualUnmodifiableListView)
+      return _upcomingInstructions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_upcomingInstructions);
+  }
+
   @override
   @JsonKey()
   final LatLng? destination;
@@ -261,8 +254,8 @@ class _NavigationState extends NavigationState {
             (identical(other.route, route) || other.route == route) &&
             (identical(other.currentInstruction, currentInstruction) ||
                 other.currentInstruction == currentInstruction) &&
-            (identical(other.nextInstruction, nextInstruction) ||
-                other.nextInstruction == nextInstruction) &&
+            const DeepCollectionEquality()
+                .equals(other._upcomingInstructions, _upcomingInstructions) &&
             (identical(other.destination, destination) ||
                 other.destination == destination) &&
             (identical(other.status, status) || other.status == status) &&
@@ -280,7 +273,7 @@ class _NavigationState extends NavigationState {
       runtimeType,
       route,
       currentInstruction,
-      nextInstruction,
+      const DeepCollectionEquality().hash(_upcomingInstructions),
       destination,
       status,
       error,
@@ -290,7 +283,7 @@ class _NavigationState extends NavigationState {
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, nextInstruction: $nextInstruction, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute)';
   }
 }
 
@@ -305,7 +298,7 @@ abstract mixin class _$NavigationStateCopyWith<$Res>
   $Res call(
       {Route? route,
       RouteInstruction? currentInstruction,
-      RouteInstruction? nextInstruction,
+      List<RouteInstruction> upcomingInstructions,
       LatLng? destination,
       NavigationStatus status,
       String? error,
@@ -317,8 +310,6 @@ abstract mixin class _$NavigationStateCopyWith<$Res>
   $RouteCopyWith<$Res>? get route;
   @override
   $RouteInstructionCopyWith<$Res>? get currentInstruction;
-  @override
-  $RouteInstructionCopyWith<$Res>? get nextInstruction;
 }
 
 /// @nodoc
@@ -336,7 +327,7 @@ class __$NavigationStateCopyWithImpl<$Res>
   $Res call({
     Object? route = freezed,
     Object? currentInstruction = freezed,
-    Object? nextInstruction = freezed,
+    Object? upcomingInstructions = null,
     Object? destination = freezed,
     Object? status = null,
     Object? error = freezed,
@@ -353,10 +344,10 @@ class __$NavigationStateCopyWithImpl<$Res>
           ? _self.currentInstruction
           : currentInstruction // ignore: cast_nullable_to_non_nullable
               as RouteInstruction?,
-      nextInstruction: freezed == nextInstruction
-          ? _self.nextInstruction
-          : nextInstruction // ignore: cast_nullable_to_non_nullable
-              as RouteInstruction?,
+      upcomingInstructions: null == upcomingInstructions
+          ? _self._upcomingInstructions
+          : upcomingInstructions // ignore: cast_nullable_to_non_nullable
+              as List<RouteInstruction>,
       destination: freezed == destination
           ? _self.destination
           : destination // ignore: cast_nullable_to_non_nullable
@@ -409,20 +400,6 @@ class __$NavigationStateCopyWithImpl<$Res>
 
     return $RouteInstructionCopyWith<$Res>(_self.currentInstruction!, (value) {
       return _then(_self.copyWith(currentInstruction: value));
-    });
-  }
-
-  /// Create a copy of NavigationState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $RouteInstructionCopyWith<$Res>? get nextInstruction {
-    if (_self.nextInstruction == null) {
-      return null;
-    }
-
-    return $RouteInstructionCopyWith<$Res>(_self.nextInstruction!, (value) {
-      return _then(_self.copyWith(nextInstruction: value));
     });
   }
 }

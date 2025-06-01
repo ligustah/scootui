@@ -36,8 +36,9 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   Widget _buildCompactView(NavigationState state) {
-    final instruction = state.nextInstruction;
-    if (instruction == null) return const SizedBox.shrink();
+    final instructions = state.upcomingInstructions;
+    if (instructions.isEmpty) return const SizedBox.shrink();
+    final instruction = instructions.first;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -60,8 +61,9 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   Widget _buildFullView(NavigationState state) {
-    final instruction = state.nextInstruction;
-    if (instruction == null) return const SizedBox.shrink();
+    final instructions = state.upcomingInstructions;
+    if (instructions.isEmpty) return const SizedBox.shrink();
+    final instruction = instructions.first;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -86,7 +88,7 @@ class TurnByTurnWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _getInstructionText(instruction),
+                    _getInstructionText(instruction, instructions.length > 1 ? instructions[1] : null),
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -199,14 +201,14 @@ class TurnByTurnWidget extends StatelessWidget {
     }
   }
 
-  String _getInstructionText(RouteInstruction instruction) {
-    // Use Valhalla's instruction text if available
+  String _getInstructionText(RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
+    // Use Valhalla's instruction text if available, but still add "then" text
+    String baseText;
     if (instruction.instructionText?.isNotEmpty == true) {
-      return instruction.instructionText!;
-    }
-
-    // Generate instruction text with street name if available
-    return switch (instruction) {
+      baseText = instruction.instructionText!;
+    } else {
+      // Generate instruction text with street name if available
+      baseText = switch (instruction) {
       Keep(direction: final direction, streetName: final streetName) => switch (direction) {
           KeepDirection.straight => streetName != null ? 'Continue straight on $streetName' : 'Continue straight',
           _ => streetName != null ? 'Keep ${direction.name} on $streetName' : 'Keep ${direction.name}',
@@ -229,6 +231,43 @@ class TurnByTurnWidget extends StatelessWidget {
       Other(streetName: final streetName) => streetName != null ? 'Continue on $streetName' : 'Continue',
       Exit(side: final side, streetName: final streetName) => 
         streetName != null ? 'Take the ${side.name} exit to $streetName' : 'Take the ${side.name} exit',
+      };
+    }
+
+    // Add next instruction if available and close (within 500m)
+    if (nextInstruction != null && nextInstruction.distance <= 500) {
+      final nextText = _getShortInstructionText(nextInstruction);
+      
+      // Remove trailing period from base text before combining
+      final cleanBaseText = baseText.endsWith('.') ? baseText.substring(0, baseText.length - 1) : baseText;
+      return '$cleanBaseText, then $nextText';
+    }
+
+    return baseText;
+  }
+
+  String _getShortInstructionText(RouteInstruction instruction) {
+    // Generate short instruction text for "then" clauses
+    return switch (instruction) {
+      Keep(direction: final direction) => switch (direction) {
+          KeepDirection.straight => 'continue straight',
+          _ => 'keep ${direction.name}',
+        },
+      Turn(direction: final direction) => switch (direction) {
+          TurnDirection.left => 'turn left',
+          TurnDirection.right => 'turn right',
+          TurnDirection.slightLeft => 'turn slightly left',
+          TurnDirection.slightRight => 'turn slightly right',
+          TurnDirection.sharpLeft => 'turn sharply left',
+          TurnDirection.sharpRight => 'turn sharply right',
+          TurnDirection.uTurn180 => 'make a U-turn',
+          TurnDirection.rightUTurn => 'make a right U-turn',
+          TurnDirection.uTurn => 'make a U-turn',
+        },
+      Roundabout(exitNumber: final exitNumber) =>
+        'take the ${exitNumber == 1 ? '1st' : exitNumber == 2 ? '2nd' : exitNumber == 3 ? '3rd' : '${exitNumber}th'} exit',
+      Other() => 'continue',
+      Exit(side: final side) => 'take the ${side.name} exit',
     };
   }
 
