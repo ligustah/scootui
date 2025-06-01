@@ -51,6 +51,22 @@ jobs:
           mkdir -p yocto
           sudo chown 999:999 yocto
 
+      - name: Update scootui version in bitbake recipe
+        run: |
+          # Update the PV version in the scootui bitbake recipe
+          SCOOTUI_BB_FILE="librescoot/meta-librescoot/recipes-graphics/scootui/scootui.bb"
+          NEW_VERSION="0.4.7+git-${{ needs.generate-timestamp.outputs.timestamp }}"
+          
+          # Backup the original file
+          cp "$SCOOTUI_BB_FILE" "$SCOOTUI_BB_FILE.backup"
+          
+          # Update the PV line with the new timestamped version
+          sed -i "s/^PV = \".*\"/PV = \"$NEW_VERSION\"/" "$SCOOTUI_BB_FILE"
+          
+          echo "Updated PV version to: $NEW_VERSION"
+          echo "Updated line:"
+          grep "^PV = " "$SCOOTUI_BB_FILE"
+
       - name: Build scootui package for DBC
         working-directory: librescoot
         run: |
@@ -76,6 +92,16 @@ jobs:
             echo "ERROR: No ScootUI RPM found!"
             find librescoot/yocto/build -name "*scootui*.rpm" | head -10
             exit 1
+          fi
+
+      - name: Restore original bitbake recipe
+        if: always()
+        run: |
+          # Restore the original scootui.bb file
+          SCOOTUI_BB_FILE="librescoot/meta-librescoot/recipes-graphics/scootui/scootui.bb"
+          if [ -f "$SCOOTUI_BB_FILE.backup" ]; then
+            mv "$SCOOTUI_BB_FILE.backup" "$SCOOTUI_BB_FILE"
+            echo "Restored original scootui.bb file"
           fi
 
       - name: Upload ScootUI RPM artifact
