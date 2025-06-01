@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../config.dart';
+import '../routing/models.dart';
 import '../routing/route_helpers.dart';
 import '../routing/valhalla.dart';
 import '../state/gps.dart';
@@ -198,11 +199,27 @@ class NavigationCubit extends Cubit<NavigationState> {
       route.waypoints,
     );
 
+    // Debug logging for off-route detection
+    print("NavigationCubit: Position: $position, Distance from route: ${distanceFromRoute.toStringAsFixed(1)}m, Tolerance: ${_offRouteTolerance}m");
+
     // Check if we're off route
     final isOffRoute = distanceFromRoute > _offRouteTolerance;
+    print("NavigationCubit: isOffRoute: $isOffRoute, current state isOffRoute: ${state.isOffRoute}");
 
     // Find upcoming instructions
-    final upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
+    var upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
+    
+    // If off-route, insert a "return to route" instruction at the beginning
+    if (isOffRoute) {
+      final returnInstruction = RouteInstruction.other(
+        distance: distanceFromRoute,
+        location: closestPoint,
+        originalShapeIndex: 0,
+        instructionText: "Return to the route",
+      );
+      upcomingInstructions = [returnInstruction, ...upcomingInstructions];
+      print("NavigationCubit: Added return instruction. First instruction: ${upcomingInstructions.first.instructionText}, distance: ${upcomingInstructions.first.distance}");
+    }
 
     emit(state.copyWith(
       upcomingInstructions: upcomingInstructions,
@@ -234,22 +251,14 @@ class NavigationCubit extends Cubit<NavigationState> {
         return;
       }
 
-      final upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
-      final distanceToDestination = distanceCalculator.as(
-        LengthUnit.Meter,
-        position,
-        destination,
-      );
-
       emit(state.copyWith(
         route: route,
-        upcomingInstructions: upcomingInstructions,
         status: NavigationStatus.navigating,
-        distanceToDestination: distanceToDestination,
-        distanceFromRoute: 0.0,
-        isOffRoute: false,
         error: null,
       ));
+      
+      // Recalculate navigation state with the new route
+      _updateNavigationState(position);
     } catch (e) {
       emit(state.copyWith(
         status: NavigationStatus.error,

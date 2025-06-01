@@ -5,9 +5,6 @@ import 'package:latlong2/latlong.dart';
 import 'models.dart';
 
 class RouteHelpers {
-  static const double _coordinateMatchTolerance = 0.00001; // About 1 meter
-  static const double _offRouteTolerance = 50.0; // Meters
-
   /// Finds the closest point on a line segment to a given point
   static LatLng findClosestPointOnSegment(
     LatLng point,
@@ -99,11 +96,6 @@ class RouteHelpers {
       route.waypoints,
     );
 
-    // If we're too far from the route, don't show instructions
-    if (distanceFromRoute > _offRouteTolerance) {
-      return [];
-    }
-
     // Find upcoming instructions after the current segment
     return _findUpcomingInstructionsAfterSegment(
       route.instructions,
@@ -112,16 +104,6 @@ class RouteHelpers {
       closestPoint,
       maxInstructions,
     );
-  }
-
-  /// Finds the next instruction based on the current position and route
-  /// Kept for backwards compatibility, returns first upcoming instruction
-  static RouteInstruction? findNextInstruction(
-    LatLng currentPosition,
-    Route route,
-  ) {
-    final upcoming = findUpcomingInstructions(currentPosition, route, maxInstructions: 1);
-    return upcoming.isNotEmpty ? upcoming.first : null;
   }
 
   /// Helper to find upcoming instructions after a given segment
@@ -161,23 +143,5 @@ class RouteHelpers {
     }
 
     return upcomingInstructions;
-  }
-
-  /// Helper to find the next instruction after a given segment
-  /// Kept for backwards compatibility
-  static RouteInstruction? _findNextInstructionAfterSegment(
-    List<RouteInstruction> instructions,
-    List<LatLng> polyline,
-    int segmentIndexToCompareAgainst,
-    LatLng fromPoint,
-  ) {
-    final upcoming = _findUpcomingInstructionsAfterSegment(
-      instructions,
-      polyline,
-      segmentIndexToCompareAgainst,
-      fromPoint,
-      1,
-    );
-    return upcoming.isNotEmpty ? upcoming.first : null;
   }
 }

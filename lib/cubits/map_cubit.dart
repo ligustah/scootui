@@ -134,15 +134,22 @@ class MapCubit extends Cubit<MapState> {
       return;
     }
 
+    final navState = _currentNavigationState;
+    final isOffRoute = navState?.isOffRoute ?? false;
+
     // Dynamic zoom based on navigation context
     double zoom = _calculateDynamicZoom();
+
+    // When off-route, use north-up orientation and center the vehicle
+    double rotation = isOffRoute ? 0.0 : -course;
+    Offset offset = isOffRoute ? Offset.zero : _mapCenterOffset;
 
     // Use animated controller for smooth transitions
     ctrl.animateTo(
       dest: center,
       zoom: zoom,
-      rotation: -course, // For heading-up: rotate map so travel direction points up
-      offset: _mapCenterOffset,
+      rotation: rotation,
+      offset: offset,
     );
   }
 
@@ -152,6 +159,11 @@ class MapCubit extends Cubit<MapState> {
     // If not navigating, use default zoom
     if (navState == null || !navState.isNavigating) {
       return _zoomDefault;
+    }
+    
+    // If off-route, use wider zoom to show both position and route
+    if (navState.isOffRoute) {
+      return _zoomLongStraight; // Use wider zoom when off-route
     }
     
     final upcomingInstructions = navState.upcomingInstructions;
