@@ -60,7 +60,7 @@ jobs:
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
 
           # Build only the scootui package for DBC target
-          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" ./build.sh dbc -c populate_sysroot && ./build.sh dbc -c do_rootfs scootui
+          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" PACKAGE="scootui" ./build.sh dbc
 
       - name: Extract ScootUI RPM
         run: |
