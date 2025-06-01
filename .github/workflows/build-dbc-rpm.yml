@@ -126,7 +126,7 @@ jobs:
           body: |
             📦 ScootUI DBC RPM Build (version ${{ steps.date.outputs.value }})
 
-            This build contains the ScootUI RPM package specifically built for the DBC (Data Bus Controller) target platform.
+            This build contains the ScootUI RPM package specifically built for the Dashboard Controller (DBC).
 
             ## Changelog
             ${{ steps.changelog.outputs.content }}
