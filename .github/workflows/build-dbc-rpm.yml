@@ -54,7 +54,7 @@ jobs:
       - name: Update scootui version in bitbake recipe
         run: |
           # Update the PV version in the scootui bitbake recipe
-          SCOOTUI_BB_FILE="librescoot/meta-librescoot/recipes-graphics/scootui/scootui.bb"
+          SCOOTUI_BB_FILE="librescoot/yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
           NEW_VERSION="0.4.7+git-${{ needs.generate-timestamp.outputs.timestamp }}"
           
           # Backup the original file
@@ -98,7 +98,7 @@ jobs:
         if: always()
         run: |
           # Restore the original scootui.bb file
-          SCOOTUI_BB_FILE="librescoot/meta-librescoot/recipes-graphics/scootui/scootui.bb"
+          SCOOTUI_BB_FILE="librescoot/yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
           if [ -f "$SCOOTUI_BB_FILE.backup" ]; then
             mv "$SCOOTUI_BB_FILE.backup" "$SCOOTUI_BB_FILE"
             echo "Restored original scootui.bb file"
