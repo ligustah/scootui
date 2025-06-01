@@ -32,8 +32,8 @@ class NorthIndicator extends StatelessWidget {
         child: Container(
           width: 32,
           height: 32,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+          decoration: const BoxDecoration(
+            color: Colors.transparent,
             shape: BoxShape.circle,
           ),
           child: const Stack(

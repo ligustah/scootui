@@ -17,6 +17,9 @@ class TurnByTurnWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return BlocBuilder<NavigationCubit, NavigationState>(
       builder: (context, state) {
         if (!state.hasInstructions || state.status == NavigationStatus.idle) {
@@ -26,16 +29,18 @@ class TurnByTurnWidget extends StatelessWidget {
         return Container(
           padding: padding ?? const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.8),
+            color: isDark 
+                ? Colors.black.withOpacity(0.8)
+                : Colors.white.withOpacity(0.9),
             borderRadius: BorderRadius.circular(8.0),
           ),
-          child: compact ? _buildCompactView(state) : _buildFullView(state),
+          child: compact ? _buildCompactView(state, isDark) : _buildFullView(state, isDark),
         );
       },
     );
   }
 
-  Widget _buildCompactView(NavigationState state) {
+  Widget _buildCompactView(NavigationState state, bool isDark) {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
@@ -43,13 +48,13 @@ class TurnByTurnWidget extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildInstructionIcon(instruction, size: 24),
+        _buildInstructionIcon(instruction, size: 24, isDark: isDark),
         const SizedBox(width: 8),
         Flexible(
           child: Text(
             _formatDistance(instruction.distance),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -60,7 +65,7 @@ class TurnByTurnWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFullView(NavigationState state) {
+  Widget _buildFullView(NavigationState state, bool isDark) {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
@@ -71,7 +76,7 @@ class TurnByTurnWidget extends StatelessWidget {
       children: [
         Row(
           children: [
-            _buildInstructionIcon(instruction, size: 48),
+            _buildInstructionIcon(instruction, size: 48, isDark: isDark),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -79,8 +84,8 @@ class TurnByTurnWidget extends StatelessWidget {
                 children: [
                   Text(
                     _formatDistance(instruction.distance),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
                       fontSize: 18,
                       height: 1.1,
                       fontWeight: FontWeight.bold,
@@ -89,8 +94,8 @@ class TurnByTurnWidget extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     _getInstructionText(instruction, instructions.length > 1 ? instructions[1] : null),
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
                       fontSize: 14,
                       height: 1.1,
                     ),
@@ -147,9 +152,9 @@ class TurnByTurnWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildInstructionIcon(RouteInstruction instruction, {required double size}) {
+  Widget _buildInstructionIcon(RouteInstruction instruction, {required double size, required bool isDark}) {
     IconData iconData;
-    Color iconColor = Colors.white;
+    Color iconColor = isDark ? Colors.white : Colors.black87;
 
     switch (instruction) {
       case Keep(direction: final direction):
@@ -173,7 +178,7 @@ class TurnByTurnWidget extends StatelessWidget {
         break;
       case Roundabout(side: final side, exitNumber: final exitNumber):
         // Handle roundabout with custom widget below
-        return _buildRoundaboutIcon(side, exitNumber, size);
+        return _buildRoundaboutIcon(side, exitNumber, size, isDark);
       case Exit(side: final side):
         iconData = side == ExitSide.left ? Icons.exit_to_app : Icons.exit_to_app;
         break;
@@ -271,11 +276,14 @@ class TurnByTurnWidget extends StatelessWidget {
     };
   }
 
-  Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double size) {
+  Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double size, bool isDark) {
     // Use appropriate directional icon based on side
     final IconData roundaboutIcon = side == RoundaboutSide.left 
         ? Icons.roundabout_left 
         : Icons.roundabout_right;
+    
+    final iconColor = isDark ? Colors.white : Colors.black87;
+    final borderColor = isDark ? Colors.white : Colors.black87;
     
     return SizedBox(
       width: size,
@@ -285,7 +293,7 @@ class TurnByTurnWidget extends StatelessWidget {
         children: [
           Icon(
             roundaboutIcon,
-            color: Colors.white,
+            color: iconColor,
             size: size,
           ),
           Container(
@@ -294,7 +302,7 @@ class TurnByTurnWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.blue,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1.5),
+              border: Border.all(color: borderColor, width: 1.5),
             ),
             child: Center(
               child: Text(
