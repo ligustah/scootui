@@ -54,6 +54,7 @@ clone_layer "meta-librescoot" "${BRANCH}" "https://github.com/librescoot/meta-li
 clone_layer "meta-openjdk-temurin" "scarthgap" "https://github.com/lucimber/meta-openjdk-temurin" "sources/meta-openjdk-temurin"
 
 # UPDATE SCOOTUI VERSION - NEW FUNCTIONALITY
+echo "Check whether to update scootui version in bitbake recipe..."
 if [ -n "${SCOOTUI_VERSION_UPDATE}" ]; then
     echo "Updating scootui version in bitbake recipe..."
     SCOOTUI_BB_FILE="sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"

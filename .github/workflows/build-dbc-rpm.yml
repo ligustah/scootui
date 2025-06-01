@@ -82,7 +82,7 @@ jobs:
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
           
           # Add SCOOTUI_VERSION_UPDATE environment variable to Docker run command
-          sed -i 's/docker run -i -e EULA=1/docker run -i -e EULA=1 -e SCOOTUI_VERSION_UPDATE/' build.sh
+          sed -i 's/docker run -i -e EULA=1/docker run -i -e EULA=1 -e SCOOTUI_VERSION_UPDATE=${SCOOTUI_VERSION_UPDATE}/' build.sh
           
           echo "=== DEBUG: Environment variables to be passed ==="
           echo "LIBRESCOOT_VERSION=${{ needs.generate-timestamp.outputs.timestamp }}"
