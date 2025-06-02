@@ -196,16 +196,14 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
       return;
     }
 
-    // Check for double tap (toggle hazards) - now tap-to-tap instead of release-to-release
-    if (_lastTapTime != null && now.difference(_lastTapTime!) < _doublePressDuration) {
+    // Check for double tap (toggle hazards) - but only if we're not already in a press sequence
+    // We need to be careful here - only check for double tap if we're not currently tracking a press
+    if (_buttonPressStartTime == null && _lastTapTime != null && now.difference(_lastTapTime!) < _doublePressDuration) {
       _log('Double tap detected - toggling hazards');
       _executeAction(ShortcutMenuItem.toggleHazards);
       _resetState();
       return;
     }
-
-    // Record this tap time for potential double tap detection
-    _lastTapTime = now;
 
     // If we're already tracking a press, ignore this event
     // This prevents multiple button press events from resetting our timer
@@ -281,6 +279,8 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
     else if (holdDuration < _longPressDuration) {
       _log(
           'Short press detected - waiting for potential double press (window: ${_doublePressDuration.inMilliseconds}ms)');
+      // Record this tap time for potential double tap detection (tap-to-tap timing)
+      _lastTapTime = _buttonPressStartTime; // Use the original press time, not release time
     }
 
     _buttonPressStartTime = null;

@@ -154,7 +154,6 @@ class ShortcutMenuOverlay extends StatelessWidget {
     // Add a print statement to debug when this is called
     print('Building menu item: $item, isSelected: $isSelected');
 
-    final theme = Theme.of(context);
     final size = isSelected ? 80.0 : 60.0;
     final color = isSelected
         ? Colors.orange // Use orange for selected items for better contrast
