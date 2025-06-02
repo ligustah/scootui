@@ -7,8 +7,9 @@ import '../repositories/mdb_repository.dart';
 import '../state/vehicle.dart';
 import 'debug_overlay_cubit.dart';
 import 'mdb_cubits.dart';
+import 'screen_cubit.dart';
 import 'theme_cubit.dart';
-import 'trip_cubit.dart';
+// import 'trip_cubit.dart'; // Commented out since resetTrip is removed
 
 enum ShortcutMenuState {
   hidden,
@@ -18,16 +19,70 @@ enum ShortcutMenuState {
 
 enum ShortcutMenuItem {
   toggleHazards,
+  toggleView,
   toggleTheme,
   toggleDebugOverlay,
-  resetTrip,
+  // resetTrip, // Commented out for now
+}
+
+// Centralized menu items structure with metadata
+class MenuItemData {
+  final ShortcutMenuItem item;
+  final String label;
+  final IconData icon;
+  final String description;
+
+  const MenuItemData({
+    required this.item,
+    required this.label,
+    required this.icon,
+    required this.description,
+  });
+}
+
+class MenuItems {
+  static const List<MenuItemData> items = [
+    MenuItemData(
+      item: ShortcutMenuItem.toggleHazards,
+      label: 'Hazards',
+      icon: Icons.warning_amber_rounded,
+      description: 'Toggle hazard lights',
+    ),
+    MenuItemData(
+      item: ShortcutMenuItem.toggleView,
+      label: 'View',
+      icon: Icons.remove_red_eye_outlined,
+      description: 'Switch between cluster and map view',
+    ),
+    MenuItemData(
+      item: ShortcutMenuItem.toggleTheme,
+      label: 'Theme',
+      icon: Icons.brightness_6,
+      description: 'Cycle theme: dark → light → auto',
+    ),
+    MenuItemData(
+      item: ShortcutMenuItem.toggleDebugOverlay,
+      label: 'Debug',
+      icon: Icons.bug_report,
+      description: 'Toggle debug overlay',
+    ),
+  ];
+
+  static MenuItemData getItemData(ShortcutMenuItem item) {
+    return items.firstWhere((data) => data.item == item);
+  }
+
+  static IconData getViewToggleIcon(bool isClusterView) {
+    return isClusterView ? Icons.map_outlined : Icons.speed;
+  }
 }
 
 class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
   final VehicleSync _vehicleSync;
+  final ScreenCubit _screenCubit;
   final ThemeCubit _themeCubit;
   final DebugOverlayCubit _debugOverlayCubit;
-  final TripCubit _tripCubit;
+  // final TripCubit _tripCubit; // Commented out since resetTrip is removed
   final MDBRepository _mdbRepository;
 
   late final StreamSubscription<VehicleData> _vehicleSubscription;
@@ -35,7 +90,7 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
 
   // Button press tracking
   DateTime? _buttonPressStartTime;
-  DateTime? _buttonReleaseTime;
+  DateTime? _lastTapTime; // Changed from _buttonReleaseTime to track tap-to-tap
   Timer? _longPressTimer;
   Timer? _selectionTimer;
   Timer? _cycleTimer;
@@ -50,24 +105,21 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
   static const Duration _itemCycleDuration = Duration(milliseconds: 750);
   static const Duration _confirmDuration = Duration(seconds: 1);
 
-  // List of menu items
-  final List<ShortcutMenuItem> _menuItems = [
-    ShortcutMenuItem.toggleHazards,
-    ShortcutMenuItem.toggleTheme,
-    ShortcutMenuItem.toggleDebugOverlay,
-    ShortcutMenuItem.resetTrip,
-  ];
+  // List of menu items from centralized structure
+  final List<ShortcutMenuItem> _menuItems = MenuItems.items.map((data) => data.item).toList();
 
   ShortcutMenuCubit({
     required VehicleSync vehicleSync,
+    required ScreenCubit screenCubit,
     required ThemeCubit themeCubit,
     required DebugOverlayCubit debugOverlayCubit,
-    required TripCubit tripCubit,
+    // required TripCubit tripCubit, // Commented out since resetTrip is removed
     required MDBRepository mdbRepository,
   })  : _vehicleSync = vehicleSync,
+        _screenCubit = screenCubit,
         _themeCubit = themeCubit,
         _debugOverlayCubit = debugOverlayCubit,
-        _tripCubit = tripCubit,
+        // _tripCubit = tripCubit, // Commented out since resetTrip is removed
         _mdbRepository = mdbRepository,
         super(ShortcutMenuState.hidden) {
     // Listen for vehicle state changes via hash polling
@@ -111,8 +163,6 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
       _log('No longer in ready-to-drive state, hiding menu');
       emit(ShortcutMenuState.hidden);
     }
-
-    // We now rely on PUBSUB events for button handling, no need to check button state here
   }
 
   // Helper method to log with both developer.log and print
@@ -133,13 +183,16 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
       return;
     }
 
-    // Check for double press (toggle hazards)
-    if (_buttonReleaseTime != null && now.difference(_buttonReleaseTime!) < _doublePressDuration) {
-      _log('Double press detected - toggling hazards');
+    // Check for double tap (toggle hazards) - now tap-to-tap instead of release-to-release
+    if (_lastTapTime != null && now.difference(_lastTapTime!) < _doublePressDuration) {
+      _log('Double tap detected - toggling hazards');
       _executeAction(ShortcutMenuItem.toggleHazards);
       _resetState();
       return;
     }
+
+    // Record this tap time for potential double tap detection
+    _lastTapTime = now;
 
     // If we're already tracking a press, ignore this event
     // This prevents multiple button press events from resetting our timer
@@ -182,7 +235,6 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
     _longPressTimer?.cancel();
 
     final now = DateTime.now();
-    _buttonReleaseTime = now;
     _log('Seatbox button released');
     _log('Current menu state: $state');
 
@@ -257,18 +309,39 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
         _vehicleSync.toggleHazardLights();
         _log('Hazard lights toggled');
         break;
+      case ShortcutMenuItem.toggleView:
+        final currentState = _screenCubit.state;
+        if (currentState is ScreenCluster) {
+          _screenCubit.showMap();
+          _log('Switched to map view');
+        } else {
+          _screenCubit.showCluster();
+          _log('Switched to cluster view');
+        }
+        break;
       case ShortcutMenuItem.toggleTheme:
-        _themeCubit.toggleTheme();
-        _log('Theme toggled');
+        _cycleTheme();
+        _log('Theme cycled');
         break;
       case ShortcutMenuItem.toggleDebugOverlay:
         _debugOverlayCubit.toggleMode();
         _log('Debug overlay toggled');
         break;
-      case ShortcutMenuItem.resetTrip:
-        _tripCubit.reset();
-        _log('Trip counter reset');
-        break;
+    }
+  }
+
+  void _cycleTheme() {
+    final currentState = _themeCubit.state;
+    if (currentState.isAutoMode) {
+      // auto → dark
+      _themeCubit.updateAutoTheme(false);
+      _themeCubit.updateTheme(ThemeMode.dark);
+    } else if (currentState.themeMode == ThemeMode.dark) {
+      // dark → light
+      _themeCubit.updateTheme(ThemeMode.light);
+    } else {
+      // light → auto
+      _themeCubit.updateAutoTheme(true);
     }
   }
 
@@ -305,16 +378,17 @@ class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {
     _executeAction(ShortcutMenuItem.toggleDebugOverlay);
   }
 
-  void manualResetTrip() {
-    _executeAction(ShortcutMenuItem.resetTrip);
-  }
+  // void manualResetTrip() {
+  //   _executeAction(ShortcutMenuItem.resetTrip);
+  // }
 
   static ShortcutMenuCubit create(BuildContext context) {
     return ShortcutMenuCubit(
       vehicleSync: context.read<VehicleSync>(),
+      screenCubit: context.read<ScreenCubit>(),
       themeCubit: context.read<ThemeCubit>(),
       debugOverlayCubit: context.read<DebugOverlayCubit>(),
-      tripCubit: context.read<TripCubit>(),
+      // tripCubit: context.read<TripCubit>(), // Commented out since resetTrip is removed
       mdbRepository: RepositoryProvider.of<MDBRepository>(context),
     );
   }

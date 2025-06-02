@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/shortcut_menu_cubit.dart';
+import '../../cubits/screen_cubit.dart';
 
 class ShortcutMenuOverlay extends StatelessWidget {
   const ShortcutMenuOverlay({super.key});
@@ -47,21 +48,32 @@ class ShortcutMenuOverlay extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      width: 480,
-      height: 480,
-      color: Colors.black54,
-      child: Stack(
+    return Stack(
         children: [
-          // Menu items in a row at the bottom
+          // Menu items in a row at the bottom with improved container styling
           Positioned(
-            bottom: 80,
-            left: 0,
-            right: 0,
+            bottom: 60,
+            left: 40,
+            right: 40,
             child: Center(
               child: Container(
-                height: 100,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                height: 120,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(menuItems.length, (index) {
@@ -78,46 +90,57 @@ class ShortcutMenuOverlay extends StatelessWidget {
             ),
           ),
 
-          // Confirmation UI
+          // Confirmation UI with improved styling
           if (isConfirming)
             Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: Column(
-                children: [
-                  Text(
-                    'Press to trigger',
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
+              bottom: 20,
+              left: 60,
+              right: 60,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.orange,
+                    width: 2,
                   ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: SizedBox(
-                      width: 200,
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 1.0, end: 0.0),
-                        duration: const Duration(seconds: 1),
-                        builder: (context, value, child) {
-                          return LinearProgressIndicator(
-                            value: value,
-                            backgroundColor:
-                                isDark ? Colors.white24 : Colors.black12,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isDark ? Colors.white : Colors.black,
-                            ),
-                          );
-                        },
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Press to confirm',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Center(
+                      child: SizedBox(
+                        width: 200,
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween<double>(begin: 1.0, end: 0.0),
+                          duration: const Duration(seconds: 1),
+                          builder: (context, value, child) {
+                            return LinearProgressIndicator(
+                              value: value,
+                              backgroundColor:
+                                  isDark ? Colors.white24 : Colors.black12,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.orange,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
-      ),
     );
   }
 
@@ -133,10 +156,10 @@ class ShortcutMenuOverlay extends StatelessWidget {
     final theme = Theme.of(context);
     final size = isSelected ? 80.0 : 60.0;
     final color = isSelected
-        ? theme.colorScheme.primary
+        ? Colors.orange // Use orange for selected items for better contrast
         : isDark
-            ? Colors.white70
-            : Colors.black54;
+            ? Colors.white
+            : Colors.black87;
 
     // Add a key that depends on isSelected to force rebuild
     return AnimatedContainer(
@@ -146,34 +169,53 @@ class ShortcutMenuOverlay extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+        color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: color,
-          width: isSelected ? 2 : 1,
+          width: isSelected ? 4 : 2, // Thicker borders for better contrast
         ),
+        boxShadow: isSelected ? [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ] : null,
       ),
       child: Center(
-        child: _getIconForMenuItem(item, color, isSelected ? 36 : 28),
+        child: _getIconForMenuItem(context, item, color, isSelected ? 36 : 28),
       ),
     );
   }
 
-  Widget _getIconForMenuItem(ShortcutMenuItem item, Color color, double size) {
-    // Add a key to force rebuild when the size changes
+  Widget _getIconForMenuItem(BuildContext context, ShortcutMenuItem item, Color color, double size) {
+    // Get icon from centralized menu structure
+    IconData iconData;
+    
     switch (item) {
       case ShortcutMenuItem.toggleHazards:
-        return Icon(Icons.warning_amber_rounded,
-            key: ValueKey('icon_hazards_$size'), color: color, size: size);
+        iconData = MenuItems.getItemData(item).icon;
+        break;
+      case ShortcutMenuItem.toggleView:
+        // Dynamic icon based on current screen state
+        final screenCubit = context.read<ScreenCubit>();
+        final isClusterView = screenCubit.state is ScreenCluster;
+        iconData = MenuItems.getViewToggleIcon(isClusterView);
+        break;
       case ShortcutMenuItem.toggleTheme:
-        return Icon(Icons.brightness_6,
-            key: ValueKey('icon_theme_$size'), color: color, size: size);
+        iconData = MenuItems.getItemData(item).icon;
+        break;
       case ShortcutMenuItem.toggleDebugOverlay:
-        return Icon(Icons.bug_report,
-            key: ValueKey('icon_debug_$size'), color: color, size: size);
-      case ShortcutMenuItem.resetTrip:
-        return Icon(Icons.refresh,
-            key: ValueKey('icon_trip_$size'), color: color, size: size);
+        iconData = MenuItems.getItemData(item).icon;
+        break;
     }
+    
+    return Icon(
+      iconData,
+      key: ValueKey('icon_${item.name}_$size'),
+      color: color,
+      size: size,
+    );
   }
 }
