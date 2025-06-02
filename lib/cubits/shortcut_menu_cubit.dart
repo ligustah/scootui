@@ -75,6 +75,19 @@ class MenuItems {
   static IconData getViewToggleIcon(bool isClusterView) {
     return isClusterView ? Icons.map_outlined : Icons.speed;
   }
+
+  static IconData getThemeToggleIcon(bool isAutoMode, ThemeMode currentTheme) {
+    if (isAutoMode) {
+      // auto → dark (next state is dark)
+      return Icons.dark_mode;
+    } else if (currentTheme == ThemeMode.dark) {
+      // dark → light (next state is light)
+      return Icons.light_mode;
+    } else {
+      // light → auto (next state is auto)
+      return Icons.contrast;
+    }
+  }
 }
 
 class ShortcutMenuCubit extends Cubit<ShortcutMenuState> {

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/shortcut_menu_cubit.dart';
 import '../../cubits/screen_cubit.dart';
+import '../../cubits/theme_cubit.dart';
 
 class ShortcutMenuOverlay extends StatelessWidget {
   const ShortcutMenuOverlay({super.key});
@@ -204,7 +205,10 @@ class ShortcutMenuOverlay extends StatelessWidget {
         iconData = MenuItems.getViewToggleIcon(isClusterView);
         break;
       case ShortcutMenuItem.toggleTheme:
-        iconData = MenuItems.getItemData(item).icon;
+        // Dynamic icon based on next theme state
+        final themeCubit = context.read<ThemeCubit>();
+        final themeState = themeCubit.state;
+        iconData = MenuItems.getThemeToggleIcon(themeState.isAutoMode, themeState.themeMode);
         break;
       case ShortcutMenuItem.toggleDebugOverlay:
         iconData = MenuItems.getItemData(item).icon;
