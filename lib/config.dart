@@ -7,10 +7,10 @@ class AppConfig {
   static const String redisSettingsCluster = 'dashboard';
 
   /// Redis theme setting key
-  static const String themeSettingKey = 'theme';
+  static const String themeSettingKey = 'dashboard.theme';
 
   /// Redis mode setting key
-  static const String modeSettingKey = 'mode';
+  static const String modeSettingKey = 'dashboard.mode';
 
   /// Redis show raw speed setting key
   static const String showRawSpeedKey = 'dashboard.show-raw-speed';

@@ -100,14 +100,14 @@ class SettingsService {
   Future<void> _loadFromRedis() async {
     try {
       debugPrint('🔧 SettingsService: Loading theme from Redis');
-      final themeMode = await _mdbRepository.get(AppConfig.redisSettingsCluster, AppConfig.themeSettingKey);
+      final themeMode = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.themeSettingKey);
       debugPrint('🔧 SettingsService: Redis theme = $themeMode');
       if (themeMode != null) {
         _settings[AppConfig.themeSettingKey] = themeMode;
       }
 
       debugPrint('🔧 SettingsService: Loading mode from Redis');
-      final mode = await _mdbRepository.get(AppConfig.redisSettingsCluster, AppConfig.modeSettingKey);
+      final mode = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.modeSettingKey);
       debugPrint('🔧 SettingsService: Redis mode = $mode');
       if (mode != null) {
         _settings[AppConfig.modeSettingKey] = mode;
@@ -128,13 +128,13 @@ class SettingsService {
   Future<void> _syncRedisFromSettings() async {
     try {
       if (_settings.containsKey(AppConfig.themeSettingKey)) {
-        final redisTheme = await _mdbRepository.get(AppConfig.redisSettingsCluster, AppConfig.themeSettingKey);
+        final redisTheme = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.themeSettingKey);
         debugPrint(
             '🔧 SettingsService: Sync check - Redis theme = $redisTheme, settings = ${_settings[AppConfig.themeSettingKey]}');
         if (redisTheme == null) {
           debugPrint('🔧 SettingsService: Syncing theme to Redis');
           await _mdbRepository.set(
-            AppConfig.redisSettingsCluster,
+            AppConfig.redisSettingsPersistentCluster,
             AppConfig.themeSettingKey,
             _settings[AppConfig.themeSettingKey],
           );
@@ -142,13 +142,13 @@ class SettingsService {
       }
 
       if (_settings.containsKey(AppConfig.modeSettingKey)) {
-        final redisMode = await _mdbRepository.get(AppConfig.redisSettingsCluster, AppConfig.modeSettingKey);
+        final redisMode = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.modeSettingKey);
         debugPrint(
             '🔧 SettingsService: Sync check - Redis mode = $redisMode, settings = ${_settings[AppConfig.modeSettingKey]}');
         if (redisMode == null) {
           debugPrint('🔧 SettingsService: Syncing mode to Redis');
           await _mdbRepository.set(
-            AppConfig.redisSettingsCluster,
+            AppConfig.redisSettingsPersistentCluster,
             AppConfig.modeSettingKey,
             _settings[AppConfig.modeSettingKey],
           );
@@ -177,27 +177,15 @@ class SettingsService {
   void _subscribeToRedisChanges() {
     debugPrint('🔧 SettingsService: Subscribing to Redis changes');
     
-    // Subscribe to dashboard cluster changes
-    _mdbRepository.subscribe(AppConfig.redisSettingsCluster).listen(
-      (event) {
-        final (_, key) = event;
-        debugPrint('🔧 SettingsService: Received Redis update for key: $key');
-        _handleRedisChange(key);
-      },
-      onError: (e) {
-        debugPrint('🔧 SettingsService: Error in Redis subscription: $e');
-      },
-    );
-
     // Subscribe to persistent settings cluster changes
     _mdbRepository.subscribe(AppConfig.redisSettingsPersistentCluster).listen(
       (event) {
         final (_, key) = event;
-        debugPrint('🔧 SettingsService: Received persistent settings Redis update for key: $key');
-        _handlePersistentRedisChange(key);
+        debugPrint('🔧 SettingsService: Received settings Redis update for key: $key');
+        _handleRedisChange(key);
       },
       onError: (e) {
-        debugPrint('🔧 SettingsService: Error in persistent settings Redis subscription: $e');
+        debugPrint('🔧 SettingsService: Error in settings Redis subscription: $e');
       },
     );
   }
@@ -205,38 +193,18 @@ class SettingsService {
   /// Handles Redis change events
   Future<void> _handleRedisChange(String key) async {
     try {
-      // Only handle changes for keys we expect to save to the settings file
-      if (key == AppConfig.themeSettingKey || key == AppConfig.modeSettingKey) {
-        final value = await _mdbRepository.get(AppConfig.redisSettingsCluster, key);
-        debugPrint('🔧 SettingsService: Redis change - key: $key, value: $value');
+      // Handle all dashboard settings
+      if (key.startsWith('dashboard.')) {
+        final value = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, key);
+        debugPrint('🔧 SettingsService: Settings Redis change - key: $key, value: $value');
         if (value != null) {
           _settings[key] = value;
-
-          await _saveToFile();
           // Emit updated settings
           _settingsController.add(_settings);
         }
-        // } else {
-        //   debugPrint('🔧 SettingsService: Ignoring Redis change for key: $key');
       }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error handling Redis change: $e');
-    }
-  }
-
-  /// Handles persistent Redis settings change events
-  Future<void> _handlePersistentRedisChange(String key) async {
-    try {
-      if (key == AppConfig.showRawSpeedKey) {
-        final value = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, key);
-        debugPrint('🔧 SettingsService: Persistent settings Redis change - key: $key, value: $value');
-        if (value != null) {
-          _settings[key] = value;
-          _settingsController.add(_settings);
-        }
-      }
-    } catch (e) {
-      debugPrint('🔧 SettingsService: Error handling persistent Redis change: $e');
     }
   }
 
@@ -322,9 +290,8 @@ class SettingsService {
     debugPrint('🔧 SettingsService: Updating theme setting to $value');
     _settings[AppConfig.themeSettingKey] = value;
 
-    // Save to both file and Redis
-    await _saveToFile();
-    await _mdbRepository.set(AppConfig.redisSettingsCluster, AppConfig.themeSettingKey, value);
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.themeSettingKey, value);
 
     // Emit updated settings
     _settingsController.add(_settings);
@@ -337,15 +304,12 @@ class SettingsService {
     if (enabled) {
       // When enabling auto mode, set theme to 'auto'
       _settings[AppConfig.themeSettingKey] = 'auto';
-      await _mdbRepository.set(AppConfig.redisSettingsCluster, AppConfig.themeSettingKey, 'auto');
+      await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.themeSettingKey, 'auto');
     } else {
       // When disabling auto mode, set theme to 'dark' as default
       _settings[AppConfig.themeSettingKey] = 'dark';
-      await _mdbRepository.set(AppConfig.redisSettingsCluster, AppConfig.themeSettingKey, 'dark');
+      await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.themeSettingKey, 'dark');
     }
-
-    // Save to file
-    await _saveToFile();
 
     // Emit updated settings
     _settingsController.add(_settings);
@@ -356,9 +320,8 @@ class SettingsService {
     debugPrint('🔧 SettingsService: Updating screen setting to $screenMode');
     _settings[AppConfig.modeSettingKey] = screenMode;
 
-    // Save to both file and Redis
-    await _saveToFile();
-    await _mdbRepository.set(AppConfig.redisSettingsCluster, AppConfig.modeSettingKey, screenMode);
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.modeSettingKey, screenMode);
 
     // Emit updated settings
     _settingsController.add(_settings);
