@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
+import '../../state/engine.dart';
+import '../../state/settings.dart';
 import '../indicators/speed_limit_indicator.dart';
 
 class SpeedometerDisplay extends StatefulWidget {
@@ -71,8 +73,11 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   @override
   Widget build(BuildContext context) {
     final engineData = EngineSync.watch(context);
-    final speed = engineData.speed.toDouble();
+    final settings = SettingsSync.watch(context);
     final theme = ThemeCubit.watch(context);
+    
+    // Get the correct speed based on settings
+    final speed = _getDisplaySpeed(engineData, settings);
 
     // Check if we're regenerating by monitoring the motor current
     // Negative current indicates regenerative braking
@@ -210,6 +215,19 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
         ),
       ],
     );
+  }
+
+  /// Gets the correct speed value based on settings
+  double _getDisplaySpeed(EngineData engineData, SettingsData settings) {
+    if (settings.showRawSpeedBool) {
+      // Use raw speed if available and not null, otherwise fall back to processed speed
+      final rawSpeedValue = engineData.rawSpeed;
+      if (rawSpeedValue != null) {
+        return rawSpeedValue.toDouble();
+      }
+    }
+    
+    return engineData.speed.toDouble();
   }
 }
 

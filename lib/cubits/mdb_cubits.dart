@@ -9,6 +9,7 @@ import '../state/gps.dart';
 import '../state/internet.dart';
 import '../state/navigation.dart';
 import '../state/ota.dart';
+import '../state/settings.dart';
 import '../state/speed_limit.dart';
 import '../state/vehicle.dart';
 import 'syncable_cubit.dart';
@@ -145,4 +146,16 @@ class SpeedLimitSync extends SyncableCubit<SpeedLimitData> {
       selector(context.select((SpeedLimitSync e) => e.state));
 
   SpeedLimitSync(MDBRepository repo) : super(redisRepository: repo, initialState: SpeedLimitData());
+}
+
+class SettingsSync extends SyncableCubit<SettingsData> {
+  static SettingsData watch(BuildContext context) => context.watch<SettingsSync>().state;
+
+  static SettingsSync create(BuildContext context) =>
+      SettingsSync(RepositoryProvider.of<MDBRepository>(context))..start();
+
+  static T select<T>(BuildContext context, T Function(SettingsData) selector) =>
+      selector(context.select((SettingsSync e) => e.state));
+
+  SettingsSync(MDBRepository repo) : super(redisRepository: repo, initialState: SettingsData());
 }

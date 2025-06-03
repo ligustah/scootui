@@ -12,6 +12,12 @@ class AppConfig {
   /// Redis mode setting key
   static const String modeSettingKey = 'mode';
 
+  /// Redis show raw speed setting key
+  static const String showRawSpeedKey = 'dashboard.show-raw-speed';
+
+  /// Redis settings cluster for persistent settings
+  static const String redisSettingsPersistentCluster = 'settings';
+
   /// Default Valhalla endpoint URL
   static String valhallaEndpoint = 'https://valhalla1.openstreetmap.de/';
 

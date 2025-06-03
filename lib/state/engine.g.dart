@@ -19,6 +19,7 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
   num get motorCurrent;
   num get rpm;
   num get speed;
+  num? get rawSpeed;
   Toggle get throttle;
   String get firmwareVersion;
   double get odometer;
@@ -77,6 +78,13 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
             defaultValue: null,
             interval: Duration(microseconds: 100000)),
         SyncFieldSettings(
+            name: "rawSpeed",
+            variable: "raw-speed",
+            type: SyncFieldType.num,
+            typeName: "num?",
+            defaultValue: null,
+            interval: Duration(microseconds: 100000)),
+        SyncFieldSettings(
             name: "throttle",
             variable: "throttle",
             type: SyncFieldType.enum_,
@@ -118,6 +126,7 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
       motorCurrent: "motor:current" != name ? motorCurrent : num.parse(value),
       rpm: "rpm" != name ? rpm : num.parse(value),
       speed: "speed" != name ? speed : num.parse(value),
+      rawSpeed: "raw-speed" != name ? rawSpeed : num.parse(value),
       throttle:
           "throttle" != name ? throttle : $_ToggleMap[value] ?? Toggle.off,
       firmwareVersion: "fw-version" != name ? firmwareVersion : value,
@@ -134,6 +143,7 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
         motorCurrent,
         rpm,
         speed,
+        rawSpeed,
         throttle,
         firmwareVersion,
         odometer,
@@ -151,6 +161,7 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
     buf.writeln("	motorCurrent = $motorCurrent");
     buf.writeln("	rpm = $rpm");
     buf.writeln("	speed = $speed");
+    buf.writeln("	rawSpeed = $rawSpeed");
     buf.writeln("	throttle = $throttle");
     buf.writeln("	firmwareVersion = $firmwareVersion");
     buf.writeln("	odometer = $odometer");

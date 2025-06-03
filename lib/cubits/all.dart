@@ -46,4 +46,5 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: ShortcutMenuCubit.create),
   BlocProvider(create: VersionOverlayCubit.create),
   BlocProvider(create: DashboardSyncCubit.create),
+  BlocProvider(create: SettingsSync.create),
 ];

@@ -37,6 +37,10 @@ class EngineData extends Equatable with $EngineData {
   final num speed;
 
   @override
+  @StateField(name: "raw-speed", interval: Duration(milliseconds: 100))
+  final num? rawSpeed;
+
+  @override
   @StateField(defaultValue: "off")
   final Toggle throttle;
 
@@ -59,6 +63,7 @@ class EngineData extends Equatable with $EngineData {
     this.kers = Toggle.on,
     this.kersReasonOff = "none",
     this.speed = 0,
+    this.rawSpeed,
     this.firmwareVersion = "",
     this.motorCurrent = 0,
     this.motorVoltage = 0,

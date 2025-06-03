@@ -112,6 +112,13 @@ class SettingsService {
       if (mode != null) {
         _settings[AppConfig.modeSettingKey] = mode;
       }
+
+      debugPrint('🔧 SettingsService: Loading show-raw-speed from Redis');
+      final showRawSpeed = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.showRawSpeedKey);
+      debugPrint('🔧 SettingsService: Redis show-raw-speed = $showRawSpeed');
+      if (showRawSpeed != null) {
+        _settings[AppConfig.showRawSpeedKey] = showRawSpeed;
+      }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error loading settings from Redis: $e');
     }
@@ -147,6 +154,20 @@ class SettingsService {
           );
         }
       }
+
+      if (_settings.containsKey(AppConfig.showRawSpeedKey)) {
+        final redisShowRawSpeed = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.showRawSpeedKey);
+        debugPrint(
+            '🔧 SettingsService: Sync check - Redis show-raw-speed = $redisShowRawSpeed, settings = ${_settings[AppConfig.showRawSpeedKey]}');
+        if (redisShowRawSpeed == null) {
+          debugPrint('🔧 SettingsService: Syncing show-raw-speed to Redis');
+          await _mdbRepository.set(
+            AppConfig.redisSettingsPersistentCluster,
+            AppConfig.showRawSpeedKey,
+            _settings[AppConfig.showRawSpeedKey],
+          );
+        }
+      }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error syncing settings to Redis: $e');
     }
@@ -155,6 +176,8 @@ class SettingsService {
   /// Subscribes to Redis changes for settings values
   void _subscribeToRedisChanges() {
     debugPrint('🔧 SettingsService: Subscribing to Redis changes');
+    
+    // Subscribe to dashboard cluster changes
     _mdbRepository.subscribe(AppConfig.redisSettingsCluster).listen(
       (event) {
         final (_, key) = event;
@@ -163,6 +186,18 @@ class SettingsService {
       },
       onError: (e) {
         debugPrint('🔧 SettingsService: Error in Redis subscription: $e');
+      },
+    );
+
+    // Subscribe to persistent settings cluster changes
+    _mdbRepository.subscribe(AppConfig.redisSettingsPersistentCluster).listen(
+      (event) {
+        final (_, key) = event;
+        debugPrint('🔧 SettingsService: Received persistent settings Redis update for key: $key');
+        _handlePersistentRedisChange(key);
+      },
+      onError: (e) {
+        debugPrint('🔧 SettingsService: Error in persistent settings Redis subscription: $e');
       },
     );
   }
@@ -186,6 +221,22 @@ class SettingsService {
       }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error handling Redis change: $e');
+    }
+  }
+
+  /// Handles persistent Redis settings change events
+  Future<void> _handlePersistentRedisChange(String key) async {
+    try {
+      if (key == AppConfig.showRawSpeedKey) {
+        final value = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, key);
+        debugPrint('🔧 SettingsService: Persistent settings Redis change - key: $key, value: $value');
+        if (value != null) {
+          _settings[key] = value;
+          _settingsController.add(_settings);
+        }
+      }
+    } catch (e) {
+      debugPrint('🔧 SettingsService: Error handling persistent Redis change: $e');
     }
   }
 
@@ -247,6 +298,13 @@ class SettingsService {
     return value ?? 'speedometer';
   }
 
+  /// Gets the show raw speed setting with fallback to default
+  bool getShowRawSpeedSetting() {
+    final value = _settings[AppConfig.showRawSpeedKey] as String?;
+    debugPrint('🔧 SettingsService: Getting show raw speed setting: $value');
+    return value == 'true';
+  }
+
   /// Updates the theme setting
   Future<void> updateThemeSetting(ThemeMode themeMode) async {
     String value;
@@ -301,6 +359,19 @@ class SettingsService {
     // Save to both file and Redis
     await _saveToFile();
     await _mdbRepository.set(AppConfig.redisSettingsCluster, AppConfig.modeSettingKey, screenMode);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the show raw speed setting
+  Future<void> updateShowRawSpeedSetting(bool enabled) async {
+    debugPrint('🔧 SettingsService: Updating show raw speed setting to $enabled');
+    final value = enabled ? 'true' : 'false';
+    _settings[AppConfig.showRawSpeedKey] = value;
+
+    // Save to persistent settings Redis (no file saving)
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.showRawSpeedKey, value);
 
     // Emit updated settings
     _settingsController.add(_settings);
