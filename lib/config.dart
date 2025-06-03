@@ -21,9 +21,8 @@ class AppConfig {
   /// Default Valhalla endpoint URL
   static String valhallaEndpoint = 'https://valhalla1.openstreetmap.de/';
 
-  // TODO: add to setting service
   /// Redis valhalla endpoint setting key
-  // static const String valhallaEndpointKey = 'valhalla-url';
+  static const String valhallaEndpointKey = 'dashboard.valhalla-url';
 
   /// Redis brightness sensor key
   static const String brightnessKey = 'brightness';

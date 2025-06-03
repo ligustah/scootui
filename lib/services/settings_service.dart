@@ -119,6 +119,14 @@ class SettingsService {
       if (showRawSpeed != null) {
         _settings[AppConfig.showRawSpeedKey] = showRawSpeed;
       }
+
+      debugPrint('🔧 SettingsService: Loading valhalla-url from Redis');
+      final valhallaUrl = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.valhallaEndpointKey);
+      debugPrint('🔧 SettingsService: Redis valhalla-url = $valhallaUrl');
+      if (valhallaUrl != null) {
+        _settings[AppConfig.valhallaEndpointKey] = valhallaUrl;
+        AppConfig.valhallaEndpoint = valhallaUrl; // Update the static value
+      }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error loading settings from Redis: $e');
     }
@@ -168,6 +176,20 @@ class SettingsService {
           );
         }
       }
+
+      if (_settings.containsKey(AppConfig.valhallaEndpointKey)) {
+        final redisValhallaUrl = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.valhallaEndpointKey);
+        debugPrint(
+            '🔧 SettingsService: Sync check - Redis valhalla-url = $redisValhallaUrl, settings = ${_settings[AppConfig.valhallaEndpointKey]}');
+        if (redisValhallaUrl == null) {
+          debugPrint('🔧 SettingsService: Syncing valhalla-url to Redis');
+          await _mdbRepository.set(
+            AppConfig.redisSettingsPersistentCluster,
+            AppConfig.valhallaEndpointKey,
+            _settings[AppConfig.valhallaEndpointKey],
+          );
+        }
+      }
     } catch (e) {
       debugPrint('🔧 SettingsService: Error syncing settings to Redis: $e');
     }
@@ -199,6 +221,12 @@ class SettingsService {
         debugPrint('🔧 SettingsService: Settings Redis change - key: $key, value: $value');
         if (value != null) {
           _settings[key] = value;
+          
+          // Update static AppConfig for Valhalla URL
+          if (key == AppConfig.valhallaEndpointKey) {
+            AppConfig.valhallaEndpoint = value;
+          }
+          
           // Emit updated settings
           _settingsController.add(_settings);
         }
@@ -273,6 +301,13 @@ class SettingsService {
     return value == 'true';
   }
 
+  /// Gets the Valhalla endpoint setting with fallback to default
+  String getValhallaEndpointSetting() {
+    final value = _settings[AppConfig.valhallaEndpointKey] as String?;
+    debugPrint('🔧 SettingsService: Getting Valhalla endpoint setting: $value');
+    return value ?? AppConfig.valhallaEndpoint;
+  }
+
   /// Updates the theme setting
   Future<void> updateThemeSetting(ThemeMode themeMode) async {
     String value;
@@ -335,6 +370,19 @@ class SettingsService {
 
     // Save to persistent settings Redis (no file saving)
     await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.showRawSpeedKey, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the Valhalla endpoint setting
+  Future<void> updateValhallaEndpointSetting(String url) async {
+    debugPrint('🔧 SettingsService: Updating Valhalla endpoint setting to $url');
+    _settings[AppConfig.valhallaEndpointKey] = url;
+    AppConfig.valhallaEndpoint = url; // Update static value immediately
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.valhallaEndpointKey, url);
 
     // Emit updated settings
     _settingsController.add(_settings);
