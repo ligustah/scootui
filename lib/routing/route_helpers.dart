@@ -129,7 +129,9 @@ class RouteHelpers {
         continue; // Skip instructions that couldn't be properly mapped to the shape
       }
 
-      if (instructionShapeIndex > segmentIndexToCompareAgainst) {
+      // If the instruction's starting point is on or after the segment the user is currently on,
+      // it's considered an upcoming or current instruction.
+      if (instructionShapeIndex >= segmentIndexToCompareAgainst) {
         // Calculate distance to the instruction's starting point
         final instructionPoint = instruction.location;
         final distanceToManeuverStart = const Distance().as(
