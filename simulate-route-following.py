@@ -147,10 +147,10 @@ def main():
             prev_speed = current_speed
 
             # Update target speed more gradually and independently
-            if random.random() < 0.2:
-                target_speed_change = random.uniform(-3, 6)
+            if random.random() < 0.4:
+                target_speed_change = random.uniform(-4, 5)
                 new_target = target_speed + target_speed_change
-                target_speed = max(20, min(max_speed, new_target))
+                target_speed = max(30, min(max_speed, new_target))
 
             # Limit speed change to max_speed_delta per second
             if target_speed > prev_speed:
