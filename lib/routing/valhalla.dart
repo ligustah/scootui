@@ -354,9 +354,9 @@ class ValhallaService {
   }
 
   String? _extractInstructionText(Maneuver maneuver) {
-    // Use verbal succinct instruction for turn-by-turn display, fallback to other options
-    return maneuver.verbalSuccinctTransitionInstruction ??
-        maneuver.verbalPreTransitionInstruction ??
+    // Use verbal pre-transition instruction for turn-by-turn display, fallback to other options
+    return maneuver.verbalPreTransitionInstruction ??
+        maneuver.verbalTransitionAlertInstruction ?? // Added alert as a secondary fallback
         maneuver.instruction;
   }
 }
