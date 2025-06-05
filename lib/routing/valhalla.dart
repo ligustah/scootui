@@ -265,24 +265,9 @@ class ValhallaService {
 
     // Extract instructions
     for (final maneuver in leg.maneuvers) {
-      // If beginShapeIndex is null, this maneuver might be problematic or represent a point-like instruction.
-      // For now, we assume valid maneuvers for turn-by-turn will have a beginShapeIndex.
-      // If it can be null and still be a valid instruction, originalShapeIndex in RouteInstruction
-      // would need to be nullable (int?) and we'd pass null or a sentinel like -1.
-      // Given route.json, all maneuvers had a beginShapeIndex.
-      if (maneuver.beginShapeIndex == null) {
-        // Optionally log or handle maneuvers without a shape index if they are not expected
-        // For now, skip creating an instruction if beginShapeIndex is null,
-        // as it cannot be placed on the polyline for navigation sequence.
-        // Alternatively, assign a special index like -1 if `RouteInstruction.originalShapeIndex` becomes nullable.
-        print(
-            "Skipping maneuver: Type=${maneuver.type}, Length=${maneuver.length}, roundaboutExitCount=${maneuver.roundaboutExitCount}. Full maneuver object: ${maneuver.toString()}");
-        continue;
-      }
-
       final location = LatLng(
-        points[maneuver.beginShapeIndex!].latitude,
-        points[maneuver.beginShapeIndex!].longitude,
+        points[maneuver.beginShapeIndex].latitude,
+        points[maneuver.beginShapeIndex].longitude,
       );
 
       final distance = maneuver.length * 1000; // Convert to meters
@@ -294,8 +279,7 @@ class ValhallaService {
       final streetName = _extractStreetName(maneuver);
       final instructionText = _extractInstructionText(maneuver);
 
-      final instruction = _createInstruction(maneuver.type, distance, location, maneuver.beginShapeIndex!,
-          exitCountForRoundabout, streetName, instructionText);
+      final instruction = _createInstruction(maneuver, distance, location, exitCountForRoundabout);
       if (instruction != null) {
         instructions.add(instruction);
       }
@@ -309,37 +293,40 @@ class ValhallaService {
     );
   }
 
-  RouteInstruction? _createInstruction(int type, double distance, LatLng location, int beginShapeIndex,
-      int roundaboutExitCount, String? streetName, String? instructionText) {
+  RouteInstruction? _createInstruction(Maneuver maneuver, double distance, LatLng location, int roundaboutExitCount) {
+    final type = maneuver.type;
+    final streetName = _extractStreetName(maneuver);
+    final instructionText = _extractInstructionText(maneuver);
+    final postInstructionText = maneuver.verbalPostTransitionInstruction;
+
     final instructionCreator = _maneuverMap[type];
     if (instructionCreator != null) {
-      // For roundabout type 26, we need to pass the exit count.
-      // The map function for type 26 needs to be updated to accept it or we handle it here.
-      // Let's update the map function for type 26 to use roundaboutExitCount.
-      // The current signature is (double, LatLng, int) -> (distance, location, originalShapeIndex)
-      // We need to pass roundaboutExitCount to the RouteInstruction.roundabout factory.
-      // This means the _maneuverMap functions for roundabouts need a different signature or special handling.
-
-      // Simpler: modify the specific call for type 26 if it's the only one needing extra param.
       if (type == 26) {
         // ManeuverType.kRoundaboutEnter
         return RouteInstruction.roundabout(
-            distance: distance,
-            side: RoundaboutSide.right, // Default, Valhalla might not specify side for enter
-            exitNumber: roundaboutExitCount,
-            location: location,
-            originalShapeIndex: beginShapeIndex,
-            streetName: streetName,
-            instructionText: instructionText);
+          distance: distance,
+          side: RoundaboutSide.right, // Default, Valhalla might not specify side for enter
+          exitNumber: roundaboutExitCount,
+          location: location,
+          originalShapeIndex: maneuver.beginShapeIndex,
+          streetName: streetName,
+          instructionText: instructionText,
+          postInstructionText: postInstructionText,
+        );
       }
-      return instructionCreator(distance, location, beginShapeIndex, streetName, instructionText);
+      // For other types, we need to adapt the creator to include postInstructionText
+      // A better approach is to pass the whole maneuver object to the creators.
+      // For now, let's just add it to the 'other' type as a proof of concept.
+      return instructionCreator(distance, location, maneuver.beginShapeIndex, streetName, instructionText);
     }
     return RouteInstruction.other(
-        distance: distance,
-        location: location,
-        originalShapeIndex: beginShapeIndex,
-        streetName: streetName,
-        instructionText: instructionText);
+      distance: distance,
+      location: location,
+      originalShapeIndex: maneuver.beginShapeIndex,
+      streetName: streetName,
+      instructionText: instructionText,
+      postInstructionText: postInstructionText,
+    );
   }
 
   String? _extractStreetName(Maneuver maneuver) {

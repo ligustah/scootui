@@ -19,7 +19,7 @@ class TurnByTurnWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return BlocBuilder<NavigationCubit, NavigationState>(
       builder: (context, state) {
         if (!state.hasInstructions || state.status == NavigationStatus.idle) {
@@ -29,9 +29,7 @@ class TurnByTurnWidget extends StatelessWidget {
         return Container(
           padding: padding ?? const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
-            color: isDark 
-                ? Colors.black.withOpacity(0.8)
-                : Colors.white.withOpacity(0.9),
+            color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
             borderRadius: BorderRadius.circular(8.0),
           ),
           child: compact ? _buildCompactView(state, isDark) : _buildFullView(state, isDark),
@@ -207,45 +205,29 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   String _getInstructionText(RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
-    // Use Valhalla's instruction text if available, but still add "then" text
-    String baseText;
-    if (instruction.instructionText?.isNotEmpty == true) {
-      baseText = instruction.instructionText!;
-    } else {
-      // Generate instruction text with street name if available
+    // Use Valhalla's instruction text if available.
+    String baseText = instruction.instructionText ?? '';
+
+    // If Valhalla's text is empty, generate a fallback.
+    if (baseText.isEmpty) {
       baseText = switch (instruction) {
-      Keep(direction: final direction, streetName: final streetName) => switch (direction) {
-          KeepDirection.straight => streetName != null ? 'Continue straight on $streetName' : 'Continue straight',
-          _ => streetName != null ? 'Keep ${direction.name} on $streetName' : 'Keep ${direction.name}',
-        },
-      Turn(direction: final direction, streetName: final streetName) => switch (direction) {
-          TurnDirection.left => streetName != null ? 'Turn left onto $streetName' : 'Turn left',
-          TurnDirection.right => streetName != null ? 'Turn right onto $streetName' : 'Turn right',
-          TurnDirection.slightLeft => streetName != null ? 'Turn slightly left onto $streetName' : 'Turn slightly left',
-          TurnDirection.slightRight => streetName != null ? 'Turn slightly right onto $streetName' : 'Turn slightly right',
-          TurnDirection.sharpLeft => streetName != null ? 'Turn sharply left onto $streetName' : 'Turn sharply left',
-          TurnDirection.sharpRight => streetName != null ? 'Turn sharply right onto $streetName' : 'Turn sharply right',
-          TurnDirection.uTurn180 => 'Turn 180 degrees',
-          TurnDirection.rightUTurn => 'Perform right u-turn',
-          TurnDirection.uTurn => 'Perform u-turn',
-        },
-      Roundabout(exitNumber: final exitNumber, streetName: final streetName) =>
-        streetName != null 
-          ? 'In the roundabout, take the ${exitNumber == 1 ? '1st' : exitNumber == 2 ? '2nd' : exitNumber == 3 ? '3rd' : '${exitNumber}th'} exit onto $streetName'
-          : 'In the roundabout, take the ${exitNumber == 1 ? '1st' : exitNumber == 2 ? '2nd' : exitNumber == 3 ? '3rd' : '${exitNumber}th'} exit',
-      Other(streetName: final streetName) => streetName != null ? 'Continue on $streetName' : 'Continue',
-      Exit(side: final side, streetName: final streetName) => 
-        streetName != null ? 'Take the ${side.name} exit to $streetName' : 'Take the ${side.name} exit',
+        Keep(direction: final direction, streetName: final streetName) =>
+          streetName != null ? 'Keep ${direction.name} on $streetName' : 'Keep ${direction.name}',
+        Turn(direction: final direction, streetName: final streetName) =>
+          streetName != null ? 'Turn ${direction.name} onto $streetName' : 'Turn ${direction.name}',
+        Roundabout(exitNumber: final exitNumber, streetName: final streetName) =>
+          streetName != null ? 'Take exit ${exitNumber} onto $streetName' : 'Take exit $exitNumber',
+        Exit(side: final side, streetName: final streetName) =>
+          streetName != null ? 'Take the ${side.name} exit to $streetName' : 'Take the ${side.name} exit',
+        Other(streetName: final streetName) => streetName != null ? 'Continue on $streetName' : 'Continue',
       };
     }
 
-    // Add next instruction if available and close (within 500m)
-    if (nextInstruction != null && nextInstruction.distance <= 500) {
-      final nextText = _getShortInstructionText(nextInstruction);
-      
-      // Remove trailing period from base text before combining
+    // Append the post-maneuver instruction if available.
+    if (instruction.postInstructionText?.isNotEmpty == true) {
+      // Ensure the base text ends correctly before appending.
       final cleanBaseText = baseText.endsWith('.') ? baseText.substring(0, baseText.length - 1) : baseText;
-      return '$cleanBaseText, then $nextText';
+      return '$cleanBaseText. ${instruction.postInstructionText!}';
     }
 
     return baseText;
@@ -278,13 +260,11 @@ class TurnByTurnWidget extends StatelessWidget {
 
   Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double size, bool isDark) {
     // Use appropriate directional icon based on side
-    final IconData roundaboutIcon = side == RoundaboutSide.left 
-        ? Icons.roundabout_left 
-        : Icons.roundabout_right;
-    
+    final IconData roundaboutIcon = side == RoundaboutSide.left ? Icons.roundabout_left : Icons.roundabout_right;
+
     final iconColor = isDark ? Colors.white : Colors.black87;
     final borderColor = isDark ? Colors.white : Colors.black87;
-    
+
     return SizedBox(
       width: size,
       height: size,

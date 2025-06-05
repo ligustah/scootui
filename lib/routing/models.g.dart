@@ -13,6 +13,7 @@ Keep _$KeepFromJson(Map<String, dynamic> json) => Keep(
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
+      postInstructionText: json['postInstructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -23,6 +24,7 @@ Map<String, dynamic> _$KeepToJson(Keep instance) => <String, dynamic>{
       'originalShapeIndex': instance.originalShapeIndex,
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
+      'postInstructionText': instance.postInstructionText,
       'runtimeType': instance.$type,
     };
 
@@ -39,6 +41,7 @@ Turn _$TurnFromJson(Map<String, dynamic> json) => Turn(
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
+      postInstructionText: json['postInstructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -49,6 +52,7 @@ Map<String, dynamic> _$TurnToJson(Turn instance) => <String, dynamic>{
       'originalShapeIndex': instance.originalShapeIndex,
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
+      'postInstructionText': instance.postInstructionText,
       'runtimeType': instance.$type,
     };
 
@@ -71,6 +75,7 @@ Exit _$ExitFromJson(Map<String, dynamic> json) => Exit(
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
+      postInstructionText: json['postInstructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -81,6 +86,7 @@ Map<String, dynamic> _$ExitToJson(Exit instance) => <String, dynamic>{
       'originalShapeIndex': instance.originalShapeIndex,
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
+      'postInstructionText': instance.postInstructionText,
       'runtimeType': instance.$type,
     };
 
@@ -97,6 +103,7 @@ Roundabout _$RoundaboutFromJson(Map<String, dynamic> json) => Roundabout(
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
+      postInstructionText: json['postInstructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -109,6 +116,7 @@ Map<String, dynamic> _$RoundaboutToJson(Roundabout instance) =>
       'originalShapeIndex': instance.originalShapeIndex,
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
+      'postInstructionText': instance.postInstructionText,
       'runtimeType': instance.$type,
     };
 
@@ -123,6 +131,7 @@ Other _$OtherFromJson(Map<String, dynamic> json) => Other(
       originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
+      postInstructionText: json['postInstructionText'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -132,6 +141,7 @@ Map<String, dynamic> _$OtherToJson(Other instance) => <String, dynamic>{
       'originalShapeIndex': instance.originalShapeIndex,
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
+      'postInstructionText': instance.postInstructionText,
       'runtimeType': instance.$type,
     };
 
