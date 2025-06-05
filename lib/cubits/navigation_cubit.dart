@@ -7,6 +7,7 @@ import '../config.dart';
 import '../routing/models.dart';
 import '../routing/route_helpers.dart';
 import '../routing/valhalla.dart';
+import '../services/toast_service.dart';
 import '../state/gps.dart';
 import '../state/navigation.dart';
 import 'mdb_cubits.dart';
@@ -18,7 +19,7 @@ class NavigationCubit extends Cubit<NavigationState> {
   final NavigationSync _navigationSync;
 
   static const double _arrivalProximityMeters = 100.0;
-  static const double _offRouteTolerance = 50.0; // 50 meters
+  static const double _offRouteTolerance = 40.0; // meters
   DateTime? _lastReroute;
   LatLng? _currentPosition;
 
@@ -60,9 +61,11 @@ class NavigationCubit extends Cubit<NavigationState> {
     try {
       final position = _currentPosition;
       if (position == null) {
+        const errorMsg = 'Current position not available';
+        ToastService.showError(errorMsg);
         emit(state.copyWith(
           status: NavigationStatus.error,
-          error: 'Current position not available',
+          error: errorMsg,
         ));
         return;
       }
@@ -71,9 +74,11 @@ class NavigationCubit extends Cubit<NavigationState> {
       final route = await valhallaService.getRoute(position, destination);
 
       if (route.waypoints.isEmpty) {
+        const errorMsg = 'Could not calculate route';
+        ToastService.showError(errorMsg);
         emit(state.copyWith(
           status: NavigationStatus.error,
-          error: 'Could not calculate route',
+          error: errorMsg,
         ));
         return;
       }
@@ -93,9 +98,11 @@ class NavigationCubit extends Cubit<NavigationState> {
         error: null,
       ));
     } catch (e) {
+      final errorMsg = 'Failed to calculate route: $e';
+      ToastService.showError(errorMsg);
       emit(state.copyWith(
         status: NavigationStatus.error,
-        error: 'Failed to calculate route: $e',
+        error: errorMsg,
       ));
     }
   }
@@ -140,6 +147,7 @@ class NavigationCubit extends Cubit<NavigationState> {
               state.status == NavigationStatus.idle ||
               state.status == NavigationStatus.error)) {
         print("NavigationCubit: Conditions met, calling _calculateRoute for $destination");
+        ToastService.showInfo('New navigation destination received. Calculating route...');
         _calculateRoute(destination);
       } else {
         print(
@@ -147,9 +155,11 @@ class NavigationCubit extends Cubit<NavigationState> {
       }
     } catch (e) {
       print("NavigationCubit: Error processing navigation data: $e");
+      final errorMsg = 'Error processing navigation data: $e';
+      ToastService.showError(errorMsg);
       emit(state.copyWith(
         status: NavigationStatus.error,
-        error: 'Error processing navigation data: $e',
+        error: errorMsg,
       ));
     }
   }
@@ -186,6 +196,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
     // Check if we've arrived
     if (distanceToDestination < _arrivalProximityMeters) {
+      ToastService.showSuccess('You have arrived at your destination!');
       emit(state.copyWith(
         status: NavigationStatus.arrived,
         distanceToDestination: distanceToDestination,
@@ -200,7 +211,8 @@ class NavigationCubit extends Cubit<NavigationState> {
     );
 
     // Debug logging for off-route detection
-    print("NavigationCubit: Position: $position, Distance from route: ${distanceFromRoute.toStringAsFixed(1)}m, Tolerance: ${_offRouteTolerance}m");
+    print(
+        "NavigationCubit: Position: $position, Distance from route: ${distanceFromRoute.toStringAsFixed(1)}m, Tolerance: ${_offRouteTolerance}m");
 
     // Check if we're off route
     final isOffRoute = distanceFromRoute > _offRouteTolerance;
@@ -208,7 +220,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
     // Find upcoming instructions
     var upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
-    
+
     // If off-route, insert a "return to route" instruction at the beginning
     if (isOffRoute) {
       final returnInstruction = RouteInstruction.other(
@@ -218,7 +230,8 @@ class NavigationCubit extends Cubit<NavigationState> {
         instructionText: "Return to the route",
       );
       upcomingInstructions = [returnInstruction, ...upcomingInstructions];
-      print("NavigationCubit: Added return instruction. First instruction: ${upcomingInstructions.first.instructionText}, distance: ${upcomingInstructions.first.distance}");
+      print(
+          "NavigationCubit: Added return instruction. First instruction: ${upcomingInstructions.first.instructionText}, distance: ${upcomingInstructions.first.distance}");
     }
 
     emit(state.copyWith(
@@ -230,6 +243,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
     // Check if we need to reroute
     if (isOffRoute && (_lastReroute == null || DateTime.now().difference(_lastReroute!) > const Duration(seconds: 5))) {
+      ToastService.showWarning('Off route. Attempting to reroute...');
       _reroute(position, destination);
     }
   }
@@ -244,9 +258,11 @@ class NavigationCubit extends Cubit<NavigationState> {
       final route = await valhallaService.getRoute(position, destination);
 
       if (route.waypoints.isEmpty) {
+        const errorMsg = 'Could not calculate new route';
+        ToastService.showError(errorMsg);
         emit(state.copyWith(
           status: NavigationStatus.error,
-          error: 'Could not calculate new route',
+          error: errorMsg,
         ));
         return;
       }
@@ -256,13 +272,15 @@ class NavigationCubit extends Cubit<NavigationState> {
         status: NavigationStatus.navigating,
         error: null,
       ));
-      
+
       // Recalculate navigation state with the new route
       _updateNavigationState(position);
     } catch (e) {
+      final errorMsg = 'Failed to reroute: $e';
+      ToastService.showError(errorMsg);
       emit(state.copyWith(
         status: NavigationStatus.error,
-        error: 'Failed to reroute: $e',
+        error: errorMsg,
       ));
     }
   }
