@@ -31,6 +31,10 @@ class TurnByTurnWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
             borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+              width: 1.5,
+            ),
           ),
           child: compact ? _buildCompactView(state, isDark) : _buildFullView(state, isDark),
         );
@@ -93,8 +97,9 @@ class TurnByTurnWidget extends StatelessWidget {
                   Text(
                     _getInstructionText(instruction, instructions.length > 1 ? instructions[1] : null),
                     style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.black54,
+                      color: isDark ? Colors.white70 : Colors.black87, // Increased contrast for light theme
                       fontSize: 14,
+                      fontWeight: isDark ? FontWeight.normal : FontWeight.w500, // Bolder for light theme
                       height: 1.1,
                     ),
                   ),
