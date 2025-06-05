@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Route;
@@ -15,7 +16,6 @@ import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 import '../map/mbtiles_provider.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/tiles_repository.dart';
-import '../routing/models.dart';
 import '../state/gps.dart';
 import 'mdb_cubits.dart';
 import 'navigation_cubit.dart';
@@ -148,41 +148,45 @@ class MapCubit extends Cubit<MapState> {
   double _calculateDynamicZoom() {
     final navState = _currentNavigationState;
 
-    // If not navigating, use default zoom
-    if (navState == null || !navState.isNavigating) {
+    if (navState == null || !navState.isNavigating || navState.upcomingInstructions.isEmpty) {
       return _zoomDefault;
     }
 
-    // If off-route, use wider zoom to show both position and route
     if (navState.isOffRoute) {
-      return _zoomLongStraight; // Use wider zoom when off-route
+      return _zoomLongStraight;
     }
 
-    final upcomingInstructions = navState.upcomingInstructions;
-    if (upcomingInstructions.isEmpty) {
-      return _zoomDefault;
+    final nextInstruction = navState.upcomingInstructions.first;
+    final distanceToTurn = nextInstruction.distance; // in meters
+
+    if (distanceToTurn <= 1) {
+      return _zoomComplexTurn; // Very close, zoom in fully
     }
 
-    final nextInstruction = upcomingInstructions.first;
+    const screenHeight = 480.0;
+    const topStatusBarHeight = 30.0;
+    const bottomBarHeight = 60.0;
+    const vehicleVerticalOffset = 0.75;
 
-    // Determine zoom based on instruction type and distance
-    return switch (nextInstruction) {
-      Turn(:final distance) => distance < 200
-          ? _zoomComplexTurn // Very close to turn
-          : distance < 500
-              ? _zoomApproachingTurn // Approaching turn
-              : distance > 2000
-                  ? _zoomLongStraight // Long straight before turn
-                  : _zoomDefault,
-      Keep(:final distance) => distance > 3000 ? _zoomLongStraight : _zoomDefault,
-      Roundabout(:final distance) => distance < 300
-          ? _zoomComplexTurn // Close to roundabout
-          : distance < 800
-              ? _zoomApproachingTurn // Approaching roundabout
-              : _zoomDefault,
-      Exit(:final distance) => distance < 500 ? _zoomComplexTurn : _zoomDefault,
-      Other() => _zoomDefault,
-    };
+    const visibleMapHeight = screenHeight - topStatusBarHeight - bottomBarHeight;
+
+    // The point of interest (the turn) should be visible in the upper part of the map.
+    // The vehicle is not in the center, it's offset downwards.
+    // This means we have more "look-ahead" distance.
+    final lookAheadHeight = visibleMapHeight * vehicleVerticalOffset;
+
+    // We want to fit the distanceToTurn within this lookAheadHeight.
+    final targetVisibleMeters = distanceToTurn;
+
+    // This formula is a heuristic to convert meters to a zoom level.
+    // It's derived from how map scales work (roughly doubles with each zoom level).
+    // The constants are tuned to fit the visual layout.
+    // C - log2(meters) -> zoom
+    // The value 15.6 is a magic number that works well for this screen size and projection.
+    double requiredZoom = 15.6 - math.log(targetVisibleMeters / lookAheadHeight) / math.ln2;
+
+    // Clamp the zoom level to reasonable bounds
+    return requiredZoom.clamp(_zoomLongStraight, _zoomComplexTurn);
   }
 
   void _onGpsData(GpsData data) {
