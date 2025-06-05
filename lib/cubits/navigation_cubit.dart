@@ -134,24 +134,29 @@ class NavigationCubit extends Cubit<NavigationState> {
         return;
       }
 
-      if (state.destination == destination && state.status == NavigationStatus.navigating) {
-        print("NavigationCubit: Destination is the same and already navigating.");
+      // If we are already actively navigating, rerouting, or calculating for the *same* destination, do nothing.
+      if (state.destination == destination &&
+          (state.status == NavigationStatus.navigating ||
+              state.status == NavigationStatus.rerouting ||
+              state.status == NavigationStatus.calculating)) {
+        print("NavigationCubit: Destination is the same and already actively navigating/processing.");
         return;
       }
 
-      print(
-          "NavigationCubit: Current position: $_currentPosition. New destination: $destination. Current state destination: ${state.destination}");
-      // Only start navigation if we have a current position and it's a new destination or not yet navigating
-      if (_currentPosition != null &&
-          (state.destination != destination ||
-              state.status == NavigationStatus.idle ||
-              state.status == NavigationStatus.error)) {
-        print("NavigationCubit: Conditions met, calling _calculateRoute for $destination");
+      // If we have a current position, and the conditions above are not met (i.e., it's a new destination,
+      // or it's the same destination but we are not actively navigating/processing it, e.g., status is idle, arrived, or error),
+      // then calculate the route.
+      if (_currentPosition != null) {
+        print(
+            "NavigationCubit: Conditions met to calculate route. CurrentPos: $_currentPosition, NewDest: $destination, OldDest: ${state.destination}, Status: ${state.status}");
         ToastService.showInfo('New navigation destination received. Calculating route...');
         _calculateRoute(destination);
       } else {
+        // This case should be covered by the earlier _currentPosition == null check,
+        // but kept for clarity if logic changes.
         print(
-            "NavigationCubit: Conditions not met for route calculation. CurrentPos: $_currentPosition, state.dest: ${state.destination}, new dest: $destination, status: ${state.status}");
+            "NavigationCubit: Current position is null, cannot calculate route yet (should have been handled earlier). Dest: $destination");
+        // State was already set if _currentPosition was null earlier.
       }
     } catch (e) {
       print("NavigationCubit: Error processing navigation data: $e");
@@ -170,7 +175,19 @@ class NavigationCubit extends Cubit<NavigationState> {
 
     final currentState = state;
 
-    // If we're not navigating, just update position
+    // If we have a destination but no route (which happens on startup with a pending destination),
+    // and we just received a GPS position, it's time to calculate the route.
+    if (currentState.destination != null && currentState.route == null) {
+      // We check for idle or error status to ensure we only trigger this
+      // if we're not already in the middle of a calculation or navigation.
+      if (currentState.status == NavigationStatus.idle || currentState.status == NavigationStatus.error) {
+        print("NavigationCubit (_onGpsData): Destination is pending and GPS is now available. Calculating route.");
+        _calculateRoute(currentState.destination!);
+        return; // Exit because _calculateRoute will emit the next state.
+      }
+    }
+
+    // If we're not actively navigating or have no route, do nothing further.
     if (!currentState.isNavigating || currentState.route == null) {
       return;
     }
