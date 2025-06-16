@@ -50,10 +50,23 @@ class SavedLocationsCubit extends Cubit<SavedLocationsState> {
     }
   }
 
-  /// Save current GPS location
-  Future<void> saveCurrentLocation(GpsData gpsData, InternetData internetData) async {
+  /// Save current GPS location with validation
+  Future<bool> saveCurrentLocation(GpsData gpsData, InternetData internetData) async {
     try {
-      debugPrint('SavedLocationsCubit: Saving current location');
+      debugPrint('SavedLocationsCubit: Attempting to save current location');
+
+      // Validate GPS fix and coordinates
+      if (gpsData.state != GpsState.fixEstablished) {
+        debugPrint('SavedLocationsCubit: No GPS fix available');
+        return false;
+      }
+
+      if (gpsData.latitude == 0.0 && gpsData.longitude == 0.0) {
+        debugPrint('SavedLocationsCubit: Invalid coordinates (0.0, 0.0)');
+        return false;
+      }
+
+      debugPrint('SavedLocationsCubit: GPS validation passed, saving location');
 
       // Generate label based on internet connectivity
       String label;
@@ -81,17 +94,19 @@ class SavedLocationsCubit extends Cubit<SavedLocationsState> {
         // Reload locations to get updated list
         await loadSavedLocations();
         debugPrint('SavedLocationsCubit: Location saved successfully');
+        return true;
       } else {
-        emit(const SavedLocationsState.error('Failed to save location - storage full'));
+        debugPrint('SavedLocationsCubit: Failed to save location - storage full');
+        return false;
       }
     } catch (e) {
       debugPrint('SavedLocationsCubit: Error saving location: $e');
-      emit(SavedLocationsState.error('Failed to save current location'));
+      return false;
     }
   }
 
   /// Delete a saved location
-  Future<void> deleteLocation(int id) async {
+  Future<bool> deleteLocation(int id) async {
     try {
       debugPrint('SavedLocationsCubit: Deleting location with ID $id');
 
@@ -100,12 +115,14 @@ class SavedLocationsCubit extends Cubit<SavedLocationsState> {
         // Reload locations to get updated list
         await loadSavedLocations();
         debugPrint('SavedLocationsCubit: Location deleted successfully');
+        return true;
       } else {
-        emit(const SavedLocationsState.error('Failed to delete location'));
+        debugPrint('SavedLocationsCubit: Failed to delete location');
+        return false;
       }
     } catch (e) {
       debugPrint('SavedLocationsCubit: Error deleting location: $e');
-      emit(SavedLocationsState.error('Failed to delete location'));
+      return false;
     }
   }
 
