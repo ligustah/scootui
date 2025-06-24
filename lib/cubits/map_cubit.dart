@@ -110,8 +110,10 @@ class MapCubit extends Cubit<MapState> {
     _currentNavigationState = navState;
 
     // Trigger map update with new zoom if currently navigating
+    // Use snapped position when available and on-route, otherwise use current position
     if (navState.isNavigating && state.position != defaultCoordinates) {
-      _moveAndRotate(state.position, state.orientation);
+      final positionToUse = navState.snappedPosition ?? state.position;
+      _moveAndRotate(positionToUse, state.orientation);
     }
   }
 
@@ -198,17 +200,23 @@ class MapCubit extends Cubit<MapState> {
     // Marker should counter-rotate by the same amount to stay screen-upright.
     final orientationForMarker = data.course;
 
-    final position = LatLng(data.latitude, data.longitude);
+    final rawPosition = LatLng(data.latitude, data.longitude);
+    
+    // Use snapped position when navigating and on-route, otherwise use raw GPS position
+    final navState = _currentNavigationState;
+    final positionForDisplay = (navState?.isNavigating == true && navState?.snappedPosition != null) 
+        ? navState!.snappedPosition! 
+        : rawPosition;
 
     emit(current.copyWith(
-      position: position,
+      position: positionForDisplay,
       orientation: orientationForMarker,
     ));
 
     // Throttle map updates to reduce performance impact
     _updateTimer?.cancel();
     _updateTimer = Timer(const Duration(milliseconds: 100), () {
-      _moveAndRotate(position, courseForMapRotation);
+      _moveAndRotate(positionForDisplay, courseForMapRotation);
     });
   }
 

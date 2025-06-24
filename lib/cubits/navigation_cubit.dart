@@ -238,6 +238,12 @@ class NavigationCubit extends Cubit<NavigationState> {
     final isOffRoute = distanceFromRoute > _offRouteTolerance;
     print("NavigationCubit: isOffRoute: $isOffRoute, current state isOffRoute: ${state.isOffRoute}");
 
+    // Calculate snapped position - use closest point on route when on-route, original position when off-route
+    final snappedPosition = isOffRoute ? position : closestPoint;
+    if (!isOffRoute) {
+      print("NavigationCubit: Snapping to route - Original: $position, Snapped: $snappedPosition");
+    }
+
     // Find upcoming instructions
     var upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
 
@@ -259,6 +265,7 @@ class NavigationCubit extends Cubit<NavigationState> {
       distanceToDestination: distanceToDestination,
       distanceFromRoute: distanceFromRoute,
       isOffRoute: isOffRoute,
+      snappedPosition: snappedPosition,
     ));
 
     // Check if we need to reroute
