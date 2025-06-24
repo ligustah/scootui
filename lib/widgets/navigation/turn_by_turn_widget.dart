@@ -26,6 +26,42 @@ class TurnByTurnWidget extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
+        // Special handling for arrival status
+        if (state.status == NavigationStatus.arrived) {
+          return Container(
+            padding: padding ?? const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.place,
+                  color: Colors.green,
+                  size: compact ? 24 : 48,
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    'You have arrived!',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: compact ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         return Container(
           padding: padding ?? const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
