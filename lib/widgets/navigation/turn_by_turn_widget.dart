@@ -195,7 +195,11 @@ class TurnByTurnWidget extends StatelessWidget {
     IconData iconData;
     Color iconColor = isDark ? Colors.white : Colors.black87;
 
-    switch (instruction) {
+    // For long distances (>1km), show straight arrow
+    if (instruction.distance > 1000) {
+      iconData = Icons.straight;
+    } else {
+      switch (instruction) {
       case Keep(direction: final direction):
         iconData = switch (direction) {
           KeepDirection.straight => Icons.straight,
@@ -224,6 +228,7 @@ class TurnByTurnWidget extends StatelessWidget {
       case Other():
         iconData = Icons.navigation;
         break;
+      }
     }
 
     return Icon(
@@ -246,6 +251,12 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   String _getInstructionText(RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
+    // For long distances (>1km), show "Continue for X.X km" message
+    if (instruction.distance > 1000) {
+      final distanceKm = (instruction.distance / 1000).toStringAsFixed(1);
+      return 'Continue for $distanceKm km';
+    }
+
     // Use Valhalla's instruction text if available.
     String baseText = instruction.instructionText ?? '';
 
