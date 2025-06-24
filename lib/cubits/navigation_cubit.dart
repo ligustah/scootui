@@ -211,8 +211,11 @@ class NavigationCubit extends Cubit<NavigationState> {
       destination,
     );
 
+    print("NavigationCubit: Distance to destination: ${distanceToDestination.toStringAsFixed(1)}m (threshold: ${_arrivalProximityMeters}m)");
+
     // Check if we've arrived
     if (distanceToDestination < _arrivalProximityMeters) {
+      print("NavigationCubit: Arrival detected! Distance: ${distanceToDestination.toStringAsFixed(1)}m");
       ToastService.showSuccess('You have arrived at your destination!');
       emit(state.copyWith(
         status: NavigationStatus.arrived,
