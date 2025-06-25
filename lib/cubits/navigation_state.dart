@@ -28,6 +28,7 @@ abstract class NavigationState with _$NavigationState {
     @Default(0.0) double distanceToDestination,
     @Default(0.0) double distanceFromRoute,
     @Default(false) bool isOffRoute,
+    @Default(null) LatLng? snappedPosition,
   }) = _NavigationState;
 
   bool get isNavigating => status == NavigationStatus.navigating;

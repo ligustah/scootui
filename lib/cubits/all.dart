@@ -8,6 +8,7 @@ import 'mdb_cubits.dart';
 import 'menu_cubit.dart';
 import 'navigation_cubit.dart';
 import 'ota_cubit.dart';
+import 'saved_locations_cubit.dart';
 import 'screen_cubit.dart';
 import 'shortcut_menu_cubit.dart';
 import 'shutdown_cubit.dart';
@@ -42,6 +43,7 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: ScreenCubit.create),
   BlocProvider(create: MenuCubit.create),
   BlocProvider(create: AddressCubit.create),
+  BlocProvider(create: SavedLocationsCubit.create),
   BlocProvider(create: DebugOverlayCubit.create),
   BlocProvider(create: ShortcutMenuCubit.create),
   BlocProvider(create: VersionOverlayCubit.create),

@@ -27,6 +27,9 @@ class AppConfig {
   /// Redis brightness sensor key
   static const String brightnessKey = 'brightness';
 
+  /// Redis saved locations key prefix
+  static const String savedLocationsPrefix = 'scootui.saved-locations';
+
   /// Auto theme light threshold (lux) - switch to light theme above this value
   static const double autoThemeLightThreshold = 25.0;
 

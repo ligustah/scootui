@@ -24,6 +24,7 @@ mixin _$NavigationState {
   double get distanceToDestination;
   double get distanceFromRoute;
   bool get isOffRoute;
+  LatLng? get snappedPosition;
 
   /// Create a copy of NavigationState
   /// with the given fields replaced by the non-null parameter values.
@@ -52,7 +53,9 @@ mixin _$NavigationState {
             (identical(other.distanceFromRoute, distanceFromRoute) ||
                 other.distanceFromRoute == distanceFromRoute) &&
             (identical(other.isOffRoute, isOffRoute) ||
-                other.isOffRoute == isOffRoute));
+                other.isOffRoute == isOffRoute) &&
+            (identical(other.snappedPosition, snappedPosition) ||
+                other.snappedPosition == snappedPosition));
   }
 
   @override
@@ -66,11 +69,12 @@ mixin _$NavigationState {
       error,
       distanceToDestination,
       distanceFromRoute,
-      isOffRoute);
+      isOffRoute,
+      snappedPosition);
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition)';
   }
 }
 
@@ -89,7 +93,8 @@ abstract mixin class $NavigationStateCopyWith<$Res> {
       String? error,
       double distanceToDestination,
       double distanceFromRoute,
-      bool isOffRoute});
+      bool isOffRoute,
+      LatLng? snappedPosition});
 
   $RouteCopyWith<$Res>? get route;
   $RouteInstructionCopyWith<$Res>? get currentInstruction;
@@ -117,6 +122,7 @@ class _$NavigationStateCopyWithImpl<$Res>
     Object? distanceToDestination = null,
     Object? distanceFromRoute = null,
     Object? isOffRoute = null,
+    Object? snappedPosition = freezed,
   }) {
     return _then(_self.copyWith(
       route: freezed == route
@@ -155,6 +161,10 @@ class _$NavigationStateCopyWithImpl<$Res>
           ? _self.isOffRoute
           : isOffRoute // ignore: cast_nullable_to_non_nullable
               as bool,
+      snappedPosition: freezed == snappedPosition
+          ? _self.snappedPosition
+          : snappedPosition // ignore: cast_nullable_to_non_nullable
+              as LatLng?,
     ));
   }
 
@@ -199,7 +209,8 @@ class _NavigationState extends NavigationState {
       this.error = null,
       this.distanceToDestination = 0.0,
       this.distanceFromRoute = 0.0,
-      this.isOffRoute = false})
+      this.isOffRoute = false,
+      this.snappedPosition = null})
       : _upcomingInstructions = upcomingInstructions,
         super._();
 
@@ -237,6 +248,9 @@ class _NavigationState extends NavigationState {
   @override
   @JsonKey()
   final bool isOffRoute;
+  @override
+  @JsonKey()
+  final LatLng? snappedPosition;
 
   /// Create a copy of NavigationState
   /// with the given fields replaced by the non-null parameter values.
@@ -265,7 +279,9 @@ class _NavigationState extends NavigationState {
             (identical(other.distanceFromRoute, distanceFromRoute) ||
                 other.distanceFromRoute == distanceFromRoute) &&
             (identical(other.isOffRoute, isOffRoute) ||
-                other.isOffRoute == isOffRoute));
+                other.isOffRoute == isOffRoute) &&
+            (identical(other.snappedPosition, snappedPosition) ||
+                other.snappedPosition == snappedPosition));
   }
 
   @override
@@ -279,11 +295,12 @@ class _NavigationState extends NavigationState {
       error,
       distanceToDestination,
       distanceFromRoute,
-      isOffRoute);
+      isOffRoute,
+      snappedPosition);
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition)';
   }
 }
 
@@ -304,7 +321,8 @@ abstract mixin class _$NavigationStateCopyWith<$Res>
       String? error,
       double distanceToDestination,
       double distanceFromRoute,
-      bool isOffRoute});
+      bool isOffRoute,
+      LatLng? snappedPosition});
 
   @override
   $RouteCopyWith<$Res>? get route;
@@ -334,6 +352,7 @@ class __$NavigationStateCopyWithImpl<$Res>
     Object? distanceToDestination = null,
     Object? distanceFromRoute = null,
     Object? isOffRoute = null,
+    Object? snappedPosition = freezed,
   }) {
     return _then(_NavigationState(
       route: freezed == route
@@ -372,6 +391,10 @@ class __$NavigationStateCopyWithImpl<$Res>
           ? _self.isOffRoute
           : isOffRoute // ignore: cast_nullable_to_non_nullable
               as bool,
+      snappedPosition: freezed == snappedPosition
+          ? _self.snappedPosition
+          : snappedPosition // ignore: cast_nullable_to_non_nullable
+              as LatLng?,
     ));
   }
 

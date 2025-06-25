@@ -3,9 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/menu_cubit.dart';
+import '../../cubits/saved_locations_cubit.dart';
 import '../../cubits/screen_cubit.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../cubits/trip_cubit.dart';
+import '../../repositories/mdb_repository.dart';
+import '../../services/toast_service.dart';
+import '../../state/gps.dart';
 import '../general/control_gestures_detector.dart';
 import 'menu_item.dart';
 
@@ -25,6 +29,11 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   int _selectedIndex = 0;
   bool _showMapView = false;
+
+  // Submenu state
+  final List<List<MenuItem>> _menuStack = [];
+  final List<int> _selectedIndexStack = [];
+  bool _isInSubmenu = false;
 
   @override
   void initState() {
@@ -76,43 +85,123 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final menu = context.watch<MenuCubit>();
-    final screen = context.read<ScreenCubit>();
-    final trip = context.read<TripCubit>();
-    final theme = context.read<ThemeCubit>();
-    final vehicle = context.read<VehicleSync>();
+  void _enterSubmenu(List<MenuItem> submenuItems) {
+    setState(() {
+      _menuStack.add(submenuItems);
+      _selectedIndexStack.add(_selectedIndex);
+      _selectedIndex = 0;
+      _isInSubmenu = true;
+    });
+  }
 
-    switch (menu.state) {
-      case MenuHidden():
-        if (!_animController.isDismissed) {
-          // if the menu is still visible, but should be hidden =>
-          // start the animation
-          _animController.reverse();
-        } else {
-          // once menu is completely hidden, reset the selected index.
-          // we don't need to use setState here, because we don't need
-          // to re-render. this is just setting it up for next time it's shown
-          // if the menu is already hidden, just return an empty widget
-          return const SizedBox.shrink();
-        }
-        break;
-      case MenuVisible():
-        if (_animController.isDismissed) {
-          _selectedIndex = 0;
-          // use a separate variable here, because we only want to set this
-          // just before we start fading in the menu
-          _showMapView = screen.state is ScreenMap;
-          _animController.forward();
-        }
-        break;
+  void _exitSubmenu() {
+    if (_selectedIndexStack.isNotEmpty) {
+      setState(() {
+        _menuStack.removeLast();
+        _selectedIndex = _selectedIndexStack.removeLast();
+        _isInSubmenu = _menuStack.isNotEmpty;
+      });
+    }
+  }
+
+  void _resetMenuState() {
+    _menuStack.clear();
+    _selectedIndexStack.clear();
+    _selectedIndex = 0;
+    _isInSubmenu = false;
+  }
+
+  List<MenuItem> _buildSavedLocationsSubmenu(BuildContext context) {
+    final savedLocationsCubit = context.read<SavedLocationsCubit>();
+    final locations = savedLocationsCubit.currentLocations;
+
+    if (locations.isEmpty) {
+      return [
+        MenuItem(
+          title: 'No saved locations',
+          type: MenuItemType.action,
+          onChanged: (_) {
+            _exitSubmenu();
+          },
+        ),
+        MenuItem(
+          title: 'Go back',
+          type: MenuItemType.action,
+          onChanged: (_) {
+            _exitSubmenu();
+          },
+        ),
+      ];
     }
 
-    // Use the proper isDark getter that handles auto mode
-    final isDark = theme.state.isDark;
+    final items = <MenuItem>[];
 
-    final items = [
+    for (final location in locations) {
+      items.add(MenuItem(
+        title: location.label,
+        type: MenuItemType.submenu,
+        submenuItems: [
+          MenuItem(
+            title: 'Start navigation',
+            type: MenuItemType.action,
+            onChanged: (_) {
+              final mdbRepo = context.read<MDBRepository>();
+              mdbRepo.set("navigation", "destination", location.coordinatesString);
+              savedLocationsCubit.updateLastUsed(location.id);
+              context.read<MenuCubit>().hideMenu();
+            },
+          ),
+          MenuItem(
+            title: 'Go back',
+            type: MenuItemType.action,
+            onChanged: (_) {
+              _exitSubmenu();
+            },
+          ),
+          MenuItem(
+            title: 'Delete saved location',
+            type: MenuItemType.action,
+            onChanged: (_) async {
+              final success = await savedLocationsCubit.deleteLocation(location.id);
+              if (success) {
+                ToastService.showSuccess('Location deleted successfully!');
+              } else {
+                ToastService.showError('Failed to delete location.');
+              }
+              // Exit to the individual location submenu
+              _exitSubmenu();
+            },
+          ),
+        ],
+      ));
+    }
+
+    items.add(MenuItem(
+      title: 'Go back',
+      type: MenuItemType.action,
+      onChanged: (_) {
+        _exitSubmenu();
+      },
+    ));
+
+    return items;
+  }
+
+  List<MenuItem> _buildCurrentMenuItems(
+    BuildContext context,
+    MenuCubit menu,
+    ScreenCubit screen,
+    TripCubit trip,
+    ThemeCubit theme,
+    VehicleSync vehicle,
+  ) {
+    // If we're in a submenu, return the current submenu items
+    if (_isInSubmenu && _menuStack.isNotEmpty) {
+      return _menuStack.last;
+    }
+
+    // Main menu items
+    return [
       MenuItem(
         title: 'Hazard lights',
         type: MenuItemType.action,
@@ -149,6 +238,40 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           },
         ),
       MenuItem(
+        title: 'Saved Locations',
+        type: MenuItemType.submenu,
+        submenuItems: _buildSavedLocationsSubmenu(context),
+      ),
+      MenuItem(
+        title: 'Save current location',
+        type: MenuItemType.action,
+        onChanged: (_) async {
+          final gpsData = context.read<GpsSync>().state;
+          final internetData = context.read<InternetSync>().state;
+          final savedLocationsCubit = context.read<SavedLocationsCubit>();
+
+          // Validate GPS before attempting to save
+          if (gpsData.state != GpsState.fixEstablished) {
+            ToastService.showError('No GPS fix available. Please wait for GPS signal.');
+            return;
+          }
+
+          if (gpsData.latitude == 0.0 && gpsData.longitude == 0.0) {
+            ToastService.showError('Invalid GPS coordinates. Please wait for valid location.');
+            return;
+          }
+
+          final success = await savedLocationsCubit.saveCurrentLocation(gpsData, internetData);
+          if (success) {
+            ToastService.showSuccess('Location saved successfully!');
+          } else {
+            ToastService.showError('Failed to save location. Storage may be full.');
+          }
+
+          menu.hideMenu();
+        },
+      ),
+      MenuItem(
           title: "Switch Theme",
           type: MenuItemType.action,
           onChanged: (_) {
@@ -169,6 +292,59 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         onChanged: (_) => menu.hideMenu(),
       )
     ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final menu = context.watch<MenuCubit>();
+    final screen = context.read<ScreenCubit>();
+    final trip = context.read<TripCubit>();
+    final theme = context.read<ThemeCubit>();
+    final vehicle = context.read<VehicleSync>();
+
+    // Watch for saved locations changes and refresh submenu if needed
+    context.watch<SavedLocationsCubit>();
+
+    // If we're in the saved locations submenu, refresh it when locations change
+    if (_isInSubmenu && _menuStack.isNotEmpty && _menuStack.length == 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _menuStack[0] = _buildSavedLocationsSubmenu(context);
+          });
+        }
+      });
+    }
+
+    switch (menu.state) {
+      case MenuHidden():
+        if (!_animController.isDismissed) {
+          // if the menu is still visible, but should be hidden =>
+          // start the animation
+          _animController.reverse();
+        } else {
+          // once menu is completely hidden, reset the selected index.
+          // we don't need to use setState here, because we don't need
+          // to re-render. this is just setting it up for next time it's shown
+          // if the menu is already hidden, just return an empty widget
+          return const SizedBox.shrink();
+        }
+        break;
+      case MenuVisible():
+        if (_animController.isDismissed) {
+          _resetMenuState();
+          // use a separate variable here, because we only want to set this
+          // just before we start fading in the menu
+          _showMapView = screen.state is ScreenMap;
+          _animController.forward();
+        }
+        break;
+    }
+
+    // Use the proper isDark getter that handles auto mode
+    final isDark = theme.state.isDark;
+
+    final items = _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle);
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
@@ -178,7 +354,11 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       }),
       onRightPress: () {
         final item = items[_selectedIndex];
-        item.onChanged?.call(item.currentValue);
+        if (item.type == MenuItemType.submenu) {
+          _enterSubmenu(item.submenuItems ?? []);
+        } else {
+          item.onChanged?.call(item.currentValue);
+        }
       },
       child: FadeTransition(
         opacity: _animation,
@@ -190,7 +370,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
             children: [
               const SizedBox(height: 20),
               Text(
-                'MENU',
+                _isInSubmenu ? 'SAVED LOCATIONS' : 'MENU',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -215,7 +395,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                           child: MenuItemWidget(
                             item: item,
                             isSelected: _selectedIndex == index,
-                            isInSubmenu: false, //widget.isInSubmenu && widget.selectedIndex == index,
+                            isInSubmenu: _isInSubmenu,
                           ),
                         );
                       },
@@ -287,14 +467,12 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                     _buildControlHint(
                       context,
                       'Left Brake',
-                      false ? 'Change Value' : 'Next Item',
-                      // widget.isInSubmenu ? 'Change Value' : 'Next Item',
+                      'Next Item',
                     ),
                     _buildControlHint(
                       context,
                       'Right Brake',
-                      false ? 'Confirm' : 'Select',
-                      // widget.isInSubmenu ? 'Confirm' : 'Select',
+                      _isInSubmenu ? 'Select' : 'Select',
                     ),
                   ],
                 ),
