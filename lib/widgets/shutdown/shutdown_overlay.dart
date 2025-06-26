@@ -17,35 +17,44 @@ class ShutdownOverlay extends StatelessWidget {
 
     // Check if OTA update is ongoing (DBC status takes priority)
     final dbcStatus = otaData.dbcStatus;
-    final isOtaOngoing = dbcStatus == 'downloading' || dbcStatus == 'installing';
+    final isOtaOngoing =
+        dbcStatus == 'downloading' || dbcStatus == 'installing';
 
-    // Check if we're shutting down
-    final isShuttingDown = shutdownState.isVisible;
+    // Check shutdown overlay types
+    final isFullShutdownOverlay = shutdownState.isFullOverlay;
+    final isBackgroundProcessing = shutdownState.isBackgroundIndicator;
 
     // Priority logic:
-    // 1. If OTA is ongoing AND we're shutting down -> show combined OTA shutdown overlay
-    // 2. If OTA is ongoing but NOT shutting down -> show OTA overlay (for locked scooter)
-    // 3. If shutting down but no OTA -> show normal shutdown overlay
-    // 4. Otherwise -> show nothing
+    // 1. If OTA is ongoing AND we have full shutdown overlay -> show combined OTA shutdown overlay
+    // 2. If OTA is ongoing (and no full shutdown or only background processing) -> show OTA overlay only
+    // 3. If full shutdown overlay but no OTA -> show normal shutdown overlay
+    // 4. If background processing only (no OTA, no full shutdown) -> show small background indicator
+    // 5. Otherwise -> show nothing
 
-    if (isOtaOngoing && isShuttingDown) {
-      return _buildCombinedOtaShutdownOverlay(context, vehicleState, otaData, shutdownState.status);
+    if (isOtaOngoing && isFullShutdownOverlay) {
+      return _buildCombinedOtaShutdownOverlay(
+          context, vehicleState, otaData, shutdownState.status);
     } else if (isOtaOngoing) {
+      // OTA takes priority over background processing indicator
       return _buildOtaOverlay(context, vehicleState, otaData);
-    } else if (isShuttingDown) {
+    } else if (isFullShutdownOverlay) {
       return AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: ShutdownContent(status: shutdownState.status),
       );
+    } else if (isBackgroundProcessing) {
+      return _buildBackgroundProcessingIndicator(context);
     }
 
     return const SizedBox.shrink();
   }
 
-  Widget _buildOtaOverlay(BuildContext context, VehicleData vehicleState, OtaData otaData) {
+  Widget _buildOtaOverlay(
+      BuildContext context, VehicleData vehicleState, OtaData otaData) {
     final dbcStatus = otaData.dbcStatus;
     final updateVersion = otaData.dbcUpdateVersion;
-    final isUnlocked = vehicleState.state == ScooterState.readyToDrive || vehicleState.state == ScooterState.parked;
+    final isUnlocked = vehicleState.state == ScooterState.readyToDrive ||
+        vehicleState.state == ScooterState.parked;
     final isLocked = vehicleState.state == ScooterState.standBy;
 
     // Status bar icon for unlocked scooter (handled by OtaStatusIndicator in top status bar)
@@ -55,7 +64,8 @@ class ShutdownOverlay extends StatelessWidget {
 
     // Full message for locked scooter
     if (isLocked) {
-      final actionText = dbcStatus == 'downloading' ? 'Downloading' : 'Installing';
+      final actionText =
+          dbcStatus == 'downloading' ? 'Downloading' : 'Installing';
       final versionText = updateVersion.isNotEmpty ? ' $updateVersion' : '';
 
       return Container(
@@ -99,15 +109,20 @@ class ShutdownOverlay extends StatelessWidget {
   }
 
   Widget _buildCombinedOtaShutdownOverlay(
-      BuildContext context, VehicleData vehicleState, OtaData otaData, ShutdownStatus shutdownStatus) {
+      BuildContext context,
+      VehicleData vehicleState,
+      OtaData otaData,
+      ShutdownStatus shutdownStatus) {
     final dbcStatus = otaData.dbcStatus;
     final updateVersion = otaData.dbcUpdateVersion;
-    final actionText = dbcStatus == 'downloading' ? 'Downloading' : 'Installing';
+    final actionText =
+        dbcStatus == 'downloading' ? 'Downloading' : 'Installing';
     final versionText = updateVersion.isNotEmpty ? ' $updateVersion' : '';
-    
+
     // Use full black background when in stand-by, translucent when shutting down
     final isStandBy = vehicleState.state == ScooterState.standBy;
-    final backgroundColor = isStandBy ? Colors.black : Colors.black.withOpacity(0.8);
+    final backgroundColor =
+        isStandBy ? Colors.black : Colors.black.withOpacity(0.8);
 
     return Container(
       color: backgroundColor,
@@ -141,6 +156,42 @@ class ShutdownOverlay extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackgroundProcessingIndicator(BuildContext context) {
+    return Positioned(
+      top: 20,
+      right: 20,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                strokeWidth: 2.0,
+              ),
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Processing...',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

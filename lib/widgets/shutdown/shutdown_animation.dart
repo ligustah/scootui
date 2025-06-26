@@ -11,12 +11,16 @@ class ShutdownContent extends StatelessWidget {
     switch (status) {
       case ShutdownStatus.shuttingDown:
         return 'Shutting down...';
+      case ShutdownStatus.shutdownComplete:
+        return 'Shutdown complete.\nTap keycard to unlock.';
       case ShutdownStatus.suspending:
         return 'Suspending...';
       case ShutdownStatus.hibernatingImminent:
         return 'Hibernation imminent...';
       case ShutdownStatus.suspendingImminent:
         return 'Suspension imminent...';
+      case ShutdownStatus.backgroundProcessing:
+        return 'Processing...';
       default:
         return '';
     }
@@ -30,6 +34,8 @@ class ShutdownContent extends StatelessWidget {
 
     final statusText = _getStatusText();
 
+    final showSpinner = status != ShutdownStatus.shutdownComplete;
+
     return Container(
       color: Colors.black.withOpacity(0.8),
       child: Align(
@@ -40,24 +46,27 @@ class ShutdownContent extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Spinner
-              const SizedBox(
-                width: 30,
-                height: 30,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  strokeWidth: 3.0,
+              // Spinner (only show for active shutdown states, not shutdownComplete)
+              if (showSpinner) ...[
+                const SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    strokeWidth: 3.0,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10), // Reduced spacing
+                const SizedBox(height: 10),
+              ],
               // Text
               Text(
                 statusText,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 18, // Reduced font size
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
