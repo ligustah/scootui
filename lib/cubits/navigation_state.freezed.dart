@@ -25,6 +25,7 @@ mixin _$NavigationState {
   double get distanceFromRoute;
   bool get isOffRoute;
   LatLng? get snappedPosition;
+  List<String> get pendingConditions;
 
   /// Create a copy of NavigationState
   /// with the given fields replaced by the non-null parameter values.
@@ -55,7 +56,9 @@ mixin _$NavigationState {
             (identical(other.isOffRoute, isOffRoute) ||
                 other.isOffRoute == isOffRoute) &&
             (identical(other.snappedPosition, snappedPosition) ||
-                other.snappedPosition == snappedPosition));
+                other.snappedPosition == snappedPosition) &&
+            const DeepCollectionEquality()
+                .equals(other.pendingConditions, pendingConditions));
   }
 
   @override
@@ -70,11 +73,12 @@ mixin _$NavigationState {
       distanceToDestination,
       distanceFromRoute,
       isOffRoute,
-      snappedPosition);
+      snappedPosition,
+      const DeepCollectionEquality().hash(pendingConditions));
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions)';
   }
 }
 
@@ -94,7 +98,8 @@ abstract mixin class $NavigationStateCopyWith<$Res> {
       double distanceToDestination,
       double distanceFromRoute,
       bool isOffRoute,
-      LatLng? snappedPosition});
+      LatLng? snappedPosition,
+      List<String> pendingConditions});
 
   $RouteCopyWith<$Res>? get route;
   $RouteInstructionCopyWith<$Res>? get currentInstruction;
@@ -123,6 +128,7 @@ class _$NavigationStateCopyWithImpl<$Res>
     Object? distanceFromRoute = null,
     Object? isOffRoute = null,
     Object? snappedPosition = freezed,
+    Object? pendingConditions = null,
   }) {
     return _then(_self.copyWith(
       route: freezed == route
@@ -165,6 +171,10 @@ class _$NavigationStateCopyWithImpl<$Res>
           ? _self.snappedPosition
           : snappedPosition // ignore: cast_nullable_to_non_nullable
               as LatLng?,
+      pendingConditions: null == pendingConditions
+          ? _self.pendingConditions
+          : pendingConditions // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 
@@ -210,8 +220,10 @@ class _NavigationState extends NavigationState {
       this.distanceToDestination = 0.0,
       this.distanceFromRoute = 0.0,
       this.isOffRoute = false,
-      this.snappedPosition = null})
+      this.snappedPosition = null,
+      final List<String> pendingConditions = const []})
       : _upcomingInstructions = upcomingInstructions,
+        _pendingConditions = pendingConditions,
         super._();
 
   @override
@@ -251,6 +263,15 @@ class _NavigationState extends NavigationState {
   @override
   @JsonKey()
   final LatLng? snappedPosition;
+  final List<String> _pendingConditions;
+  @override
+  @JsonKey()
+  List<String> get pendingConditions {
+    if (_pendingConditions is EqualUnmodifiableListView)
+      return _pendingConditions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_pendingConditions);
+  }
 
   /// Create a copy of NavigationState
   /// with the given fields replaced by the non-null parameter values.
@@ -281,7 +302,9 @@ class _NavigationState extends NavigationState {
             (identical(other.isOffRoute, isOffRoute) ||
                 other.isOffRoute == isOffRoute) &&
             (identical(other.snappedPosition, snappedPosition) ||
-                other.snappedPosition == snappedPosition));
+                other.snappedPosition == snappedPosition) &&
+            const DeepCollectionEquality()
+                .equals(other._pendingConditions, _pendingConditions));
   }
 
   @override
@@ -296,11 +319,12 @@ class _NavigationState extends NavigationState {
       distanceToDestination,
       distanceFromRoute,
       isOffRoute,
-      snappedPosition);
+      snappedPosition,
+      const DeepCollectionEquality().hash(_pendingConditions));
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions)';
   }
 }
 
@@ -322,7 +346,8 @@ abstract mixin class _$NavigationStateCopyWith<$Res>
       double distanceToDestination,
       double distanceFromRoute,
       bool isOffRoute,
-      LatLng? snappedPosition});
+      LatLng? snappedPosition,
+      List<String> pendingConditions});
 
   @override
   $RouteCopyWith<$Res>? get route;
@@ -353,6 +378,7 @@ class __$NavigationStateCopyWithImpl<$Res>
     Object? distanceFromRoute = null,
     Object? isOffRoute = null,
     Object? snappedPosition = freezed,
+    Object? pendingConditions = null,
   }) {
     return _then(_NavigationState(
       route: freezed == route
@@ -395,6 +421,10 @@ class __$NavigationStateCopyWithImpl<$Res>
           ? _self.snappedPosition
           : snappedPosition // ignore: cast_nullable_to_non_nullable
               as LatLng?,
+      pendingConditions: null == pendingConditions
+          ? _self._pendingConditions
+          : pendingConditions // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 

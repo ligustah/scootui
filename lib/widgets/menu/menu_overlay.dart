@@ -9,7 +9,6 @@ import '../../cubits/theme_cubit.dart';
 import '../../cubits/trip_cubit.dart';
 import '../../repositories/mdb_repository.dart';
 import '../../services/toast_service.dart';
-import '../../state/gps.dart';
 import '../general/control_gestures_detector.dart';
 import 'menu_item.dart';
 
@@ -251,8 +250,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           final savedLocationsCubit = context.read<SavedLocationsCubit>();
 
           // Validate GPS before attempting to save
-          if (gpsData.state != GpsState.fixEstablished) {
-            ToastService.showError('No GPS fix available. Please wait for GPS signal.');
+          if (!gpsData.hasRecentFix) {
+            ToastService.showError('No recent GPS fix available. Please wait for GPS signal.');
             return;
           }
 

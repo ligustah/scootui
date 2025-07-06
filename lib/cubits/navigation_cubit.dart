@@ -128,9 +128,12 @@ class NavigationCubit extends Cubit<NavigationState> {
 
       if (_currentPosition == null) {
         print("NavigationCubit: Current position is null, cannot calculate route yet.");
-        // Optionally, store pending destination if needed, or rely on next GPS update
+        // Store pending destination and show conditions that need to be met
         emit(state.copyWith(
-            destination: destination, status: NavigationStatus.idle, error: "Waiting for GPS fix to calculate route."));
+            destination: destination, 
+            status: NavigationStatus.idle, 
+            error: "Waiting for recent GPS fix to calculate route.",
+            pendingConditions: ["GPS fix required (last update >10 seconds ago)"]));
         return;
       }
 
@@ -150,6 +153,8 @@ class NavigationCubit extends Cubit<NavigationState> {
         print(
             "NavigationCubit: Conditions met to calculate route. CurrentPos: $_currentPosition, NewDest: $destination, OldDest: ${state.destination}, Status: ${state.status}");
         ToastService.showInfo('New navigation destination received. Calculating route...');
+        // Clear pending conditions since we can now calculate route
+        emit(state.copyWith(pendingConditions: []));
         _calculateRoute(destination);
       } else {
         // This case should be covered by the earlier _currentPosition == null check,
@@ -170,8 +175,13 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   void _onGpsData(GpsData data) {
-    final position = LatLng(data.latitude, data.longitude);
-    _currentPosition = position;
+    // Only update position if GPS fix is recent (within 10 seconds)
+    if (data.hasRecentFix) {
+      final position = LatLng(data.latitude, data.longitude);
+      _currentPosition = position;
+    } else {
+      _currentPosition = null;
+    }
 
     final currentState = state;
 
@@ -192,8 +202,10 @@ class NavigationCubit extends Cubit<NavigationState> {
       return;
     }
 
-    // Update navigation state based on current position
-    _updateNavigationState(position);
+    // Update navigation state based on current position if available
+    if (_currentPosition != null) {
+      _updateNavigationState(_currentPosition!);
+    }
   }
 
   void _updateNavigationState(LatLng position) {

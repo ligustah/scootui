@@ -60,11 +60,26 @@ class StatusIndicators extends StatelessWidget {
   }
 
   String gpsIcon(GpsData gps) {
+    // Support both state field and timestamp-based detection
+    // On stock MDB, state field doesn't exist so it defaults to 'off'
+    // Use timestamp logic when state is 'off' (stock MDB case)
+    if (gps.state == GpsState.off) {
+      // Use timestamp-based detection for stock MDB
+      if (gps.hasRecentFix) {
+        return _Icons.gpsFixEstablished;
+      } else if (gps.timestamp.isNotEmpty) {
+        return _Icons.gpsSearching; // Had fix before but now stale
+      } else {
+        return _Icons.gpsOff; // No timestamp data
+      }
+    }
+    
+    // Use explicit state field (non-stock MDB)
     return switch (gps.state) {
-      GpsState.off => _Icons.gpsOff,
       GpsState.searching => _Icons.gpsSearching,
-      GpsState.fixEstablished => _Icons.gpsFixEstablished,
+      GpsState.fixEstablished => gps.hasRecentFix ? _Icons.gpsFixEstablished : _Icons.gpsSearching,
       GpsState.error => _Icons.gpsError,
+      GpsState.off => _Icons.gpsOff, // Shouldn't reach here due to check above
     };
   }
 

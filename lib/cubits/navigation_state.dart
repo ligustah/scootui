@@ -29,10 +29,12 @@ abstract class NavigationState with _$NavigationState {
     @Default(0.0) double distanceFromRoute,
     @Default(false) bool isOffRoute,
     @Default(null) LatLng? snappedPosition,
+    @Default([]) List<String> pendingConditions,
   }) = _NavigationState;
 
   bool get isNavigating => status == NavigationStatus.navigating;
   bool get hasRoute => route != null;
   bool get hasDestination => destination != null;
   bool get hasInstructions => currentInstruction != null || upcomingInstructions.isNotEmpty;
+  bool get hasPendingConditions => pendingConditions.isNotEmpty;
 }

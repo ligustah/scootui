@@ -47,6 +47,18 @@ class GpsData extends Equatable with $GpsData {
 
   LatLng get latLng => LatLng(latitude, longitude);
   double get courseRadians => course * (math.pi / 180);
+  
+  bool get hasRecentFix {
+    if (timestamp.isEmpty) return false;
+    try {
+      final gpsTime = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final diff = now.difference(gpsTime).inSeconds;
+      return diff <= 10; // GPS fix is recent if within 10 seconds
+    } catch (e) {
+      return false;
+    }
+  }
 
   GpsData({
     this.speed = 0,

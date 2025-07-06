@@ -22,6 +22,54 @@ class TurnByTurnWidget extends StatelessWidget {
 
     return BlocBuilder<NavigationCubit, NavigationState>(
       builder: (context, state) {
+        // Show pending conditions if navigation is idle but has destination
+        if (state.status == NavigationStatus.idle && state.hasDestination && state.hasPendingConditions) {
+          return Container(
+            padding: padding ?? const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.6),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.warning,
+                  color: Colors.orange,
+                  size: compact ? 20 : 24,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Navigation Pending",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      ...state.pendingConditions.map((condition) => Text(
+                        "• $condition",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      )),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
         if (!state.hasInstructions || state.status == NavigationStatus.idle) {
           return const SizedBox.shrink();
         }

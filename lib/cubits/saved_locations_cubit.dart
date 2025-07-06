@@ -56,8 +56,8 @@ class SavedLocationsCubit extends Cubit<SavedLocationsState> {
       debugPrint('SavedLocationsCubit: Attempting to save current location');
 
       // Validate GPS fix and coordinates
-      if (gpsData.state != GpsState.fixEstablished) {
-        debugPrint('SavedLocationsCubit: No GPS fix available');
+      if (!gpsData.hasRecentFix) {
+        debugPrint('SavedLocationsCubit: No recent GPS fix available');
         return false;
       }
 
