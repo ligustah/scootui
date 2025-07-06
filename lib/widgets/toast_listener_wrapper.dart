@@ -22,24 +22,18 @@ class _ToastListenerWrapperState extends State<ToastListenerWrapper> {
     super.initState();
     _toastSubscription = ToastService.events.listen((event) {
       if (mounted) {
-        // Ensure context is valid and available
-        final currentContext = context;
         switch (event.type) {
           case ToastType.info:
-            ToastUtils.showInfoToast(currentContext, event.message);
+            ToastUtils.showInfoToast(context, event.message);
             break;
           case ToastType.error:
-            ToastUtils.showErrorToast(currentContext, event.message);
+            ToastUtils.showErrorToast(context, event.message);
             break;
           case ToastType.success:
-            ToastUtils.showSuccessToast(currentContext, event.message);
+            ToastUtils.showSuccessToast(context, event.message);
             break;
           case ToastType.warning:
-            // Assuming you'll add showWarningToast to ToastUtils
-            // For now, let's use showInfoToast as a placeholder or create it
-            // If showWarningToast doesn't exist, this will cause an error.
-            // Consider adding it to ToastUtils.
-            ToastUtils.showInfoToast(currentContext, event.message); // Placeholder
+            ToastUtils.showWarningToast(context, event.message);
             break;
         }
       }

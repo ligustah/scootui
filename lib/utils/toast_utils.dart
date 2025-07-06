@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:oktoast/oktoast.dart';
 
 class ToastUtils {
   static void showToast(
     BuildContext context,
     String message, {
-    ToastGravity gravity = ToastGravity.BOTTOM,
+    ToastPosition position = ToastPosition.bottom,
     Color? backgroundColor,
     Color? textColor,
-    Toast toastLength = Toast.LENGTH_SHORT,
+    Duration duration = const Duration(seconds: 2),
   }) {
     final theme = Theme.of(context);
     final effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.surface.withOpacity(0.85);
     final effectiveTextColor = textColor ?? theme.colorScheme.onSurface;
 
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: toastLength,
-      gravity: gravity,
-      timeInSecForIosWeb: 1,
-      backgroundColor: effectiveBackgroundColor,
-      textColor: effectiveTextColor,
-      fontSize: 16.0,
+    showToastWidget(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+        decoration: BoxDecoration(
+          color: effectiveBackgroundColor,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Text(
+          message,
+          style: TextStyle(
+            color: effectiveTextColor,
+            fontSize: 16.0,
+          ),
+        ),
+      ),
+      duration: duration,
+      position: position,
     );
   }
 
@@ -32,46 +41,40 @@ class ToastUtils {
       message,
       backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.9),
       textColor: theme.colorScheme.onErrorContainer,
-      toastLength: Toast.LENGTH_LONG,
+      duration: const Duration(seconds: 3),
     );
   }
 
   static void showSuccessToast(BuildContext context, String message) {
     final theme = Theme.of(context);
-    // Using primary container for success, adjust if a more specific success color is defined
     showToast(
       context,
       message,
       backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.9),
       textColor: theme.colorScheme.onPrimaryContainer,
-      toastLength: Toast.LENGTH_SHORT,
+      duration: const Duration(seconds: 2),
     );
   }
 
   static void showInfoToast(BuildContext context, String message) {
     final theme = Theme.of(context);
-    // Using secondary container for info, adjust if a more specific info color is defined
     showToast(
       context,
       message,
       backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.9),
       textColor: theme.colorScheme.onSecondaryContainer,
-      toastLength: Toast.LENGTH_SHORT,
+      duration: const Duration(seconds: 2),
     );
   }
 
   static void showWarningToast(BuildContext context, String message) {
     final theme = Theme.of(context);
-    // Using a distinct color for warning, e.g., amber or orange if available in theme
-    // For now, let's use secondary container as a fallback or define a specific warning color
-    // in your theme.
-    // You might want to define theme.colorScheme.warning and theme.colorScheme.onWarning
     showToast(
       context,
       message,
-      backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.9), // Placeholder, adjust
-      textColor: theme.colorScheme.onSecondaryContainer, // Placeholder, adjust
-      toastLength: Toast.LENGTH_LONG,
+      backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.9),
+      textColor: theme.colorScheme.onSecondaryContainer,
+      duration: const Duration(seconds: 3),
     );
   }
 }
