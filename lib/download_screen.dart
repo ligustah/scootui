@@ -38,7 +38,7 @@ class _DownloadScreenState extends State<DownloadScreen> {
         await dir.create(recursive: true);
       }
 
-      final task = MapDownloadTask(
+      final task = DownloadTask(
         url: url,
         destination: destinationPath,
       );

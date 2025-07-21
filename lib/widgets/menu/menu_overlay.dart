@@ -202,6 +202,14 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     // Main menu items
     return [
       MenuItem(
+        title: 'Downloads',
+        type: MenuItemType.action,
+        onChanged: (_) {
+          screen.showDownloads();
+          menu.hideMenu();
+        },
+      ),
+      MenuItem(
         title: 'Hazard lights',
         type: MenuItemType.action,
         onChanged: (_) {

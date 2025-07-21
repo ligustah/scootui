@@ -27,8 +27,10 @@ class ScreenCubit extends Cubit<ScreenState> {
       : super(_getInitialState(_settingsService.getScreenSetting())) {
     // Subscribe to settings updates
     _settingsSubscription = _settingsService.settingsStream.listen((settings) {
-      final screenMode = _settingsService.getScreenSetting(); // Get updated screen mode
-      emit(_getInitialState(screenMode)); // Emit new state based on updated mode
+      final screenMode =
+          _settingsService.getScreenSetting(); // Get updated screen mode
+      emit(
+          _getInitialState(screenMode)); // Emit new state based on updated mode
     });
 
     // Subscribe to vehicle state updates
@@ -38,8 +40,7 @@ class ScreenCubit extends Cubit<ScreenState> {
 
       // Store current normal state if we're about to enter a special state
       if (currentState is ScreenCluster || currentState is ScreenMap) {
-        if (vehicleData.state == ScooterState.updating ||
-            isOtaFullScreen) {
+        if (vehicleData.state == ScooterState.updating || isOtaFullScreen) {
           _previousNormalState = currentState;
         }
       }
@@ -67,7 +68,8 @@ class ScreenCubit extends Cubit<ScreenState> {
       if (currentState is ScreenOta &&
           vehicleData.state != ScooterState.updating) {
         // Restore previous state or default to cluster
-        final stateToRestore = _previousNormalState ?? const ScreenState.cluster();
+        final stateToRestore =
+            _previousNormalState ?? const ScreenState.cluster();
         _previousNormalState = null; // Clear the stored state
         emit(stateToRestore);
       }
@@ -109,6 +111,10 @@ class ScreenCubit extends Cubit<ScreenState> {
   void showMap() {
     // No need to emit here, the stream listener will handle it
     _persistScreenMode('navigation'); // Persist as OEM 'navigation'
+  }
+
+  void showDownloads() {
+    emit(const ScreenState.downloads());
   }
 
   void showAddressSelection() {

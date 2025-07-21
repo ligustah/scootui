@@ -195,14 +195,14 @@ class TaskService {
     _ctrl.add(tasks);
   }
 
-  void addTask(Task task) {
+  Stream<TaskStatus> addTask(Task task) async* {
     _tasks[task] = task._status;
     _emit();
 
     final port = ReceivePort();
     task._start(port.sendPort);
 
-    port.forEach((state) {
+    await for (final state in port) {
       _tasks[task] = state as TaskStatus;
 
       switch (state) {
@@ -213,7 +213,9 @@ class TaskService {
           _emit();
         default:
       }
-    });
+
+      yield state;
+    }
   }
 
   void cancelTask(Task task) {

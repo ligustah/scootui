@@ -14,42 +14,41 @@ part of 'download_task.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$MapDownloadTask {
+mixin _$DownloadTask {
   String get url;
   String get destination;
 
-  /// Create a copy of MapDownloadTask
+  /// Create a copy of DownloadTask
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  $MapDownloadTaskCopyWith<MapDownloadTask> get copyWith =>
-      _$MapDownloadTaskCopyWithImpl<MapDownloadTask>(
-          this as MapDownloadTask, _$identity);
+  $DownloadTaskCopyWith<DownloadTask> get copyWith =>
+      _$DownloadTaskCopyWithImpl<DownloadTask>(
+          this as DownloadTask, _$identity);
 
   @override
   String toString() {
-    return 'MapDownloadTask(url: $url, destination: $destination)';
+    return 'DownloadTask(url: $url, destination: $destination)';
   }
 }
 
 /// @nodoc
-abstract mixin class $MapDownloadTaskCopyWith<$Res> {
-  factory $MapDownloadTaskCopyWith(
-          MapDownloadTask value, $Res Function(MapDownloadTask) _then) =
-      _$MapDownloadTaskCopyWithImpl;
+abstract mixin class $DownloadTaskCopyWith<$Res> {
+  factory $DownloadTaskCopyWith(
+          DownloadTask value, $Res Function(DownloadTask) _then) =
+      _$DownloadTaskCopyWithImpl;
   @useResult
   $Res call({String url, String destination});
 }
 
 /// @nodoc
-class _$MapDownloadTaskCopyWithImpl<$Res>
-    implements $MapDownloadTaskCopyWith<$Res> {
-  _$MapDownloadTaskCopyWithImpl(this._self, this._then);
+class _$DownloadTaskCopyWithImpl<$Res> implements $DownloadTaskCopyWith<$Res> {
+  _$DownloadTaskCopyWithImpl(this._self, this._then);
 
-  final MapDownloadTask _self;
-  final $Res Function(MapDownloadTask) _then;
+  final DownloadTask _self;
+  final $Res Function(DownloadTask) _then;
 
-  /// Create a copy of MapDownloadTask
+  /// Create a copy of DownloadTask
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -72,48 +71,48 @@ class _$MapDownloadTaskCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _MapDownloadTask extends MapDownloadTask {
-  _MapDownloadTask({required this.url, required this.destination}) : super._();
+class _DownloadTask extends DownloadTask {
+  _DownloadTask({required this.url, required this.destination}) : super._();
 
   @override
   final String url;
   @override
   final String destination;
 
-  /// Create a copy of MapDownloadTask
+  /// Create a copy of DownloadTask
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  _$MapDownloadTaskCopyWith<_MapDownloadTask> get copyWith =>
-      __$MapDownloadTaskCopyWithImpl<_MapDownloadTask>(this, _$identity);
+  _$DownloadTaskCopyWith<_DownloadTask> get copyWith =>
+      __$DownloadTaskCopyWithImpl<_DownloadTask>(this, _$identity);
 
   @override
   String toString() {
-    return 'MapDownloadTask(url: $url, destination: $destination)';
+    return 'DownloadTask(url: $url, destination: $destination)';
   }
 }
 
 /// @nodoc
-abstract mixin class _$MapDownloadTaskCopyWith<$Res>
-    implements $MapDownloadTaskCopyWith<$Res> {
-  factory _$MapDownloadTaskCopyWith(
-          _MapDownloadTask value, $Res Function(_MapDownloadTask) _then) =
-      __$MapDownloadTaskCopyWithImpl;
+abstract mixin class _$DownloadTaskCopyWith<$Res>
+    implements $DownloadTaskCopyWith<$Res> {
+  factory _$DownloadTaskCopyWith(
+          _DownloadTask value, $Res Function(_DownloadTask) _then) =
+      __$DownloadTaskCopyWithImpl;
   @override
   @useResult
   $Res call({String url, String destination});
 }
 
 /// @nodoc
-class __$MapDownloadTaskCopyWithImpl<$Res>
-    implements _$MapDownloadTaskCopyWith<$Res> {
-  __$MapDownloadTaskCopyWithImpl(this._self, this._then);
+class __$DownloadTaskCopyWithImpl<$Res>
+    implements _$DownloadTaskCopyWith<$Res> {
+  __$DownloadTaskCopyWithImpl(this._self, this._then);
 
-  final _MapDownloadTask _self;
-  final $Res Function(_MapDownloadTask) _then;
+  final _DownloadTask _self;
+  final $Res Function(_DownloadTask) _then;
 
-  /// Create a copy of MapDownloadTask
+  /// Create a copy of DownloadTask
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
@@ -121,7 +120,7 @@ class __$MapDownloadTaskCopyWithImpl<$Res>
     Object? url = null,
     Object? destination = null,
   }) {
-    return _then(_MapDownloadTask(
+    return _then(_DownloadTask(
       url: null == url
           ? _self.url
           : url // ignore: cast_nullable_to_non_nullable

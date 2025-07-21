@@ -8,29 +8,31 @@ import '../../services/task_service.dart';
 part 'download_task.freezed.dart';
 
 @freezed
-abstract class MapDownloadTask extends Task<void> with _$MapDownloadTask {
-  factory MapDownloadTask({
+abstract class DownloadTask extends Task<void> with _$DownloadTask {
+  factory DownloadTask({
     required String url,
     required String destination,
-  }) = _MapDownloadTask;
+  }) = _DownloadTask;
 
-  MapDownloadTask._();
+  DownloadTask._();
 
   @override
-  String get name => "Map Download";
+  String get name => "Download";
 
   Future<void> _download() async {
-    final file = File(destination);
+    // download to a temporary file in the same directory
+    final tempFile = File('$destination.tmp');
 
-    if(await file.exists()) {
-
+    if (await tempFile.exists()) {
+      await tempFile.delete();
     }
 
-    await file.parent.create(recursive: true);
-    final raf = await file.open(mode: FileMode.write);
+    await tempFile.parent.create(recursive: true);
+
+    final raf = await tempFile.open(mode: FileMode.write);
     final dio = Dio();
 
-    step("Requesting map from $url");
+    step("Downloading $url");
     final response = await dio
         .get(url, options: Options(responseType: ResponseType.stream),
             onReceiveProgress: (received, total) {
@@ -47,10 +49,11 @@ abstract class MapDownloadTask extends Task<void> with _$MapDownloadTask {
           await raf.writeFrom(chunk);
         }
       } else {
-        throw Exception("Failed to download map: ${response.statusMessage}");
+        throw Exception("Failed to download: ${response.statusMessage}");
       }
     } finally {
       await raf.close();
+      await tempFile.rename(destination);
     }
   }
 
