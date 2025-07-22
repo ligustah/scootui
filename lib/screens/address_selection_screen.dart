@@ -6,10 +6,9 @@ import '../cubits/address_cubit.dart';
 // import '../cubits/navigation_cubit.dart'; // Not needed directly for setting destination via Redis
 import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
-import '../cubits/theme_cubit.dart';
 import '../repositories/mdb_repository.dart';
 import '../widgets/general/control_gestures_detector.dart';
-import '../widgets/general/control_hints.dart';
+import '../widgets/general/settings_screen.dart';
 import '../widgets/location_dial/location_dial.dart';
 
 class AddressSelectionScreen extends StatefulWidget {
@@ -62,8 +61,6 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     final addressCubit = context.watch<AddressCubit>();
     final addrService = context.read<TileAddressRepository>();
 
-    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
-
     final child = _buildDialInput(screenCubit, addrService);
 
     // final child = switch (addressCubit.state) {
@@ -83,55 +80,18 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     //       child: Center(child: Text(message))),
     // };
 
-    return Container(
-      width: 480,
-      height: 480,
-      color: theme.scaffoldBackgroundColor,
-      padding: const EdgeInsets.only(top: 40, bottom: 40),
-      child: Column(
-        children: [
-          _DialTitle(isDark: isDark),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 30),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [child],
-              ),
-            ),
-          ),
-          ControlHints(
-            leftAction: switch (addressCubit.state) {
-              AddressStateLoaded() => 'Scroll',
-              _ => null,
-            },
-            rightAction: switch (addressCubit.state) {
-              AddressStateLoaded() => 'Next',
-              AddressStateError() => 'Close',
-              _ => null,
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DialTitle extends StatelessWidget {
-  final bool isDark;
-
-  const _DialTitle({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'Enter Destination Code',
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: isDark ? Colors.white : Colors.black,
-      ),
+    return SettingsScreen(
+      title: 'Enter Destination Code',
+      leftAction: switch (addressCubit.state) {
+        AddressStateLoaded() => 'Scroll',
+        _ => null,
+      },
+      rightAction: switch (addressCubit.state) {
+        AddressStateLoaded() => 'Next',
+        AddressStateError() => 'Close',
+        _ => null,
+      },
+      child: child,
     );
   }
 }

@@ -30,6 +30,7 @@ abstract class Task<T> {
   TaskStatus<T> _status;
   Isolate? _isolate;
   DateTime? _startTime;
+  Completer<TaskStatus>? _completer; // Use raw type to avoid type issues
 
   // For EWMA ETA calculation
   static const double _ewmaAlpha =
@@ -179,6 +180,38 @@ abstract class Task<T> {
 
   void cancel() {
     _isolate?.kill();
+    _completer?.completeError(Exception('Task cancelled'));
+  }
+
+  /// Waits for the task to complete and returns the final status.
+  /// Throws a TimeoutException if the task doesn't complete within the given duration.
+  Future<TaskStatus<T>> wait([Duration? timeout]) {
+    // If the task is already in a terminal state, return immediately
+    switch (_status) {
+      case TaskCompleted():
+      case TaskError():
+        return Future.value(_status);
+      default:
+      // Wait for completion
+    }
+
+    // If completer hasn't been created yet, create it now
+    _completer ??= Completer<TaskStatus>();
+
+    if (timeout != null) {
+      return _completer!.future.timeout(
+        timeout,
+        onTimeout: () {
+          cancel();
+          throw TimeoutException(
+              'Task did not complete within $timeout', timeout);
+        },
+      ).then(
+          (status) => status as TaskStatus<T>); // Cast back to the correct type
+    }
+
+    return _completer!.future.then(
+        (status) => status as TaskStatus<T>); // Cast back to the correct type
   }
 
   Future<T> run();
@@ -195,14 +228,17 @@ class TaskService {
     _ctrl.add(tasks);
   }
 
-  Stream<TaskStatus> addTask(Task task) async* {
+  void addTask(Task task) {
     _tasks[task] = task._status;
     _emit();
 
     final port = ReceivePort();
     task._start(port.sendPort);
 
-    await for (final state in port) {
+    // Create the completer here, before setting up the listener
+    task._completer ??= Completer<TaskStatus>();
+
+    port.forEach((state) {
       _tasks[task] = state as TaskStatus;
 
       switch (state) {
@@ -211,11 +247,11 @@ class TaskService {
         case TaskCompleted() || TaskError():
           _tasks.remove(task);
           _emit();
+          task._completer?.complete(state);
+          port.close(); // Close the port after completion
         default:
       }
-
-      yield state;
-    }
+    });
   }
 
   void cancelTask(Task task) {

@@ -19,7 +19,8 @@ class MenuOverlay extends StatefulWidget {
   State<MenuOverlay> createState() => _MenuOverlayState();
 }
 
-class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStateMixin {
+class _MenuOverlayState extends State<MenuOverlay>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _animation;
   late ScrollController _scrollController;
@@ -45,7 +46,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       parent: _animController,
       curve: Curves.easeOut,
     );
-    _scrollController = ScrollController()..addListener(_updateScrollIndicators);
+    _scrollController = ScrollController()
+      ..addListener(_updateScrollIndicators);
   }
 
   @override
@@ -59,7 +61,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     if (!mounted) return;
     setState(() {
       _showTopScrollIndicator = _scrollController.offset > 20;
-      _showBottomScrollIndicator = _scrollController.offset < _scrollController.position.maxScrollExtent - 20;
+      _showBottomScrollIndicator = _scrollController.offset <
+          _scrollController.position.maxScrollExtent - 20;
     });
   }
 
@@ -75,7 +78,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
-    } else if (targetOffset + itemHeight > _scrollController.offset + viewportHeight) {
+    } else if (targetOffset + itemHeight >
+        _scrollController.offset + viewportHeight) {
       _scrollController.animateTo(
         targetOffset - viewportHeight + itemHeight,
         duration: const Duration(milliseconds: 200),
@@ -202,10 +206,10 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     // Main menu items
     return [
       MenuItem(
-        title: 'Downloads',
+        title: 'Map Region',
         type: MenuItemType.action,
         onChanged: (_) {
-          screen.showDownloads();
+          screen.showRegionSelection();
           menu.hideMenu();
         },
       ),
@@ -370,7 +374,9 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       child: FadeTransition(
         opacity: _animation,
         child: Container(
-          color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
+          color: isDark
+              ? Colors.black.withOpacity(0.9)
+              : Colors.white.withOpacity(0.9),
           padding: const EdgeInsets.only(top: 40),
           // Leave space for top status bar
           child: Column(
@@ -421,8 +427,12 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
-                                isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
+                                isDark
+                                    ? Colors.black.withOpacity(0.9)
+                                    : Colors.white.withOpacity(0.9),
+                                isDark
+                                    ? Colors.black.withOpacity(0.0)
+                                    : Colors.white.withOpacity(0.0),
                               ],
                             ),
                           ),
@@ -448,8 +458,12 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: [
-                                isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
-                                isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
+                                isDark
+                                    ? Colors.black.withOpacity(0.9)
+                                    : Colors.white.withOpacity(0.9),
+                                isDark
+                                    ? Colors.black.withOpacity(0.0)
+                                    : Colors.white.withOpacity(0.0),
                               ],
                             ),
                           ),
@@ -491,7 +505,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildControlHint(BuildContext context, String control, String action) {
+  Widget _buildControlHint(
+      BuildContext context, String control, String action) {
     final theme = ThemeCubit.watch(context);
 
     return Column(

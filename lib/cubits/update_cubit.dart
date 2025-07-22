@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scooter_cluster/repositories/tiles_update_repository.dart';
 
@@ -8,11 +9,13 @@ class UpdateCubit extends Cubit<UpdateState> {
 
   UpdateCubit(this._tilesUpdateRepository) : super(const UpdateState.idle());
 
+  static UpdateCubit create(BuildContext context) => UpdateCubit(
+        context.read<TilesUpdateRepository>(),
+      );
+
   Future<void> checkForUpdates() async {
     emit(const UpdateState.checking());
     try {
-      // Note: As discussed, this is a long-running, blocking call.
-      // This is not ideal for a real-world scenario but matches our current implementation.
       await _tilesUpdateRepository.checkForUpdates();
 
       // How do we get from here to a more descriptive state?

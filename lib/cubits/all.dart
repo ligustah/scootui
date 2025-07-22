@@ -15,6 +15,7 @@ import 'shutdown_cubit.dart';
 import 'system_cubit.dart';
 import 'theme_cubit.dart';
 import 'trip_cubit.dart';
+import 'update_cubit.dart';
 import 'version_overlay_cubit.dart';
 import 'dashboard_cubit.dart';
 
@@ -49,4 +50,5 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: VersionOverlayCubit.create),
   BlocProvider(create: DashboardSyncCubit.create),
   BlocProvider(create: SettingsSync.create),
+  BlocProvider(create: UpdateCubit.create),
 ];

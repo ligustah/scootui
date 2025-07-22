@@ -108,20 +108,11 @@ class ScreenCubit extends Cubit<ScreenState> {
     _persistScreenMode('speedometer'); // Persist as OEM 'speedometer'
   }
 
-  void showMap() {
-    // No need to emit here, the stream listener will handle it
-    _persistScreenMode('navigation'); // Persist as OEM 'navigation'
-  }
+  void showOta() => emit(const ScreenState.ota());
+  void showAddressSelection() => emit(const ScreenState.addressSelection());
+  void showRegionSelection() => emit(const ScreenState.regionSelection());
 
-  void showDownloads() {
-    emit(const ScreenState.downloads());
-  }
-
-  void showAddressSelection() {
-    // Directly emit the state without persisting
-    emit(const ScreenState.addressSelection());
-    // Do not persist address_selection mode as it can cause hanging
-  }
+  void showMap() => emit(const ScreenState.map());
 
   void showDebug() {
     // Directly emit the debug state without persisting

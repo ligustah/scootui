@@ -6,6 +6,7 @@ import 'package:github/github.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:scooter_cluster/services/task_service.dart';
 import 'package:scooter_cluster/services/valhalla_service_controller.dart';
+import 'package:scooter_cluster/utils/toast_utils.dart';
 
 import '../map/download/download_task.dart';
 
@@ -85,15 +86,20 @@ class TilesUpdateRepository {
   final ValhallaServiceController _valhallaServiceController;
 
   TilesVersions _latestTilesVersions = TilesVersions();
+  Directory? _appDir;
 
   TilesUpdateRepository(this._taskService, this._valhallaServiceController)
       : _gitHub = GitHub();
 
-  Future<Directory> getAppDir() async =>
-      await getApplicationDocumentsDirectory();
+  Future<Directory> getAppDir() async {
+    _appDir ??= await getApplicationDocumentsDirectory();
+    return _appDir!;
+  }
 
-  String get _valhallaPath => '${(getAppDir() as Directory).path}/valhalla.tar';
-  String get _osmPath => '${(getAppDir() as Directory).path}/map.mbtiles';
+  Future<String> get _valhallaPath async =>
+      '${(await getAppDir()).path}/valhalla.tar';
+  Future<String> get _osmPath async =>
+      '${(await getAppDir()).path}/maps/map.mbtiles.tmp';
 
   Future<void> loadLatestTilesVersions() async {
     final appDir = await getAppDir();
@@ -150,17 +156,32 @@ class TilesUpdateRepository {
     final region = regionByName(_latestTilesVersions.region!);
     final remoteDates = await getReleaseDates();
 
+    final valhallaPath = await _valhallaPath;
+    final osmPath = await _osmPath;
+
     if (remoteDates.valhallaDate.isAfter(
         _latestTilesVersions.releaseDates?.valhallaDate ??
             DateTime.fromMillisecondsSinceEpoch(0))) {
       final downloadTask = DownloadTask(
         url: region.valhallaUrl,
-        destination: '$_valhallaPath.tmp',
+        destination: '$valhallaPath.tmp',
       );
-      // This is now a blocking operation, which is not ideal.
-      // We may want to revisit this to make it fully background.
-      await _taskService.addTask(downloadTask);
-      await applyValhallaUpdate('$_valhallaPath.tmp', remoteDates.valhallaDate);
+
+      // Add the task and wait for completion
+      _taskService.addTask(downloadTask);
+      final status = await downloadTask.wait();
+
+      switch (status) {
+        case TaskCompleted():
+          print(
+              'downloaded valhalla tiles ${remoteDates.valhallaDate} to ${valhallaPath}.tmp');
+        // await applyValhallaUpdate(
+        //     '$valhallaPath.tmp', remoteDates.valhallaDate);
+        case TaskError(:final message):
+          throw Exception('Failed to download Valhalla tiles: $message');
+        default:
+        // Should not happen as wait() only returns terminal states
+      }
     }
 
     if (remoteDates.osmDate.isAfter(
@@ -168,37 +189,51 @@ class TilesUpdateRepository {
             DateTime.fromMillisecondsSinceEpoch(0))) {
       final downloadTask = DownloadTask(
         url: region.osmTilesUrl,
-        destination: '$_osmPath.tmp',
+        destination: '$osmPath.tmp',
       );
-      // This is now a blocking operation.
-      await _taskService.addTask(downloadTask);
-      await applyOsmUpdate('$_osmPath.tmp', remoteDates.osmDate);
+
+      // Add the task and wait for completion
+      _taskService.addTask(downloadTask);
+      final status = await downloadTask.wait();
+
+      switch (status) {
+        case TaskCompleted():
+          print(
+              'downloaded osm tiles ${remoteDates.osmDate} to ${osmPath}.tmp');
+          await applyOsmUpdate('$osmPath.tmp', remoteDates.osmDate);
+        case TaskError(:final message):
+          throw Exception('Failed to download OSM tiles: $message');
+        default:
+        // Should not happen as wait() only returns terminal states
+      }
     }
   }
 
   Future<void> applyValhallaUpdate(String tempPath, DateTime newVersion) async {
     await _valhallaServiceController.stop();
 
+    final valhallaPath = await _valhallaPath;
+
     try {
-      final valhallaFile = File(_valhallaPath);
+      final valhallaFile = File(valhallaPath);
       if (await valhallaFile.exists()) {
-        await valhallaFile.rename('$_valhallaPath.bak');
+        await valhallaFile.rename('$valhallaPath.bak');
       }
-      await File(tempPath).rename(_valhallaPath);
+      await File(tempPath).rename(valhallaPath);
 
       await _valhallaServiceController.start();
 
       // if we successfully started, update version and delete backup
       await setValhallaDate(newVersion);
-      final backupFile = File('$_valhallaPath.bak');
+      final backupFile = File('$valhallaPath.bak');
       if (await backupFile.exists()) {
         await backupFile.delete();
       }
     } catch (e) {
       // rollback
-      final backupFile = File('$_valhallaPath.bak');
+      final backupFile = File('$valhallaPath.bak');
       if (await backupFile.exists()) {
-        await backupFile.rename(_valhallaPath);
+        await backupFile.rename(valhallaPath);
       }
       await _valhallaServiceController.start();
       rethrow;
@@ -206,11 +241,12 @@ class TilesUpdateRepository {
   }
 
   Future<void> applyOsmUpdate(String tempPath, DateTime newVersion) async {
-    final osmFile = File('$_osmPath.new');
+    final osmPath = await _osmPath;
+    final osmFile = File('$osmPath.new');
     if (await osmFile.exists()) {
       await osmFile.delete();
     }
-    await File(tempPath).rename('$_osmPath.new');
+    await File(tempPath).rename('$osmPath.new');
     // The MapCubit will handle the rest on next startup.
     // It will also be responsible for calling setOsmDate.
   }

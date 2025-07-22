@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scooter_cluster/download_screen.dart';
 
 import '../cubits/debug_overlay_cubit.dart';
 import '../cubits/mdb_cubits.dart';
@@ -18,6 +17,7 @@ import 'debug_screen.dart';
 import 'map_screen.dart';
 import 'ota_background_screen.dart';
 import 'ota_screen.dart';
+import 'region_selection_screen.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -67,7 +67,7 @@ class MainScreen extends StatelessWidget {
             ScreenDebug() => const DebugScreen(),
             ScreenShuttingDown() =>
               menuTrigger(const ClusterScreen()), // Fallback (shouldn't happen)
-            ScreenDownloads() => DownloadScreen(),
+            ScreenRegionSelection() => const RegionSelectionScreen(),
           },
 
           // Menu overlay
