@@ -1,28 +1,28 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:scooter_cluster/cubits/map_cubit.dart';
 import 'package:scooter_cluster/cubits/mdb_cubits.dart';
 import 'package:scooter_cluster/cubits/theme_cubit.dart';
-import 'package:scooter_cluster/cubits/update_cubit.dart';
-import 'package:scooter_cluster/cubits/update_state.dart';
 import 'package:scooter_cluster/repositories/tiles_update_repository.dart';
 import 'package:scooter_cluster/widgets/general/control_gestures_detector.dart';
 import 'package:scooter_cluster/widgets/general/settings_screen.dart';
 
 import '../cubits/screen_cubit.dart';
 
-class RegionSelectionScreen extends StatefulWidget {
-  const RegionSelectionScreen({Key? key}) : super(key: key);
+class DownloadMapScreen extends StatefulWidget {
+  const DownloadMapScreen({Key? key}) : super(key: key);
 
   @override
-  _RegionSelectionScreenState createState() => _RegionSelectionScreenState();
+  _DownloadMapScreenState createState() => _DownloadMapScreenState();
 }
 
-class _RegionSelectionScreenState extends State<RegionSelectionScreen> {
+class _DownloadMapScreenState extends State<DownloadMapScreen> {
   int _selectedIndex = 0;
   final List<GlobalKey> _keys = regions.map((e) => GlobalKey()).toList();
   final ScrollController _scrollController = ScrollController();
+
+  String get currentMonth => DateFormat('MMMM yyyy').format(DateTime.now());
 
   @override
   void dispose() {
@@ -66,40 +66,53 @@ class _RegionSelectionScreenState extends State<RegionSelectionScreen> {
       },
       onRightPress: () {
         final region = regions[_selectedIndex];
-        final updateCubit = context.read<UpdateCubit>();
-        final tilesUpdateRepository = context.read<TilesUpdateRepository>();
 
-        // set region and check for updates asynchronously
-        tilesUpdateRepository.setRegion(region).then((_) {
-          updateCubit.checkForUpdates();
-        });
-
-        // navigate away
+        // Fire download and immediately navigate back
+        context.read<MapCubit>().downloadMap(region);
         context.read<ScreenCubit>().showMap();
       },
       child: SettingsScreen(
-        title: 'Map Region',
+        title: 'Download Map',
         leftAction: 'Scroll',
-        rightAction: 'Select',
-        child: Material(
-          color: theme.scaffoldBackgroundColor,
-          child: ListView.builder(
-            controller: _scrollController,
-            itemCount: regions.length,
-            itemBuilder: (context, index) {
-              final region = regions[index];
-              final isSelected = index == _selectedIndex;
-              return ListTile(
-                key: _keys[index],
-                title: Text(region.name),
-                tileColor: isSelected
-                    ? isDark
-                        ? Colors.grey.shade800
-                        : Colors.grey.shade200
-                    : null,
-              );
-            },
-          ),
+        rightAction: 'Download',
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16.0),
+              color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+              child: Text(
+                'Maps from $currentMonth',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Expanded(
+              child: Material(
+                color: theme.scaffoldBackgroundColor,
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: regions.length,
+                  itemBuilder: (context, index) {
+                    final region = regions[index];
+                    final isSelected = index == _selectedIndex;
+                    return ListTile(
+                      key: _keys[index],
+                      title: Text(region.name),
+                      tileColor: isSelected
+                          ? isDark
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade200
+                          : null,
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

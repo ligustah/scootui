@@ -35,9 +35,6 @@ final List<SingleChildWidget> allRepositories = [
   RepositoryProvider(create: (context) => TaskService()),
   RepositoryProvider(create: (context) => ValhallaServiceController()),
   RepositoryProvider(
-    create: (context) => TilesUpdateRepository(
-      context.read<TaskService>(),
-      context.read<ValhallaServiceController>(),
-    )..loadLatestTilesVersions(),
+    create: (context) => TilesUpdateRepository(),
   ),
 ];

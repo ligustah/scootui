@@ -177,13 +177,13 @@ class ScreenShuttingDown implements ScreenState {
 
 /// @nodoc
 
-class ScreenRegionSelection implements ScreenState {
-  const ScreenRegionSelection();
+class ScreenDownloadMap implements ScreenState {
+  const ScreenDownloadMap();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is ScreenRegionSelection);
+        (other.runtimeType == runtimeType && other is ScreenDownloadMap);
   }
 
   @override
@@ -191,7 +191,7 @@ class ScreenRegionSelection implements ScreenState {
 
   @override
   String toString() {
-    return 'ScreenState.regionSelection()';
+    return 'ScreenState.downloadMap()';
   }
 }
 

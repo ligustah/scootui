@@ -16,10 +16,11 @@ import '../widgets/version_overlay.dart';
 import 'address_selection_screen.dart';
 import 'cluster_screen.dart';
 import 'debug_screen.dart';
+import 'destination_screen.dart';
+import 'download_map_screen.dart';
 import 'map_screen.dart';
 import 'ota_background_screen.dart';
 import 'ota_screen.dart';
-import 'region_selection_screen.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -75,7 +76,7 @@ class MainScreen extends StatelessWidget {
                 ScreenDebug() => const DebugScreen(),
                 ScreenShuttingDown() => menuTrigger(
                     const ClusterScreen()), // Fallback (shouldn't happen)
-                ScreenRegionSelection() => const RegionSelectionScreen(),
+                ScreenDownloadMap() => const DownloadMapScreen(),
               },
 
               // Menu overlay

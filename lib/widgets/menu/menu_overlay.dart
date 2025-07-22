@@ -150,7 +150,8 @@ class _MenuOverlayState extends State<MenuOverlay>
             type: MenuItemType.action,
             onChanged: (_) {
               final mdbRepo = context.read<MDBRepository>();
-              mdbRepo.set("navigation", "destination", location.coordinatesString);
+              mdbRepo.set(
+                  "navigation", "destination", location.coordinatesString);
               savedLocationsCubit.updateLastUsed(location.id);
               context.read<MenuCubit>().hideMenu();
             },
@@ -166,7 +167,8 @@ class _MenuOverlayState extends State<MenuOverlay>
             title: 'Delete saved location',
             type: MenuItemType.action,
             onChanged: (_) async {
-              final success = await savedLocationsCubit.deleteLocation(location.id);
+              final success =
+                  await savedLocationsCubit.deleteLocation(location.id);
               if (success) {
                 ToastService.showSuccess('Location deleted successfully!');
               } else {
@@ -256,20 +258,24 @@ class _MenuOverlayState extends State<MenuOverlay>
 
           // Validate GPS before attempting to save
           if (!gpsData.hasRecentFix) {
-            ToastService.showError('No recent GPS fix available. Please wait for GPS signal.');
+            ToastService.showError(
+                'No recent GPS fix available. Please wait for GPS signal.');
             return;
           }
 
           if (gpsData.latitude == 0.0 && gpsData.longitude == 0.0) {
-            ToastService.showError('Invalid GPS coordinates. Please wait for valid location.');
+            ToastService.showError(
+                'Invalid GPS coordinates. Please wait for valid location.');
             return;
           }
 
-          final success = await savedLocationsCubit.saveCurrentLocation(gpsData, internetData);
+          final success = await savedLocationsCubit.saveCurrentLocation(
+              gpsData, internetData);
           if (success) {
             ToastService.showSuccess('Location saved successfully!');
           } else {
-            ToastService.showError('Failed to save location. Storage may be full.');
+            ToastService.showError(
+                'Failed to save location. Storage may be full.');
           }
 
           menu.hideMenu();
@@ -292,10 +298,10 @@ class _MenuOverlayState extends State<MenuOverlay>
       ),
       if (!kIsWeb)
         MenuItem(
-          title: 'Map Region',
+          title: 'Download Map',
           type: MenuItemType.action,
           onChanged: (_) {
-            screen.showRegionSelection();
+            screen.showDownloadMap();
             menu.hideMenu();
           },
         ),
@@ -357,7 +363,8 @@ class _MenuOverlayState extends State<MenuOverlay>
     // Use the proper isDark getter that handles auto mode
     final isDark = theme.state.isDark;
 
-    final items = _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle);
+    final items =
+        _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle);
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,

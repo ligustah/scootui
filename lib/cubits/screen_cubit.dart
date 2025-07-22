@@ -110,7 +110,7 @@ class ScreenCubit extends Cubit<ScreenState> {
 
   void showOta() => emit(const ScreenState.ota());
   void showAddressSelection() => emit(const ScreenState.addressSelection());
-  void showRegionSelection() => emit(const ScreenState.regionSelection());
+  void showDownloadMap() => emit(const ScreenState.downloadMap());
 
   void showMap() => emit(const ScreenState.map());
 
