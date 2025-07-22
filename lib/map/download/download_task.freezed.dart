@@ -17,6 +17,7 @@ T _$identity<T>(T value) => value;
 mixin _$DownloadTask {
   String get url;
   String get destination;
+  String? get description;
 
   /// Create a copy of DownloadTask
   /// with the given fields replaced by the non-null parameter values.
@@ -28,7 +29,7 @@ mixin _$DownloadTask {
 
   @override
   String toString() {
-    return 'DownloadTask(url: $url, destination: $destination)';
+    return 'DownloadTask(url: $url, destination: $destination, description: $description)';
   }
 }
 
@@ -38,7 +39,7 @@ abstract mixin class $DownloadTaskCopyWith<$Res> {
           DownloadTask value, $Res Function(DownloadTask) _then) =
       _$DownloadTaskCopyWithImpl;
   @useResult
-  $Res call({String url, String destination});
+  $Res call({String url, String destination, String? description});
 }
 
 /// @nodoc
@@ -55,6 +56,7 @@ class _$DownloadTaskCopyWithImpl<$Res> implements $DownloadTaskCopyWith<$Res> {
   $Res call({
     Object? url = null,
     Object? destination = null,
+    Object? description = freezed,
   }) {
     return _then(_self.copyWith(
       url: null == url
@@ -65,6 +67,10 @@ class _$DownloadTaskCopyWithImpl<$Res> implements $DownloadTaskCopyWith<$Res> {
           ? _self.destination
           : destination // ignore: cast_nullable_to_non_nullable
               as String,
+      description: freezed == description
+          ? _self.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -72,12 +78,16 @@ class _$DownloadTaskCopyWithImpl<$Res> implements $DownloadTaskCopyWith<$Res> {
 /// @nodoc
 
 class _DownloadTask extends DownloadTask {
-  _DownloadTask({required this.url, required this.destination}) : super._();
+  _DownloadTask(
+      {required this.url, required this.destination, this.description})
+      : super._();
 
   @override
   final String url;
   @override
   final String destination;
+  @override
+  final String? description;
 
   /// Create a copy of DownloadTask
   /// with the given fields replaced by the non-null parameter values.
@@ -89,7 +99,7 @@ class _DownloadTask extends DownloadTask {
 
   @override
   String toString() {
-    return 'DownloadTask(url: $url, destination: $destination)';
+    return 'DownloadTask(url: $url, destination: $destination, description: $description)';
   }
 }
 
@@ -101,7 +111,7 @@ abstract mixin class _$DownloadTaskCopyWith<$Res>
       __$DownloadTaskCopyWithImpl;
   @override
   @useResult
-  $Res call({String url, String destination});
+  $Res call({String url, String destination, String? description});
 }
 
 /// @nodoc
@@ -119,6 +129,7 @@ class __$DownloadTaskCopyWithImpl<$Res>
   $Res call({
     Object? url = null,
     Object? destination = null,
+    Object? description = freezed,
   }) {
     return _then(_DownloadTask(
       url: null == url
@@ -129,6 +140,10 @@ class __$DownloadTaskCopyWithImpl<$Res>
           ? _self.destination
           : destination // ignore: cast_nullable_to_non_nullable
               as String,
+      description: freezed == description
+          ? _self.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

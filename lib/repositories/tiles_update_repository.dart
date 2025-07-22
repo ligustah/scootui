@@ -169,6 +169,7 @@ class TilesUpdateRepository {
       valhallaTask = DownloadTask(
         url: region.valhallaUrl,
         destination: '$valhallaPath.tmp',
+        description: 'Downloading ${region.name} routing data',
       );
       _taskService.addTask(valhallaTask);
     }
@@ -180,6 +181,7 @@ class TilesUpdateRepository {
       osmTask = DownloadTask(
         url: region.osmTilesUrl,
         destination: '$osmPath.tmp',
+        description: 'Downloading ${region.name} map data',
       );
       _taskService.addTask(osmTask);
     }

@@ -12,12 +12,13 @@ abstract class DownloadTask extends Task<void> with _$DownloadTask {
   factory DownloadTask({
     required String url,
     required String destination,
+    String? description,
   }) = _DownloadTask;
 
   DownloadTask._();
 
   @override
-  String get name => "Download";
+  String get name => description ?? "Download";
 
   Future<void> _download() async {
     // download to a temporary file in the same directory

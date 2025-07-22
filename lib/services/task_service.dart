@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'toast_service.dart';
+
 part 'task_service.freezed.dart';
 
 @freezed
@@ -259,17 +261,40 @@ class TaskService {
     // Create the completer here, before setting up the listener
     task._completer ??= Completer<TaskStatus>();
 
+    // Track if we've shown the start toast for this task
+    bool startToastShown = false;
+
     port.forEach((state) {
       _tasks[task] = state as TaskStatus;
 
       switch (state) {
         case TaskRunning():
+          // Show toast only once when task starts running
+          if (!startToastShown) {
+            ToastService.showInfo('Started: ${task.name}');
+            startToastShown = true;
+          }
           _emit();
-        case TaskCompleted() || TaskError():
+        case TaskCompleted():
           _tasks.remove(task);
           _emit();
           task._completer?.complete(state);
           port.close(); // Close the port after completion
+
+          // Show success toast
+          ToastService.showSuccess('Completed: ${task.name}');
+
+          // Mark task as complete and process next
+          _currentTask = null;
+          _processNextTask();
+        case TaskError(:final message):
+          _tasks.remove(task);
+          _emit();
+          task._completer?.complete(state);
+          port.close(); // Close the port after completion
+
+          // Show error toast
+          ToastService.showError('Failed: ${task.name} - $message');
 
           // Mark task as complete and process next
           _currentTask = null;
