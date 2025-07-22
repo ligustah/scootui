@@ -224,6 +224,10 @@ class TaskService {
   final LinkedHashMap<Task, TaskStatus> _tasks =
       LinkedHashMap<Task, TaskStatus>();
 
+  // Queue for pending tasks
+  final Queue<Task> _taskQueue = Queue<Task>();
+  Task? _currentTask;
+
   void _emit() {
     _ctrl.add(tasks);
   }
@@ -231,6 +235,23 @@ class TaskService {
   void addTask(Task task) {
     _tasks[task] = task._status;
     _emit();
+
+    // Add to queue instead of starting immediately
+    _taskQueue.add(task);
+
+    // Process next task if no task is currently running
+    _processNextTask();
+  }
+
+  void _processNextTask() {
+    // If a task is already running or no tasks in queue, return
+    if (_currentTask != null || _taskQueue.isEmpty) {
+      return;
+    }
+
+    // Get next task from queue
+    final task = _taskQueue.removeFirst();
+    _currentTask = task;
 
     final port = ReceivePort();
     task._start(port.sendPort);
@@ -249,15 +270,31 @@ class TaskService {
           _emit();
           task._completer?.complete(state);
           port.close(); // Close the port after completion
+
+          // Mark task as complete and process next
+          _currentTask = null;
+          _processNextTask();
         default:
       }
     });
   }
 
   void cancelTask(Task task) {
-    // Implement cancellation logic if needed
-    _tasks.remove(task);
-    task.cancel();
+    // Remove from queue if pending
+    if (_taskQueue.contains(task)) {
+      _taskQueue.remove(task);
+      _tasks.remove(task);
+      _emit();
+      return;
+    }
+
+    // Cancel if it's the current task
+    if (_currentTask == task) {
+      _tasks.remove(task);
+      task.cancel();
+      _currentTask = null;
+      _processNextTask(); // Process next task after cancellation
+    }
   }
 
   List<(Task, TaskStatus)> get tasks =>

@@ -159,18 +159,34 @@ class TilesUpdateRepository {
     final valhallaPath = await _valhallaPath;
     final osmPath = await _osmPath;
 
+    DownloadTask? valhallaTask;
+    DownloadTask? osmTask;
+
+    // Check and queue Valhalla download if needed
     if (remoteDates.valhallaDate.isAfter(
         _latestTilesVersions.releaseDates?.valhallaDate ??
             DateTime.fromMillisecondsSinceEpoch(0))) {
-      final downloadTask = DownloadTask(
+      valhallaTask = DownloadTask(
         url: region.valhallaUrl,
         destination: '$valhallaPath.tmp',
       );
+      _taskService.addTask(valhallaTask);
+    }
 
-      // Add the task and wait for completion
-      _taskService.addTask(downloadTask);
-      final status = await downloadTask.wait();
+    // Check and queue OSM download if needed
+    if (remoteDates.osmDate.isAfter(
+        _latestTilesVersions.releaseDates?.osmDate ??
+            DateTime.fromMillisecondsSinceEpoch(0))) {
+      osmTask = DownloadTask(
+        url: region.osmTilesUrl,
+        destination: '$osmPath.tmp',
+      );
+      _taskService.addTask(osmTask);
+    }
 
+    // Wait for Valhalla download if queued
+    if (valhallaTask != null) {
+      final status = await valhallaTask.wait();
       switch (status) {
         case TaskCompleted():
           print(
@@ -184,18 +200,9 @@ class TilesUpdateRepository {
       }
     }
 
-    if (remoteDates.osmDate.isAfter(
-        _latestTilesVersions.releaseDates?.osmDate ??
-            DateTime.fromMillisecondsSinceEpoch(0))) {
-      final downloadTask = DownloadTask(
-        url: region.osmTilesUrl,
-        destination: '$osmPath.tmp',
-      );
-
-      // Add the task and wait for completion
-      _taskService.addTask(downloadTask);
-      final status = await downloadTask.wait();
-
+    // Wait for OSM download if queued
+    if (osmTask != null) {
+      final status = await osmTask.wait();
       switch (status) {
         case TaskCompleted():
           print(
