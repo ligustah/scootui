@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -206,14 +207,6 @@ class _MenuOverlayState extends State<MenuOverlay>
     // Main menu items
     return [
       MenuItem(
-        title: 'Map Region',
-        type: MenuItemType.action,
-        onChanged: (_) {
-          screen.showRegionSelection();
-          menu.hideMenu();
-        },
-      ),
-      MenuItem(
         title: 'Hazard lights',
         type: MenuItemType.action,
         onChanged: (_) {
@@ -297,6 +290,15 @@ class _MenuOverlayState extends State<MenuOverlay>
           menu.hideMenu();
         },
       ),
+      if (!kIsWeb)
+        MenuItem(
+          title: 'Map Region',
+          type: MenuItemType.action,
+          onChanged: (_) {
+            screen.showRegionSelection();
+            menu.hideMenu();
+          },
+        ),
       MenuItem(
         title: 'Exit Menu',
         type: MenuItemType.action,
