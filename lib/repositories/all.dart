@@ -1,17 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nested/nested.dart';
-import 'package:scooter_cluster/repositories/tile_address_repository.dart';
-import 'package:scooter_cluster/repositories/tiles_update_repository.dart';
-import 'package:scooter_cluster/services/task_service.dart';
-import 'package:scooter_cluster/services/valhalla_service_controller.dart';
 
 import '../services/auto_theme_service.dart';
+import '../services/map_service.dart';
 import '../services/settings_service.dart';
+import '../services/task_service.dart';
+import '../services/valhalla_service_controller.dart';
 import 'address_repository.dart';
 import 'mdb_repository.dart';
 import 'redis_mdb_repository.dart';
-import 'tiles_repository.dart';
+import 'tiles_update_repository.dart';
 
 // Initialize the MDB repository first, then settings service which depends on it
 final List<SingleChildWidget> allRepositories = [
@@ -27,11 +26,9 @@ final List<SingleChildWidget> allRepositories = [
   RepositoryProvider(
     create: (context) => AutoThemeService(context.read<MDBRepository>()),
   ),
-  RepositoryProvider(create: AddressRepository.create),
-  RepositoryProvider(create: TilesRepository.create),
+  RepositoryProvider(create: (context) => MapService()..init()),
   RepositoryProvider(
-      create: (context) =>
-          TileAddressRepository(context.read<TilesRepository>())..init()),
+      create: (context) => AddressRepository(context.read<MapService>())),
   RepositoryProvider(create: (context) => TaskService()),
   RepositoryProvider(create: (context) => ValhallaServiceController()),
   RepositoryProvider(

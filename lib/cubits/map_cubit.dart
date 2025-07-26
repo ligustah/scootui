@@ -13,12 +13,11 @@ import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../map/mbtiles_provider.dart';
 import '../repositories/mdb_repository.dart';
-import '../repositories/tiles_repository.dart';
 import '../repositories/tiles_update_repository.dart';
+import '../services/map_service.dart';
 import '../services/task_service.dart';
 import '../services/toast_service.dart';
 import '../services/valhalla_service_controller.dart';
@@ -42,7 +41,7 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<ThemeState> _themeSub;
   late final StreamSubscription<ShutdownState> _shutdownSub;
   late final StreamSubscription<NavigationState> _navigationStateSub; // Added
-  final TilesRepository _tilesRepository;
+  final MapService _mapService;
   final TaskService _taskService;
   final ValhallaServiceController _valhallaServiceController;
 
@@ -67,7 +66,7 @@ class MapCubit extends Cubit<MapState> {
         themeUpdates: context.read<ThemeCubit>().stream,
         shutdownStream: context.read<ShutdownCubit>().stream,
         navigationStateStream: context.read<NavigationCubit>().stream, // Added
-        tilesRepository: RepositoryProvider.of<TilesRepository>(context),
+        mapService: RepositoryProvider.of<MapService>(context),
         taskService: RepositoryProvider.of<TaskService>(context),
         valhallaServiceController:
             RepositoryProvider.of<ValhallaServiceController>(context),
@@ -83,11 +82,11 @@ class MapCubit extends Cubit<MapState> {
     required Stream<ThemeState> themeUpdates,
     required Stream<ShutdownState> shutdownStream,
     required Stream<NavigationState> navigationStateStream, // Added
-    required TilesRepository tilesRepository,
+    required MapService mapService,
     required TaskService taskService,
     required ValhallaServiceController valhallaServiceController,
     required MDBRepository mdbRepository,
-  })  : _tilesRepository = tilesRepository,
+  })  : _mapService = mapService,
         _taskService = taskService,
         _valhallaServiceController = valhallaServiceController,
         super(MapLoading(
@@ -103,15 +102,6 @@ class MapCubit extends Cubit<MapState> {
   Future<void> close() {
     final current = state;
     current.controller.dispose();
-    switch (current) {
-      case MapOffline():
-        final tiles = current.tiles;
-        if (tiles is AsyncMbTilesProvider) {
-          tiles.dispose();
-        }
-        break;
-      default:
-    }
     _themeSub.cancel();
     _gpsSub.cancel();
     _shutdownSub.cancel();
@@ -265,34 +255,22 @@ class MapCubit extends Cubit<MapState> {
 
   Future<void> _onMapReady(TickerProvider vsync) async {
     final current = state;
+    if (current is! MapOffline) {
+      // This should not happen, but as a safeguard.
+      return;
+    }
     _animatedController = AnimatedMapController(
         vsync: vsync,
         mapController: current.controller,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut);
 
-    emit(switch (current) {
-      MapOffline() => current.copyWith(isReady: true),
-      MapOnline() => current.copyWith(isReady: true),
-      MapLoading(:final position, :final controller) => MapOffline(
-          // Default to offline if was loading
-          position: position,
-          orientation: 0,
-          controller: controller,
-          tiles: AsyncMbTilesProvider(
-              _tilesRepository), // Re-init or ensure it's available
-          theme: await _getTheme(true), // Default theme
-          themeMode: 'dark', // Default to dark
-          onReady: _onMapReady,
-          isReady: true,
-        ),
-      MapUnavailable() => current,
-    });
+    // The controller is now ready. Move the map to the correct position
+    // BEFORE emitting the final ready state to avoid race conditions.
+    _moveAndRotate(current.position, current.orientation);
 
-    final mapIsReady = state is MapOffline || state is MapOnline;
-    if (mapIsReady) {
-      _moveAndRotate(state.position, state.orientation);
-    }
+    // Now, emit the ready state.
+    emit(current.copyWith(isReady: true));
   }
 
   Future<Theme> _getTheme(bool isDark) async {
@@ -321,9 +299,10 @@ class MapCubit extends Cubit<MapState> {
     try {
       ToastService.showInfo('Starting map download for ${region.name}...');
 
-      final appDir = await getApplicationDocumentsDirectory();
-      final valhallaPath = '${appDir.path}/valhalla_tiles.tar';
-      final osmPath = (await _tilesRepository.getMapFilename())!;
+      final osmPath = (await _mapService.getMapFilename());
+      if (osmPath == null) {
+        throw Exception("Could not get map filename for download");
+      }
 
       // Create download tasks
       final osmTask = DownloadTask(
@@ -332,209 +311,36 @@ class MapCubit extends Cubit<MapState> {
         description: 'Downloading ${region.name} map data',
       );
 
-      final valhallaTask = DownloadTask(
-        url: region.valhallaUrl,
-        destination: '$valhallaPath.tmp',
-        description: 'Downloading ${region.name} routing data',
-      );
-
-      // Add to task service
       _taskService.addTask(osmTask);
-      _taskService.addTask(valhallaTask);
-
-      // Wait for both downloads to complete
       final osmStatus = await osmTask.wait();
-      final valhallaStatus = await valhallaTask.wait();
 
-      bool osmSuccess = false;
-      bool valhallaSuccess = false;
-
-      // Check OSM download status
-      switch (osmStatus) {
-        case TaskCompleted():
-          print('downloaded osm tiles to $osmPath.tmp');
-          osmSuccess = true;
-        case TaskError(:final message):
-          ToastService.showError('Failed to download map data: $message');
-        default:
-        // Should not happen as wait() only returns terminal states
-      }
-
-      // Check Valhalla download status
-      switch (valhallaStatus) {
-        case TaskCompleted():
-          print('downloaded valhalla tiles to $valhallaPath.tmp');
-          valhallaSuccess = true;
-        case TaskError(:final message):
-          ToastService.showError('Failed to download routing data: $message');
-        default:
-        // Should not happen as wait() only returns terminal states
-      }
-
-      // Only apply update if both downloads succeeded
-      if (osmSuccess && valhallaSuccess) {
-        await _applyMapUpdate(
-            '$osmPath.tmp', osmPath, '$valhallaPath.tmp', valhallaPath);
+      if (osmStatus is TaskCompleted) {
+        await _applyMapUpdate('$osmPath.tmp');
+      } else if (osmStatus is TaskError) {
+        ToastService.showError(
+            'Failed to download map data: ${osmStatus.message}');
       }
     } catch (e) {
       ToastService.showError('Map download failed: $e');
     }
   }
 
-  Future<void> _applyMapUpdate(String osmTmpPath, String osmPath,
-      String valhallaTmpPath, String valhallaPath) async {
+  Future<void> _applyMapUpdate(String osmTmpPath) async {
     try {
-      // Step 1: Unload current map
-      await _unloadMap();
-
-      // Step 2: Stop Valhalla service before updating files
-      await _valhallaServiceController.stop();
-
-      // Step 3: Backup existing files if they exist
-      bool hadOsmBackup = false;
-      bool hadValhallaBackup = false;
-
-      final osmFile = File(osmPath);
-      final valhallaFile = File(valhallaPath);
-      final osmBackupPath = '$osmPath.bak';
-      final valhallaBackupPath = '$valhallaPath.bak';
-
-      // this is a workaround for windows, where it takes a bit for the process
-      // to release the original file lock.
-      for (var i = 0; i < 10; i++) {
-        try {
-          if (await osmFile.exists()) {
-            await osmFile.rename(osmBackupPath);
-            hadOsmBackup = true;
-          }
-          break;
-        } catch (e) {
-          if (i == 9) {
-            rethrow;
-          }
-          await Future.delayed(const Duration(milliseconds: 500));
-        }
-      }
-
-      if (await valhallaFile.exists()) {
-        await valhallaFile.rename(valhallaBackupPath);
-        hadValhallaBackup = true;
-      }
-
-      // Step 4: Move new files from .tmp to final locations
-      final osmTmpFile = File(osmTmpPath);
-      final valhallaTmpFile = File(valhallaTmpPath);
-
-      if (await osmTmpFile.exists()) {
-        await osmTmpFile.rename(osmPath);
-      } else {
-        throw Exception('OSM temporary file not found');
-      }
-
-      if (await valhallaTmpFile.exists()) {
-        await valhallaTmpFile.rename(valhallaPath);
-      } else {
-        throw Exception('Valhalla temporary file not found');
-      }
-
-      // Step 5: Try to start Valhalla service with new data
-      await _valhallaServiceController.start();
-
-      // Step 6: Try to load the new map using the standard _loadMap function
-      if (_lastThemeState != null) {
-        await _loadMap(_lastThemeState!);
-      } else {
-        // Fallback: we can't load without theme state
-        throw Exception('Theme state not available');
-      }
-
-      // Step 7: Check if the map loaded successfully
-      final newState = state;
-      if (newState is! MapOffline) {
-        // Map failed to load - treat this as an error
-        throw Exception('Map failed to load after update');
-      }
-
-      // Step 8: If we get here, everything worked - clean up backups
-      if (hadOsmBackup) {
-        final osmBackup = File(osmBackupPath);
-        if (await osmBackup.exists()) {
-          await osmBackup.delete();
-        }
-      }
-
-      if (hadValhallaBackup) {
-        final valhallaBackup = File(valhallaBackupPath);
-        if (await valhallaBackup.exists()) {
-          await valhallaBackup.delete();
-        }
-      }
+      await _mapService.updateMap(osmTmpPath);
 
       ToastService.showSuccess('Map updated successfully!');
+    } on MapUnavailableException catch (e) {
+      ToastService.showError('Update failed: ${e.message}');
+      print('Update failed: ${e.toString()}');
     } catch (e) {
-      // Something went wrong - try to restore backups
-      ToastService.showError(
-          'Update failed, restoring previous map... - ${e.toString()}');
-
-      try {
-        // Stop valhalla service first
-        await _valhallaServiceController.stop();
-
-        // Delete any partially moved files
-        final osmFile = File(osmPath);
-        final valhallaFile = File(valhallaPath);
-
-        if (await osmFile.exists()) {
-          await osmFile.delete();
-        }
-        if (await valhallaFile.exists()) {
-          await valhallaFile.delete();
-        }
-
-        // Restore backups
-        final osmBackup = File('$osmPath.bak');
-        final valhallaBackup = File('$valhallaPath.bak');
-
-        if (await osmBackup.exists()) {
-          await osmBackup.rename(osmPath);
-        }
-
-        if (await valhallaBackup.exists()) {
-          await valhallaBackup.rename(valhallaPath);
-        }
-
-        // Try to restart valhalla and reload map
-        await _valhallaServiceController.start();
-        if (_lastThemeState != null) {
-          await _loadMap(_lastThemeState!);
-        }
-      } catch (restoreError) {
-        ToastService.showError('Failed to restore previous map: $restoreError');
+      ToastService.showError('An unexpected error occurred: ${e.toString()}');
+      print('An unexpected error occurred: ${e.toString()}');
+    } finally {
+      if (_lastThemeState != null) {
+        await _loadMap(_lastThemeState!);
       }
-
-      // Re-throw the original error
-      throw Exception('Map update failed: $e');
     }
-  }
-
-  Future<void> _unloadMap() async {
-    final current = state;
-
-    // Dispose of current map provider if it exists
-    if (current is MapOffline && current.tiles is AsyncMbTilesProvider) {
-      await (current.tiles as AsyncMbTilesProvider).dispose();
-    }
-
-    // Emit loading state to clear the current map
-    emit(MapLoading(
-      controller: current.controller,
-      position: switch (current) {
-        MapOffline(:final position) => position,
-        MapUnavailable(:final position) => position,
-        MapLoading(:final position) => position,
-        _ => defaultCoordinates,
-      },
-    ));
   }
 
   Future<void> _loadMap(ThemeState themeState) async {
@@ -544,23 +350,21 @@ class MapCubit extends Cubit<MapState> {
     final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
-    final provider = AsyncMbTilesProvider(_tilesRepository);
-    final tilesInit = await provider.init();
-
-    switch (tilesInit) {
-      case InitSuccess(:final metadata):
-        emit(MapState.offline(
-          tiles: provider,
-          position: _getInitialCoordinates(metadata),
-          orientation: 0,
-          controller: ctrl,
-          theme: theme,
-          themeMode: themeState.isDark ? 'dark' : 'light',
-          onReady: _onMapReady,
-        ));
-      case InitError(:final message):
-        emit(MapState.unavailable(message,
-            controller: ctrl, position: state.position));
+    try {
+      final metadata = await _mapService.getMetadata();
+      final provider = AsyncMbTilesProvider(_mapService, metadata);
+      emit(MapState.offline(
+        tiles: provider,
+        position: _getInitialCoordinates(metadata),
+        orientation: 0,
+        controller: ctrl,
+        theme: theme,
+        themeMode: themeState.isDark ? 'dark' : 'light',
+        onReady: _onMapReady,
+      ));
+    } on MapUnavailableException catch (e) {
+      emit(MapState.unavailable(e.message,
+          controller: ctrl, position: state.position));
     }
   }
 }
