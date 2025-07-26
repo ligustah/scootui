@@ -5,11 +5,13 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
+import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 import '../repositories/address_repository.dart';
 
@@ -56,14 +58,9 @@ class MapService {
   /// Returns the map metadata. Throws [MapUnavailableException] if initialization fails.
   Future<MbTilesMetadata> getMetadata() => _initCompleter.future;
 
-  Future<String?> getMapFilename() async {
-    // This logic is now part of the service.
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      return '${appDir.path}/maps/map.mbtiles';
-    } catch (e) {
-      return null;
-    }
+  Future<Directory> getMapsDirectory() async {
+    final appDir = await getApplicationDocumentsDirectory();
+    return Directory(p.join(appDir.path, 'maps'));
   }
 
   Future<void> updateMap(String newMapPath) {
@@ -154,21 +151,69 @@ class _MapServiceIsolateHandler {
   _MapServiceIsolateHandler(this._sendPort);
 
   Future<String> _getMapFilename() async {
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      return '${appDir.path}/maps/map.mbtiles';
-    } catch (e) {
-      throw Exception(
-          "Could not determine application documents directory: $e");
+    final appDir = await getApplicationDocumentsDirectory();
+    final mapsDir = Directory(p.join(appDir.path, 'maps'));
+    if (!await mapsDir.exists()) {
+      await mapsDir.create(recursive: true);
     }
+
+    // Migrate old map file if it exists
+    final oldMapFile = File(p.join(mapsDir.path, 'map.mbtiles'));
+    if (await oldMapFile.exists()) {
+      try {
+        final timestamp = DateFormat('yyyyMMdd_HHmmss')
+            .format(await oldMapFile.lastModified());
+        final newPath = p.join(mapsDir.path, 'map_$timestamp.mbtiles');
+        await oldMapFile.rename(newPath);
+        print('Migrated existing map to $newPath');
+      } catch (e) {
+        print('Failed to migrate old map file: $e');
+      }
+    }
+
+    final mapFiles = (await mapsDir.list().toList())
+        .whereType<File>()
+        .where((f) => p.basename(f.path).startsWith('map_'))
+        .where((f) => p.basename(f.path).endsWith('.mbtiles'))
+        .toList();
+
+    if (mapFiles.isEmpty) {
+      throw MapUnavailableException('No map files found in ${mapsDir.path}');
+    }
+
+    // Sort by timestamp (newest first)
+    mapFiles.sort((a, b) => b.path.compareTo(a.path));
+
+    return mapFiles.first.path;
   }
 
-  Future<MbTiles> _getMbTiles() async {
-    final mapPath = await _getMapFilename();
+  Future<MbTiles> _getMbTiles(String mapPath) async {
     if (!File(mapPath).existsSync()) {
       throw MapUnavailableException('Map file not found at $mapPath');
     }
     return MbTiles(mbtilesPath: mapPath);
+  }
+
+  Future<void> _cleanupOldMaps(String currentMapPath) async {
+    final mapsDir = File(currentMapPath).parent;
+    final currentFileName = p.basename(currentMapPath);
+
+    final oldMaps = (await mapsDir.list().toList())
+        .whereType<File>()
+        .where((f) =>
+            p.basename(f.path).startsWith('map_') &&
+            p.basename(f.path).endsWith('.mbtiles') &&
+            p.basename(f.path) != currentFileName)
+        .toList();
+
+    for (final oldMap in oldMaps) {
+      try {
+        await oldMap.delete();
+        print('Deleted old map: ${oldMap.path}');
+      } catch (e) {
+        print('Failed to delete old map ${oldMap.path}: $e');
+      }
+    }
   }
 
   Future<void> handle(dynamic message) async {
@@ -177,14 +222,13 @@ class _MapServiceIsolateHandler {
     switch (message) {
       case _InitRequest():
         try {
-          // Load tiles handle
-          _mbTiles = await _getMbTiles();
-
-          // Load address query handle
-          final dbPath = await _getMapFilename();
-          _db = sqlite.sqlite3.open(dbPath, mode: sqlite.OpenMode.readOnly);
-
+          final mapPath = await _getMapFilename();
+          _mbTiles = await _getMbTiles(mapPath);
+          _db = sqlite.sqlite3.open(mapPath, mode: sqlite.OpenMode.readOnly);
           _sendPort.send(Response.init(_mbTiles!.getMetadata()));
+
+          // Cleanup old maps after successful load
+          await _cleanupOldMaps(mapPath);
         } catch (e) {
           _sendPort.send(Response.error(e.toString()));
         }
@@ -235,63 +279,21 @@ class _MapServiceIsolateHandler {
       case _ReloadMapRequest(:final requestId, :final newMapPath):
         try {
           print('Unloading current databases');
-          // 1. Unload current databases
           _mbTiles?.dispose();
           _mbTiles = null;
           _db?.dispose();
           _db = null;
 
-          // 2. Rename old file to backup
-          final oldMapPath = await _getMapFilename();
-          final oldMapFile = File(oldMapPath);
-          final backupMapPath = '$oldMapPath.bak';
-          if (await oldMapFile.exists()) {
-            // This is a workaround for Windows, where it takes a moment for the process
-            // to release the file lock after dispose() is called.
-            for (var i = 0; i < 100; i++) {
-              try {
-                await oldMapFile.rename(backupMapPath);
-                break; // Success
-              } catch (e) {
-                print('Error renaming old map file: $e');
-                if (i == 99) rethrow; // Rethrow after final attempt
+          // Load new map directly
+          _mbTiles = await _getMbTiles(newMapPath);
+          _db = sqlite.sqlite3.open(newMapPath, mode: sqlite.OpenMode.readOnly);
 
-                print('Retrying in 500ms');
-                await Future.delayed(const Duration(milliseconds: 500));
-              }
-            }
-          }
-
-          // 3. Rename new file to primary
-          await File(newMapPath).rename(oldMapPath);
-
-          // 4. Try to load new databases
-          _mbTiles = await _getMbTiles();
-          _db = sqlite.sqlite3.open(oldMapPath, mode: sqlite.OpenMode.readOnly);
-
-          // 5. Success: delete backup & notify caller
-          final backupFile = File(backupMapPath);
-          if (await backupFile.exists()) {
-            await backupFile.delete();
-          }
+          // Success: notify caller and clean up old maps
           _sendPort.send(Response.updateSuccess(requestId));
+          await _cleanupOldMaps(newMapPath);
         } catch (e) {
-          // Failure: Rollback
-          try {
-            final oldMapPath = await _getMapFilename();
-            final backupMapPath = '$oldMapPath.bak';
-            if (await File(backupMapPath).exists()) {
-              await File(backupMapPath).rename(oldMapPath);
-            }
-            // CRUCIAL: Always try to re-open the database handles after a rollback attempt.
-            // This covers both cases: restoring a backup, or the original rename failing.
-            _mbTiles = await _getMbTiles();
-            _db =
-                sqlite.sqlite3.open(oldMapPath, mode: sqlite.OpenMode.readOnly);
-          } catch (rollbackError) {
-            // If rollback fails, we are in a bad state. The service will be unusable.
-            print("CRITICAL: Map rollback failed: $rollbackError");
-          }
+          // Failure: Send error back
+          // No need to rollback, the old map is still there. The new one will be cleaned up on next startup.
           _sendPort.send(Response.updateError(requestId, e.toString()));
         }
 

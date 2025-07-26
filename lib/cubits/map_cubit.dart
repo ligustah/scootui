@@ -9,8 +9,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
+import 'package:path/path.dart' as p;
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
@@ -299,15 +301,14 @@ class MapCubit extends Cubit<MapState> {
     try {
       ToastService.showInfo('Starting map download for ${region.name}...');
 
-      final osmPath = (await _mapService.getMapFilename());
-      if (osmPath == null) {
-        throw Exception("Could not get map filename for download");
-      }
+      final mapsDir = await _mapService.getMapsDirectory();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final newMapPath = p.join(mapsDir.path, 'map_$timestamp.mbtiles');
 
       // Create download tasks
       final osmTask = DownloadTask(
         url: region.osmTilesUrl,
-        destination: '$osmPath.tmp',
+        destination: newMapPath,
         description: 'Downloading ${region.name} map data',
       );
 
@@ -315,7 +316,7 @@ class MapCubit extends Cubit<MapState> {
       final osmStatus = await osmTask.wait();
 
       if (osmStatus is TaskCompleted) {
-        await _applyMapUpdate('$osmPath.tmp');
+        await _applyMapUpdate(newMapPath);
       } else if (osmStatus is TaskError) {
         ToastService.showError(
             'Failed to download map data: ${osmStatus.message}');
@@ -325,9 +326,9 @@ class MapCubit extends Cubit<MapState> {
     }
   }
 
-  Future<void> _applyMapUpdate(String osmTmpPath) async {
+  Future<void> _applyMapUpdate(String newMapPath) async {
     try {
-      await _mapService.updateMap(osmTmpPath);
+      await _mapService.updateMap(newMapPath);
 
       ToastService.showSuccess('Map updated successfully!');
     } on MapUnavailableException catch (e) {

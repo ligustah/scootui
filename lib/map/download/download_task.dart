@@ -24,37 +24,45 @@ abstract class DownloadTask extends Task<void> with _$DownloadTask {
     // download to a temporary file in the same directory
     final tempFile = File('$destination.tmp');
 
-    if (await tempFile.exists()) {
-      await tempFile.delete();
-    }
-
-    await tempFile.parent.create(recursive: true);
-
-    final raf = await tempFile.open(mode: FileMode.write);
-    final dio = Dio();
-
-    step("Downloading $url");
-    final response = await dio
-        .get(url, options: Options(responseType: ResponseType.stream),
-            onReceiveProgress: (received, total) {
-      if (total > 0) {
-        progress(received.toDouble() / total.toDouble());
-      }
-    });
-
     try {
-      if (response.statusCode == 200) {
-        step(url);
-        final stream = response.data as ResponseBody;
-        await for (var chunk in stream.stream) {
-          await raf.writeFrom(chunk);
-        }
-      } else {
-        throw Exception("Failed to download: ${response.statusMessage}");
+      if (await tempFile.exists()) {
+        await tempFile.delete();
       }
-    } finally {
-      await raf.close();
+
+      await tempFile.parent.create(recursive: true);
+
+      final raf = await tempFile.open(mode: FileMode.write);
+      final dio = Dio();
+
+      step("Downloading $url");
+      final response = await dio
+          .get(url, options: Options(responseType: ResponseType.stream),
+              onReceiveProgress: (received, total) {
+        if (total > 0) {
+          progress(received.toDouble() / total.toDouble());
+        }
+      });
+
+      try {
+        if (response.statusCode == 200) {
+          step(url);
+          final stream = response.data as ResponseBody;
+          await for (var chunk in stream.stream) {
+            await raf.writeFrom(chunk);
+          }
+        } else {
+          throw Exception("Failed to download: ${response.statusMessage}");
+        }
+      } finally {
+        await raf.close();
+      }
       await tempFile.rename(destination);
+    } catch (e) {
+      // on error, delete the temporary file
+      if (await tempFile.exists()) {
+        await tempFile.delete();
+      }
+      rethrow;
     }
   }
 
