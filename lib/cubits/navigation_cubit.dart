@@ -38,7 +38,13 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   @override
-  Future<void> close() {
+  Future<void> close() async {
+    // Clear navigation destination if we've arrived
+    if (state.status == NavigationStatus.arrived) {
+      print("NavigationCubit: Clearing destination on shutdown since we've arrived.");
+      await clearNavigation();
+    }
+    
     _gpsSub.cancel();
     _navigationSub.cancel();
     return super.close();
@@ -191,6 +197,19 @@ class NavigationCubit extends Cubit<NavigationState> {
       // We check for idle or error status to ensure we only trigger this
       // if we're not already in the middle of a calculation or navigation.
       if (currentState.status == NavigationStatus.idle || currentState.status == NavigationStatus.error) {
+        // Before calculating route, check if we're already at the destination
+        final distanceToDestination = distanceCalculator.as(
+          LengthUnit.Meter,
+          _currentPosition!,
+          currentState.destination!,
+        );
+        
+        if (distanceToDestination < _arrivalProximityMeters) {
+          print("NavigationCubit (_onGpsData): Already at destination (${distanceToDestination.toStringAsFixed(1)}m), clearing navigation instead of calculating route.");
+          clearNavigation();
+          return;
+        }
+        
         print("NavigationCubit (_onGpsData): Destination is pending and GPS is now available. Calculating route.");
         _calculateRoute(currentState.destination!);
         return; // Exit because _calculateRoute will emit the next state.
