@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../state/battery.dart';
+import '../../utils/toast_utils.dart';
 
 // Battery icon dimensions (scaled from 144x144)
 const double kBatteryIconWidth = 24.0;
@@ -31,8 +32,20 @@ class BatteryStatusDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get theme information
     final ThemeState(:isDark) = ThemeCubit.watch(context);
-    final iconColor = isDark ? Colors.white : Colors.black;
-    final textColor = isDark ? Colors.white : Colors.black;
+    
+    // Determine battery color based on charge level
+    Color getBatteryColor() {
+      if (battery.charge <= 10) {
+        return const Color(0xFFFF0000); // Red for critical
+      } else if (battery.charge <= 20) {
+        return const Color(0xFFFF7900); // Orange for warning
+      } else {
+        return isDark ? Colors.white : Colors.black; // Normal
+      }
+    }
+    
+    final iconColor = getBatteryColor();
+    final textColor = iconColor;
     final backgroundColor = isDark ? Colors.black : Colors.white;
 
     // Determine which icon to show and what text to display
@@ -163,13 +176,55 @@ class BatteryStatusDisplay extends StatelessWidget {
   }
 }
 
-class CombinedBatteryDisplay extends StatelessWidget {
+class CombinedBatteryDisplay extends StatefulWidget {
   const CombinedBatteryDisplay({super.key});
 
   @override
+  State<CombinedBatteryDisplay> createState() => _CombinedBatteryDisplayState();
+}
+
+class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
+  int? _lastSoc;
+
+  void _checkBatteryWarnings(int soc) {
+    if (_lastSoc == null || _lastSoc == soc) {
+      _lastSoc = soc;
+      return;
+    }
+
+    // Only show toasts when crossing thresholds downward
+    if (soc < _lastSoc!) {
+      String? message;
+      if (soc == 0 && _lastSoc! > 0) {
+        message = "Battery empty. Recharge battery";
+      } else if (soc < 5 && _lastSoc! >= 5) {
+        message = "Max speed is reduced. State of charge is below 5%";
+      } else if (soc <= 10 && _lastSoc! > 10) {
+        message = "Battery low. Please recharge battery";
+      } else if (soc < 20 && _lastSoc! >= 20) {
+        message = "Battery low. Power reduced. Recharge battery";
+      }
+
+      if (message != null && mounted) {
+        ToastUtils.showWarningToast(context, message);
+      }
+    }
+
+    _lastSoc = soc;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final battery0 = Battery0Sync.watch(context);
+    final battery0 = Battery0Sync.watch(context); // battery:0 (main battery)
     final battery1 = Battery1Sync.watch(context);
+    final ThemeState(:isDark) = ThemeCubit.watch(context);
+
+    // Check for battery warnings
+    _checkBatteryWarnings(battery0.charge);
+
+    // Show turtle icon when battery is <5% (max speed reduced)
+    final showTurtle = battery0.charge < 5;
+    final iconColor = isDark ? Colors.white : Colors.black;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -177,6 +232,14 @@ class CombinedBatteryDisplay extends StatelessWidget {
         BatteryStatusDisplay(battery: battery0),
         const SizedBox(width: 8),
         BatteryStatusDisplay(battery: battery1),
+        if (showTurtle) ...[
+          const SizedBox(width: 4),
+          Icon(
+            Icons.pets,
+            size: 20,
+            color: iconColor,
+          ),
+        ],
       ],
     );
   }
