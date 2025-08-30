@@ -5,6 +5,7 @@ import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../state/battery.dart';
 import '../../utils/toast_utils.dart';
+import '../indicators/indicator_light.dart';
 
 // Battery icon dimensions (scaled from 144x144)
 const double kBatteryIconWidth = 24.0;
@@ -222,8 +223,8 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
     // Check for battery warnings
     _checkBatteryWarnings(battery0.charge);
 
-    // Show turtle icon when battery is <5% (max speed reduced)
-    final showTurtle = battery0.charge < 5;
+    // Show turtle icon when battery is ≤10% (critical)
+    final showTurtle = battery0.charge <= 10;
     final iconColor = isDark ? Colors.white : Colors.black;
 
     return Row(
@@ -234,10 +235,11 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
         BatteryStatusDisplay(battery: battery1),
         if (showTurtle) ...[
           const SizedBox(width: 4),
-          Icon(
-            Icons.pets,
+          IndicatorLight(
+            icon: IndicatorLight.svgAsset('librescoot-turtle-mode.svg'),
             size: 20,
-            color: iconColor,
+            isActive: true,
+            activeColor: iconColor,
           ),
         ],
       ],
