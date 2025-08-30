@@ -59,22 +59,22 @@ class BatterySync extends SyncableCubit<BatteryData> {
   BatterySync(MDBRepository repo, this.id) : super(redisRepository: repo, initialState: BatteryData(id: id));
 }
 
+class Battery0Sync extends BatterySync {
+  static BatteryData watch(BuildContext context) => context.watch<Battery0Sync>().state;
+
+  static Battery0Sync create(BuildContext context) =>
+      Battery0Sync(RepositoryProvider.of<MDBRepository>(context))..start();
+
+  Battery0Sync(MDBRepository repo) : super(repo, "0");
+}
+
 class Battery1Sync extends BatterySync {
   static BatteryData watch(BuildContext context) => context.watch<Battery1Sync>().state;
 
   static Battery1Sync create(BuildContext context) =>
       Battery1Sync(RepositoryProvider.of<MDBRepository>(context))..start();
 
-  Battery1Sync(MDBRepository repo) : super(repo, "0");
-}
-
-class Battery2Sync extends BatterySync {
-  static BatteryData watch(BuildContext context) => context.watch<Battery2Sync>().state;
-
-  static Battery2Sync create(BuildContext context) =>
-      Battery2Sync(RepositoryProvider.of<MDBRepository>(context))..start();
-
-  Battery2Sync(MDBRepository repo) : super(repo, "1");
+  Battery1Sync(MDBRepository repo) : super(repo, "1");
 }
 
 class BluetoothSync extends SyncableCubit<BluetoothData> {

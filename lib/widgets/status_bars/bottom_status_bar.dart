@@ -14,12 +14,12 @@ class BottomStatusBar extends StatelessWidget {
     this.bluetoothPinCode,
   });
 
-  String? _getStatusMessage(BatteryData battery1, BatteryData battery2) {
+  String? _getStatusMessage(BatteryData battery0, BatteryData battery1) {
     if (errorMessage != null) {
       return errorMessage;
     }
     
-    if (!battery1.present && !battery2.present) {
+    if (!battery0.present && !battery1.present) {
       return 'No battery connected';
     }
     
@@ -28,11 +28,11 @@ class BottomStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final battery0 = Battery0Sync.watch(context);
     final battery1 = Battery1Sync.watch(context);
-    final battery2 = Battery2Sync.watch(context);
     final ThemeState(:theme) = ThemeCubit.watch(context);
 
-    final message = _getStatusMessage(battery1, battery2);
+    final message = _getStatusMessage(battery0, battery1);
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),

@@ -168,15 +168,15 @@ class CombinedBatteryDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final battery0 = Battery0Sync.watch(context);
     final battery1 = Battery1Sync.watch(context);
-    final battery2 = Battery2Sync.watch(context);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        BatteryStatusDisplay(battery: battery1),
+        BatteryStatusDisplay(battery: battery0),
         const SizedBox(width: 8),
-        BatteryStatusDisplay(battery: battery2),
+        BatteryStatusDisplay(battery: battery1),
       ],
     );
   }

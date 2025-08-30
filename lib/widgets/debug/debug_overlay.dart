@@ -54,8 +54,8 @@ class _DebugOverlayState extends State<DebugOverlay> {
     final isDark = ThemeCubit.watch(context).isDark;
     final vehicle = VehicleSync.watch(context);
     final engine = EngineSync.watch(context);
-    final battery0 = Battery1Sync.watch(context);
-    final battery1 = Battery2Sync.watch(context);
+    final battery0 = Battery0Sync.watch(context);
+    final battery1 = Battery1Sync.watch(context);
     final gps = GpsSync.watch(context);
     final internet = InternetSync.watch(context);
     final dashboardData = DashboardSyncCubit.watch(context);
