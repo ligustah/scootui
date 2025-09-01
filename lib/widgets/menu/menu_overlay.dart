@@ -58,30 +58,35 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   void _updateScrollIndicators() {
     if (!mounted) return;
     setState(() {
-      _showTopScrollIndicator = _scrollController.offset > 20;
-      _showBottomScrollIndicator = _scrollController.offset < _scrollController.position.maxScrollExtent - 20;
+      _showTopScrollIndicator = _scrollController.offset > 5;
+      _showBottomScrollIndicator = _scrollController.offset < _scrollController.position.maxScrollExtent - 5;
     });
   }
 
   void _scrollToSelectedItem() {
-    if (!mounted) return;
-    final itemHeight = 70.0; // Approximate height of each menu item
-    final viewportHeight = MediaQuery.of(context).size.height - 200;
-    final targetOffset = _selectedIndex * itemHeight;
+    if (!mounted || !_scrollController.hasClients) return;
+    
+    // Use post frame callback to ensure ListView is built and has dimensions
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      
+      final itemHeight = 54.0; // Updated height for reduced padding menu items
+      final viewportHeight = _scrollController.position.viewportDimension;
+      final halfViewport = viewportHeight / 2;
+      
+      // Calculate target offset to center the selected item
+      final targetOffset = (_selectedIndex * itemHeight) - halfViewport + (itemHeight / 2);
+      
+      // Clamp the offset to valid scroll range
+      final maxOffset = _scrollController.position.maxScrollExtent;
+      final clampedOffset = targetOffset.clamp(0.0, maxOffset);
 
-    if (targetOffset < (viewportHeight - _scrollController.offset)) {
       _scrollController.animateTo(
-        targetOffset,
+        clampedOffset,
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
-    } else if (targetOffset + itemHeight > _scrollController.offset + viewportHeight) {
-      _scrollController.animateTo(
-        targetOffset - viewportHeight + itemHeight,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-      );
-    }
+    });
   }
 
   void _enterSubmenu(List<MenuItem> submenuItems) {
@@ -336,6 +341,13 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           // just before we start fading in the menu
           _showMapView = screen.state is ScreenMap;
           _animController.forward();
+          // Reset scroll position and indicators when menu opens
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              _scrollController.jumpTo(0);
+              _updateScrollIndicators();
+            }
+          });
         }
         break;
     }
@@ -367,7 +379,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           // Leave space for top status bar
           child: Column(
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
               Text(
                 _isInSubmenu ? 'SAVED LOCATIONS' : 'MENU',
                 style: TextStyle(
@@ -376,7 +388,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                   color: isDark ? Colors.white : Colors.black,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               // Menu items with scroll indicators
               Expanded(
@@ -385,12 +397,12 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                     // Menu items list
                     ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(40, 20, 40, 20),
+                      padding: const EdgeInsets.fromLTRB(40, 12, 40, 12),
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final item = items[index];
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 2),
                           child: MenuItemWidget(
                             item: item,
                             isSelected: _selectedIndex == index,
@@ -457,9 +469,18 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                 ),
               ),
 
-              // Controls help
-              Padding(
-                padding: const EdgeInsets.all(20),
+              // Controls help - styled like unified bottom status bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.black.withOpacity(0.3) : Colors.white.withOpacity(0.3),
+                  border: Border(
+                    top: BorderSide(
+                      color: isDark ? Colors.white10 : Colors.black12,
+                      width: 1,
+                    ),
+                  ),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -492,15 +513,17 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         Text(
           control,
           style: TextStyle(
-            fontSize: 14,
-            color: theme.isDark ? Colors.white70 : Colors.black54,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: theme.isDark ? Colors.white60 : Colors.black54,
+            letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           action,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
             color: theme.isDark ? Colors.white : Colors.black,
           ),

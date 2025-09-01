@@ -62,7 +62,7 @@ class MenuItemWidget extends StatelessWidget {
     final ThemeState(:isDark) = ThemeCubit.watch(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isSelected
             ? (isDark ? Colors.white24 : Colors.black12)
