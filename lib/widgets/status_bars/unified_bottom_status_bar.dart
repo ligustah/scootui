@@ -34,48 +34,53 @@ class UnifiedBottomStatusBar extends StatelessWidget {
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Left: Duration and Avg Speed (sized to content)
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Labels and values rows
-              Row(
+          // Left: Duration and Avg Speed (equal width section)
+          Expanded(
+            flex: 1,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Duration column
-                  Column(
+                  // Labels and values rows
+                  Row(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      _buildLabel('DURATION', isDark),
-                      _buildValue(_formatTripTime(trip.tripDuration), textColor),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  // Avg Speed column
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel('Ø SPEED', isDark),
-                      Row(
+                      // Duration column
+                      Column(
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildValue(trip.averageSpeed.toStringAsFixed(1), textColor),
-                          const SizedBox(width: 2),
-                          Text(
-                            'km/h',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? Colors.white54 : Colors.black54,
-                            ),
+                          _buildLabel('DURATION', isDark),
+                          _buildValue(_formatTripTime(trip.tripDuration), textColor),
+                        ],
+                      ),
+                      const SizedBox(width: 16),
+                      // Avg Speed column
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabel('Ø SPEED', isDark),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              _buildValue(trip.averageSpeed.toStringAsFixed(1), textColor),
+                              const SizedBox(width: 2),
+                              Text(
+                                'km/h',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark ? Colors.white54 : Colors.black54,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -83,49 +88,53 @@ class UnifiedBottomStatusBar extends StatelessWidget {
                   ),
                 ],
               ),
-            ],
+            ),
           ),
 
-          // Center: Configurable widget
-          if (centerWidget != null)
-            Expanded(
-              child: centerWidget!,
-            )
-          else
-            const Expanded(child: SizedBox()),
+          // Center: Configurable widget (equal width section)
+          Expanded(
+            flex: 1,
+            child: centerWidget ?? const SizedBox(),
+          ),
 
-          // Right: Trip and Total distances (sized to content)
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              // Labels and values rows
-              Row(
+          // Right: Trip and Total distances (equal width section)
+          Expanded(
+            flex: 1,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // Trip column
-                  Column(
+                  // Labels and values rows
+                  Row(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      _buildLabel('TRIP', isDark),
-                      _buildValue(currentTrip.toStringAsFixed(1), textColor),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  // Total column
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildLabel('TOTAL', isDark),
-                      _buildValue(currentTotal.toStringAsFixed(1), textColor),
+                      // Trip column
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _buildLabel('TRIP', isDark),
+                          _buildValue(currentTrip.toStringAsFixed(1), textColor),
+                        ],
+                      ),
+                      const SizedBox(width: 16),
+                      // Total column
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _buildLabel('TOTAL', isDark),
+                          _buildValue(currentTotal.toStringAsFixed(1), textColor),
+                        ],
+                      ),
                     ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ],
       ),
