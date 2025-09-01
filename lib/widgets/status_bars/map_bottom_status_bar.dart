@@ -41,7 +41,7 @@ class MapBottomStatusBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Left: Trip distance
+          // Left: Trip stats
           Expanded(
             flex: 2,
             child: Column(
@@ -51,18 +51,33 @@ class MapBottomStatusBar extends StatelessWidget {
                 Text(
                   'TRIP',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.w500,
                     color: isDark ? Colors.white60 : Colors.black54,
                     letterSpacing: 1,
                   ),
                 ),
                 Text(
-                  currentTrip.toStringAsFixed(1),
+                  '${currentTrip.toStringAsFixed(1)} km',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'AVG ${trip.averageSpeed.toStringAsFixed(1)} km/h',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+                Text(
+                  _formatTripTime(trip.tripDuration),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.white60 : Colors.black54,
                   ),
                 ),
               ],
@@ -140,5 +155,17 @@ class MapBottomStatusBar extends StatelessWidget {
     }
 
     return engineData.speed.toDouble();
+  }
+
+  String _formatTripTime(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes % 60;
+    final seconds = duration.inSeconds % 60;
+    
+    if (hours > 0) {
+      return '$hours:${minutes.toString().padLeft(2, '0')}';
+    } else {
+      return '$minutes:${seconds.toString().padLeft(2, '0')}';
+    }
   }
 }

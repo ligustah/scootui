@@ -98,15 +98,19 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                   Text(
                     'REGEN',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.white70 : Colors.black54,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white60 : Colors.black54,
+                      letterSpacing: 0.5,
                     ),
                   ),
                   Text(
                     'DISCHARGE',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.white70 : Colors.black54,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white60 : Colors.black54,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ],

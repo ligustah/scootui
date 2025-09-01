@@ -141,7 +141,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     }
 
     return Stack(
-      alignment: Alignment.topCenter,
+      alignment: Alignment.center,
       children: [
         Container(
           decoration: const BoxDecoration(
@@ -150,7 +150,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
         ),
         // Main speedometer gauge
         CustomPaint(
-          size: const Size.fromRadius(150),
+          size: const Size(300, 240), // Width: full diameter, Height: reduced to visual arc bounds
           painter: _SpeedometerPainter(
             progress: animatedSpeed / widget.maxSpeed,
             isDark: theme.isDark,
@@ -161,7 +161,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
         ),
         // Speed display and indicators
         Transform.translate(
-          offset: const Offset(0, 10),
+          offset: const Offset(0, 40), // Adjusted for new widget size: arc center (150) - widget center (120) + original offset (10)
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -250,7 +250,8 @@ class _SpeedometerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
+    // Center the circle horizontally but position it so the arc fits in the canvas
+    final center = Offset(size.width / 2, 150); // 150 = radius, positions circle center
     final radius = size.width / 2;
     const strokeWidth = 20.0;
 
@@ -288,6 +289,9 @@ class _SpeedometerPainter extends CustomPainter {
 
     // Draw tick marks
     _drawTicks(canvas, center, radius, isDark);
+    
+    // Draw speed labels
+    _drawSpeedLabels(canvas, center, radius, isDark);
   }
 
   void _drawTicks(Canvas canvas, Offset center, double radius, bool isDark) {
@@ -296,32 +300,72 @@ class _SpeedometerPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
-    final speedStep = 10.0; // 10 km/h per major tick
-    final totalMajorTicks = (maxSpeed / speedStep).ceil() + 1;
-    final minorTicksPerMajor = 1; // Number of minor ticks between major ticks
+    final minorSpeedStep = 5.0; // 5 km/h per tick
+    final majorSpeedStep = 10.0; // 10 km/h per major tick
+    final totalTicks = (maxSpeed / minorSpeedStep).ceil() + 1;
 
-    for (int i = 0; i <= totalMajorTicks * minorTicksPerMajor; i++) {
-      final isMajorTick = i % minorTicksPerMajor == 0;
-      final speedValue = (i / minorTicksPerMajor * speedStep).toInt();
+    for (int i = 0; i <= totalTicks; i++) {
+      final speedValue = (i * minorSpeedStep).toInt();
+      final isMajorTick = speedValue % majorSpeedStep == 0;
 
       // Skip if speed value would exceed maxSpeed
       if (speedValue > maxSpeed) continue;
 
       final angle = _startAngle + (speedValue / maxSpeed) * _sweepAngle;
-      final tickLength = isMajorTick ? 15.0 : 7.0;
-      final tickWidth = isMajorTick ? 2.0 : 1.0;
+      final tickLength = isMajorTick ? 8.0 : 4.0;
+      final tickWidth = isMajorTick ? 1.5 : 1.0;
 
       // Draw tick
       tickPaint.strokeWidth = tickWidth;
       final start = Offset(
-        center.dx + (radius - 30) * math.cos(angle),
-        center.dy + (radius - 30) * math.sin(angle),
+        center.dx + (radius - 26) * math.cos(angle),
+        center.dy + (radius - 26) * math.sin(angle),
       );
       final end = Offset(
-        center.dx + (radius - 30 - tickLength) * math.cos(angle),
-        center.dy + (radius - 30 - tickLength) * math.sin(angle),
+        center.dx + (radius - 26 - tickLength) * math.cos(angle),
+        center.dy + (radius - 26 - tickLength) * math.sin(angle),
       );
       canvas.drawLine(start, end, tickPaint);
+    }
+  }
+
+  void _drawSpeedLabels(Canvas canvas, Offset center, double radius, bool isDark) {
+    final labelSpeeds = [0.0, 30.0, 50.0];
+    
+    for (final speed in labelSpeeds) {
+      // Skip if speed exceeds maxSpeed
+      if (speed > maxSpeed) continue;
+      
+      final angle = _startAngle + (speed / maxSpeed) * _sweepAngle;
+      
+      // Position label close to the ticks, just inside them
+      final labelPosition = Offset(
+        center.dx + (radius - 44) * math.cos(angle),
+        center.dy + (radius - 44) * math.sin(angle),
+      );
+      
+      // Create text painter for the speed label
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: speed.toInt().toString(),
+          style: TextStyle(
+            color: isDark ? Colors.white30 : Colors.black12,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      
+      textPainter.layout();
+      
+      // Center the text at the calculated position
+      final textOffset = Offset(
+        labelPosition.dx - textPainter.width / 2,
+        labelPosition.dy - textPainter.height / 2,
+      );
+      
+      textPainter.paint(canvas, textOffset);
     }
   }
 

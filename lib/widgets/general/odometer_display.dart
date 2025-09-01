@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/theme_cubit.dart';
+import '../../cubits/trip_cubit.dart';
 
 class OdometerDisplay extends StatelessWidget {
   final double tripDistance;
@@ -143,6 +144,7 @@ class TripDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeState(:isDark) = ThemeCubit.watch(context);
+    final trip = TripCubit.watch(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -154,7 +156,7 @@ class TripDisplay extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildLabel('AVG SPEED', isDark),
-              _buildValue('${_calculateAverageSpeed()} km/h', isDark),
+              _buildValue('${trip.averageSpeed.toStringAsFixed(1)} km/h', isDark),
             ],
           ),
 
@@ -163,7 +165,7 @@ class TripDisplay extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               _buildLabel('TRIP TIME', isDark),
-              _buildValue(_formatTripTime(), isDark),
+              _buildValue(_formatTripTime(trip.tripDuration), isDark),
             ],
           ),
         ],
@@ -197,16 +199,16 @@ class TripDisplay extends StatelessWidget {
     });
   }
 
-  double _calculateAverageSpeed() {
-    // This would normally be calculated based on trip distance and time
-    // For now, returning a placeholder value
-    return 35.0;
-  }
-
-  String _formatTripTime() {
-    // This would normally show the actual trip duration
-    // For now, returning a placeholder value
-    return '1:23';
+  String _formatTripTime(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes % 60;
+    final seconds = duration.inSeconds % 60;
+    
+    if (hours > 0) {
+      return '$hours:${minutes.toString().padLeft(2, '0')}';
+    } else {
+      return '$minutes:${seconds.toString().padLeft(2, '0')}';
+    }
   }
 }
 
@@ -228,33 +230,27 @@ class AnimatedOdometerDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 500),
-            tween: Tween<double>(
-              begin: previousTrip,
-              end: tripDistance,
-            ),
-            builder: (context, tripValue, child) {
-              return TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 500),
-                tween: Tween<double>(
-                  begin: previousTotal,
-                  end: totalDistance,
-                ),
-                builder: (context, totalValue, child) {
-                  return OdometerDisplay(
-                    tripDistance: tripValue,
-                    totalDistance: totalValue,
-                  );
-                },
-              );
-            },
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 500),
+      tween: Tween<double>(
+        begin: previousTrip,
+        end: tripDistance,
+      ),
+      builder: (context, tripValue, child) {
+        return TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 500),
+          tween: Tween<double>(
+            begin: previousTotal,
+            end: totalDistance,
           ),
-        ),
-      ],
+          builder: (context, totalValue, child) {
+            return OdometerDisplay(
+              tripDistance: tripValue,
+              totalDistance: totalValue,
+            );
+          },
+        );
+      },
     );
   }
 }

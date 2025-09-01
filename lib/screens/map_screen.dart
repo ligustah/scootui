@@ -7,7 +7,8 @@ import '../cubits/theme_cubit.dart';
 import '../widgets/map/map_overlay_indicators.dart';
 import '../widgets/map/map_view.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';
-import '../widgets/status_bars/map_bottom_status_bar.dart';
+import '../widgets/status_bars/unified_bottom_status_bar.dart';
+import '../widgets/status_bars/speed_center_widget.dart';
 import '../widgets/status_bars/top_status_bar.dart';
 import '../widgets/indicators/indicator_lights.dart';
 import '../widgets/indicators/speed_limit_indicator.dart';
@@ -83,7 +84,9 @@ class MapScreen extends StatelessWidget {
           ),
 
           // Bottom status bar (shrink to content)
-          MapBottomStatusBar(),
+          const UnifiedBottomStatusBar(
+            centerWidget: SpeedCenterWidget(),
+          ),
         ],
       ),
     );
