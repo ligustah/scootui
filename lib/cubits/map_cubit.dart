@@ -77,23 +77,56 @@ class MapCubit extends Cubit<MapState> {
   @override
   Future<void> close() {
     final current = state;
-    current.controller.dispose();
-    _animatedController?.dispose(); // Dispose AnimatedMapController
+    
+    // Cancel timer first to prevent any pending updates
+    _updateTimer?.cancel();
+    
+    // Stop any ongoing animations and dispose AnimatedMapController
+    try {
+      _animatedController?.stopAnimations();
+      _animatedController?.dispose();
+      _animatedController = null;
+    } catch (e) {
+      print("MapCubit: Error disposing AnimatedMapController: $e");
+    }
+    
+    // Then dispose the base map controller
+    try {
+      current.controller.dispose();
+    } catch (e) {
+      print("MapCubit: Error disposing MapController: $e");
+    }
+    
     switch (current) {
       case MapOffline():
         final tiles = current.tiles;
         if (tiles is AsyncMbTilesProvider) {
-          tiles.dispose();
+          try {
+            tiles.dispose();
+          } catch (e) {
+            print("MapCubit: Error disposing tiles provider: $e");
+          }
         }
         break;
       default:
     }
+    
+    // Cancel all streams
     _themeSub.cancel();
     _gpsSub.cancel();
     _shutdownSub.cancel();
-    _navigationStateSub.cancel(); // Added
-    _updateTimer?.cancel(); // Cancel GPS throttling timer
+    _navigationStateSub.cancel();
+    
     return super.close();
+  }
+
+  /// Stops any ongoing map animations - called when map view is being disposed
+  void stopAnimations() {
+    try {
+      _animatedController?.stopAnimations();
+    } catch (e) {
+      print("MapCubit: Error stopping animations: $e");
+    }
   }
 
   Future<void> _onShutdownStateChange(ShutdownState shutdownState) async {
@@ -124,8 +157,12 @@ class MapCubit extends Cubit<MapState> {
       return;
     }
     final ctrl = _animatedController;
-    if (ctrl == null) {
-      print("MapCubit: AnimatedMapController is null in _moveAndRotate. Map not ready or not initialized yet.");
+    if (ctrl == null || isClosed) {
+      if (isClosed) {
+        print("MapCubit: Cubit is closed, skipping _moveAndRotate.");
+      } else {
+        print("MapCubit: AnimatedMapController is null in _moveAndRotate. Map not ready or not initialized yet.");
+      }
       return;
     }
 
@@ -149,6 +186,7 @@ class MapCubit extends Cubit<MapState> {
       );
     } catch (e) {
       // Widget disposed during animation, ignore the error
+      print("MapCubit: Animation error (likely disposed): $e");
     }
   }
 
@@ -221,7 +259,9 @@ class MapCubit extends Cubit<MapState> {
     // Throttle map updates to reduce performance impact
     _updateTimer?.cancel();
     _updateTimer = Timer(const Duration(milliseconds: 100), () {
-      _moveAndRotate(positionForDisplay, courseForMapRotation);
+      if (!isClosed) {
+        _moveAndRotate(positionForDisplay, courseForMapRotation);
+      }
     });
   }
 

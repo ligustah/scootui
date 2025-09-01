@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
     show Alignment, BuildContext, Colors, Icon, Icons, Widget, TickerProviderStateMixin;
+import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart'
@@ -10,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer, VectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
 
+import '../../cubits/map_cubit.dart';
 import '../../repositories/mdb_repository.dart';
 import '../../routing/models.dart';
 import '../../utils/theme_aware_cache.dart';
@@ -87,6 +89,35 @@ class OnlineMapView extends StatefulWidget {
 }
 
 class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateMixin {
+  bool _isDisposing = false;
+
+  @override
+  Ticker createTicker(TickerCallback onTick) {
+    if (_isDisposing) {
+      // Return a fake ticker that does nothing if we're disposing
+      return Ticker((elapsed) {}, debugLabel: 'disposed-ticker');
+    }
+    return super.createTicker(onTick);
+  }
+
+  @override
+  void dispose() {
+    _isDisposing = true;
+    print("OnlineMapView: Starting disposal");
+    
+    // Stop any ongoing animations in MapCubit before disposing the ticker provider
+    try {
+      final mapCubit = context.read<MapCubit>();
+      mapCubit.stopAnimations();
+    } catch (e) {
+      print("OnlineMapView: Error stopping animations: $e");
+    }
+    
+    // Ensure any remaining tickers are properly disposed
+    super.dispose();
+    print("OnlineMapView: Disposal completed");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -180,6 +211,35 @@ class OfflineMapView extends StatefulWidget {
 }
 
 class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStateMixin {
+  bool _isDisposing = false;
+
+  @override
+  Ticker createTicker(TickerCallback onTick) {
+    if (_isDisposing) {
+      // Return a fake ticker that does nothing if we're disposing
+      return Ticker((elapsed) {}, debugLabel: 'disposed-ticker');
+    }
+    return super.createTicker(onTick);
+  }
+
+  @override
+  void dispose() {
+    _isDisposing = true;
+    print("OfflineMapView: Starting disposal");
+    
+    // Stop any ongoing animations in MapCubit before disposing the ticker provider
+    try {
+      final mapCubit = context.read<MapCubit>();
+      mapCubit.stopAnimations();
+    } catch (e) {
+      print("OfflineMapView: Error stopping animations: $e");
+    }
+    
+    // Ensure any remaining tickers are properly disposed
+    super.dispose();
+    print("OfflineMapView: Disposal completed");
+  }
+
   Widget? _routeLayer() {
     final waypoints = widget.route?.waypoints;
     if (waypoints == null || waypoints.isEmpty) {

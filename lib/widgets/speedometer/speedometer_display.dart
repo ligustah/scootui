@@ -65,8 +65,19 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
   @override
   void dispose() {
-    _speedController.dispose();
-    _colorController.dispose();
+    // Dispose controllers first to stop any pending animations
+    try {
+      _speedController.dispose();
+    } catch (e) {
+      print("SpeedometerDisplay: Error disposing speed controller: $e");
+    }
+    
+    try {
+      _colorController.dispose();
+    } catch (e) {
+      print("SpeedometerDisplay: Error disposing color controller: $e");
+    }
+    
     super.dispose();
   }
 
