@@ -33,18 +33,19 @@ class BatteryStatusDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get theme information
     final ThemeState(:isDark) = ThemeCubit.watch(context);
-    
+
     // Determine battery color based on charge level
     Color getBatteryColor() {
-      if (battery.charge <= 10) {
-        return const Color(0xFFFF0000); // Red for critical
-      } else if (battery.charge <= 20) {
-        return const Color(0xFFFF7900); // Orange for warning
-      } else {
-        return isDark ? Colors.white : Colors.black; // Normal
+      if (battery.present) {
+        if (battery.charge <= 10) {
+          return const Color(0xFFFF0000); // Red for critical
+        } else if (battery.charge <= 20) {
+          return const Color(0xFFFF7900); // Orange for warning
+        }
       }
+      return isDark ? Colors.white : Colors.black; // Normal
     }
-    
+
     final iconColor = getBatteryColor();
     final textColor = iconColor;
     final backgroundColor = isDark ? Colors.black : Colors.white;
