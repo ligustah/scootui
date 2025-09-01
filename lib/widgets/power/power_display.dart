@@ -10,7 +10,7 @@ class PowerDisplay extends StatefulWidget {
   const PowerDisplay({
     super.key,
     required this.powerOutput,
-    this.maxRegenPower = 1.0, // 1kW max regen
+    this.maxRegenPower = 0.54, // 0.54kW max regen (10A × 54V)
     this.maxDischargePower = 4.0, // 4kW max discharge
   });
 
@@ -123,20 +123,31 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final totalWidth = constraints.maxWidth;
-                  final barWidth = totalWidth * progress * 0.5; // Half width for each direction
+                  
+                  // Calculate asymmetric layout: regen gets 11.9%, discharge gets 88.1%
+                  final totalPower = widget.maxRegenPower + widget.maxDischargePower;
+                  final regenWidth = totalWidth * (widget.maxRegenPower / totalPower);
+                  final dischargeWidth = totalWidth * (widget.maxDischargePower / totalPower);
+                  final zeroPoint = regenWidth; // Zero point is at end of regen section
+                  
+                  // Calculate actual bar width based on power direction and magnitude
+                  final barWidth = isRegenerating 
+                      ? regenWidth * progress  // Regen: grows leftward from zero point
+                      : dischargeWidth * progress; // Discharge: grows rightward from zero point
+                      
                   final midThreshold = 0.15;
 
                   // Calculate position for the power value label
                   double labelPosition;
                   if (powerKW.abs() <= midThreshold) {
-                    // When power is close to zero, center the label
-                    labelPosition = (totalWidth / 2) - barWidth - 20; // Half of approximate label width
+                    // When power is close to zero, position near zero point
+                    labelPosition = zeroPoint - 20; // Center around zero point
                   } else if (isRegenerating) {
                     // For regenerating, position label at the left edge of the bar
-                    labelPosition = (totalWidth / 2) - barWidth - 20;
+                    labelPosition = (zeroPoint - barWidth) - 20;
                   } else {
                     // For discharging, position label at the right edge of the bar
-                    labelPosition = (totalWidth / 2) + barWidth - 20; // 40 is approximate label width
+                    labelPosition = (zeroPoint + barWidth) - 20;
                   }
 
                   return Stack(
@@ -166,26 +177,29 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                               AnimatedPositioned(
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeOutCubic,
-                                left: isRegenerating ? (totalWidth / 2) - barWidth : totalWidth / 2,
+                                left: isRegenerating ? zeroPoint - barWidth : zeroPoint,
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 300),
                                   curve: Curves.easeOutCubic,
                                   height: 4,
                                   width: barWidth,
                                   decoration: BoxDecoration(
-                                    color: isRegenerating ? Colors.red : Colors.blue,
+                                    color: isRegenerating ? Colors.green.shade600 : Colors.blue.shade600,
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
                               ),
 
-                              // Center marker
-                              Container(
-                                width: 2,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: isDark ? Colors.white30 : Colors.black26,
-                                  borderRadius: BorderRadius.circular(1),
+                              // Zero marker (positioned at zero point, not center)
+                              Positioned(
+                                left: zeroPoint - 1, // Center the 2px wide marker
+                                child: Container(
+                                  width: 2,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: isDark ? Colors.white.withOpacity(0.4) : Colors.black.withOpacity(0.38), // Slightly more prominent
+                                    borderRadius: BorderRadius.circular(1),
+                                  ),
                                 ),
                               ),
                             ],
