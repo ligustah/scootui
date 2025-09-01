@@ -33,20 +33,7 @@ class VehicleSync extends SyncableCubit<VehicleData> {
   static VehicleSync create(BuildContext context) =>
       VehicleSync(RepositoryProvider.of<MDBRepository>(context))..start();
 
-  ScooterState? _previousState;
-
-  VehicleSync(MDBRepository repo) : super(redisRepository: repo, initialState: VehicleData()) {
-    // Listen for state changes to handle dashboard ready state
-    stream.listen((vehicleData) {
-      // If state changed from updating to another state, set dashboard ready
-      if (_previousState == ScooterState.updating && vehicleData.state != ScooterState.updating) {
-        redisRepository.dashboardReady();
-      }
-
-      // Store current state for next comparison
-      _previousState = vehicleData.state;
-    });
-  }
+  VehicleSync(MDBRepository repo) : super(redisRepository: repo, initialState: VehicleData());
 
   void toggleHazardLights() {
     final command = state.blinkerState == BlinkerState.both ? BlinkerState.off : BlinkerState.both;
