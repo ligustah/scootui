@@ -5,7 +5,6 @@ import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../state/battery.dart';
 import '../../utils/toast_utils.dart';
-import '../indicators/indicator_light.dart';
 
 // Battery icon dimensions (scaled from 144x144)
 const double kBatteryIconWidth = 24.0;
@@ -200,9 +199,9 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
       if (soc == 0 && _lastSoc! > 0) {
         message = "Battery empty. Recharge battery";
       } else if (soc < 5 && _lastSoc! >= 5) {
-        message = "Max speed is reduced. State of charge is below 5%";
+        message = "Max speed is reduced. Battery is below 5%";
       } else if (soc <= 10 && _lastSoc! > 10) {
-        message = "Battery low. Please recharge battery";
+        message = "Battery low. Power reduced. Please recharge battery";
       } else if (soc < 20 && _lastSoc! >= 20) {
         message = "Battery low. Power reduced. Recharge battery";
       }
@@ -236,11 +235,11 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
         BatteryStatusDisplay(battery: battery1),
         if (showTurtle) ...[
           const SizedBox(width: 4),
-          IndicatorLight(
-            icon: IndicatorLight.svgAsset('librescoot-turtle-mode.svg'),
-            size: 20,
-            isActive: true,
-            activeColor: iconColor,
+          SvgPicture.asset(
+            'assets/icons/librescoot-turtle-mode.svg',
+            width: 20,
+            height: 20,
+            colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
           ),
         ],
       ],
