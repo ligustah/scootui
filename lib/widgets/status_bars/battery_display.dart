@@ -20,9 +20,6 @@ const double kChargeRectY = 41.0 * kScaleFactor;
 const double kChargeRectHeight = 83.0 * kScaleFactor;
 const double kChargeRectMaxWidth = 98.0 * kScaleFactor;
 
-// Fixed width for charge labels to prevent layout shifts
-const double kChargeLabelWidth = 24.0;
-
 class BatteryStatusDisplay extends StatelessWidget {
   final BatteryData battery;
 
@@ -157,18 +154,15 @@ class BatteryStatusDisplay extends StatelessWidget {
         batteryIcon,
         if (labelText != null) ...[
           const SizedBox(width: 2),
-          SizedBox(
-            width: kChargeLabelWidth,
-            child: Text(
-              labelText,
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -1.1,
-                color: textColor,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+          Text(
+            labelText,
+            textAlign: TextAlign.left,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -1.1,
+              color: textColor,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],
@@ -240,11 +234,11 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
       children: [
         BatteryStatusDisplay(battery: battery0),
         if (showBattery1) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
           BatteryStatusDisplay(battery: battery1),
         ],
         if (showTurtle) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
           SvgPicture.asset(
             'assets/icons/librescoot-turtle-mode.svg',
             width: 20,
