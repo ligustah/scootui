@@ -9,6 +9,11 @@ import '../widgets/map/map_view.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';
 import '../widgets/status_bars/map_bottom_status_bar.dart';
 import '../widgets/status_bars/top_status_bar.dart';
+import '../widgets/indicators/indicator_lights.dart';
+import '../widgets/indicators/speed_limit_indicator.dart';
+import '../cubits/mdb_cubits.dart';
+import '../state/enums.dart';
+import '../state/vehicle.dart';
 
 class MapScreen extends StatelessWidget {
   const MapScreen({
@@ -24,33 +29,61 @@ class MapScreen extends StatelessWidget {
       width: 480,
       height: 480,
       color: theme.scaffoldBackgroundColor,
-      child: Stack(
+      child: Column(
         children: [
-          Column(
-            children: [
-              // Top status bar
-              StatusBar(),
+          // Top status bar (fixed height)
+          StatusBar(),
 
-              // Map view
-              Expanded(
-                child: _buildMap(context, state, theme),
-              ),
-
-              // Bottom status bar with speed
-              MapBottomStatusBar(),
-            ],
+          // Map widget (expand to fit available space)
+          Expanded(
+            child: Stack(
+              children: [
+                // Map fills entire area as background
+                _buildMap(context, state, theme),
+                
+                // Overlay content in Column layout (top to bottom)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      // Navigation info, if navigation is active
+                      TurnByTurnWidget(),
+                      
+                      // 8px spacing
+                      const SizedBox(height: 8),
+                      
+                      // Blinker overlay (BELOW turn by turn)
+                      _buildBlinkerRow(context),
+                      
+                      // Free space (expand)
+                      const Expanded(child: SizedBox()),
+                      
+                      // Bottom row
+                      Row(
+                        children: [
+                          // Left side: warning indicators
+                          Expanded(
+                            child: _buildWarningIndicators(context),
+                          ),
+                          // Center bottom: street name display if available
+                          Expanded(
+                            child: _buildStreetNameDisplay(context),
+                          ),
+                          // Right side: north indicator space (map renders it)
+                          const Expanded(
+                            child: SizedBox(),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          // Map overlay indicators (blinkers, warnings, odometer)
-          MapOverlayIndicators(),
-
-          // Turn-by-turn instructions
-          Positioned(
-            top: 60,
-            left: 10,
-            right: 10,
-            child: TurnByTurnWidget(),
-          ),
+          // Bottom status bar (shrink to content)
+          MapBottomStatusBar(),
         ],
       ),
     );
@@ -131,5 +164,134 @@ class MapScreen extends StatelessWidget {
           // For now, removing direct setDestination from MapCubit.
         ),
     };
+  }
+
+  Widget _buildBlinkerRow(BuildContext context) {
+    final vehicleState = VehicleSync.watch(context);
+    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
+    
+    return Row(
+      children: [
+        // Left blinker
+        (vehicleState.blinkerState == BlinkerState.left || vehicleState.blinkerState == BlinkerState.both)
+          ? Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor.withOpacity(0.9),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? Colors.white12 : Colors.black12,
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Transform.scale(
+                  scale: 0.8,
+                  child: IndicatorLights.leftBlinker(vehicleState),
+                ),
+              ),
+            )
+          : const SizedBox(width: 56),
+        
+        // Spacer
+        const Expanded(child: SizedBox()),
+        
+        // Right blinker
+        (vehicleState.blinkerState == BlinkerState.right || vehicleState.blinkerState == BlinkerState.both)
+          ? Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor.withOpacity(0.9),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? Colors.white12 : Colors.black12,
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Transform.scale(
+                  scale: 0.8,
+                  child: IndicatorLights.rightBlinker(vehicleState),
+                ),
+              ),
+            )
+          : const SizedBox(width: 56),
+      ],
+    );
+  }
+
+  Widget _buildWarningIndicators(BuildContext context) {
+    final vehicleState = VehicleSync.watch(context);
+    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
+    
+    if (vehicleState.isUnableToDrive != Toggle.on && 
+        vehicleState.blinkerState != BlinkerState.both && 
+        vehicleState.state != ScooterState.parked) {
+      return const SizedBox.shrink();
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? Colors.white12 : Colors.black12,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (vehicleState.isUnableToDrive == Toggle.on) ...[
+              IndicatorLights.engineWarning(vehicleState),
+              if (vehicleState.blinkerState == BlinkerState.both || vehicleState.state == ScooterState.parked)
+                const SizedBox(width: 8),
+            ],
+            if (vehicleState.blinkerState == BlinkerState.both) ...[
+              IndicatorLights.hazards(vehicleState),
+              if (vehicleState.state == ScooterState.parked)
+                const SizedBox(width: 8),
+            ],
+            if (vehicleState.state == ScooterState.parked)
+              IndicatorLights.parkingBrake(vehicleState),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStreetNameDisplay(BuildContext context) {
+    final speedLimitData = SpeedLimitSync.watch(context);
+    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
+    
+    if (speedLimitData.roadName.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? Colors.white12 : Colors.black12,
+            width: 1,
+          ),
+        ),
+        child: RoadNameDisplay(
+          textStyle: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: isDark ? Colors.white70 : Colors.black54,
+          ),
+        ),
+      ),
+    );
   }
 }
