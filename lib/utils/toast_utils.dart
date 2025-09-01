@@ -77,4 +77,15 @@ class ToastUtils {
       duration: const Duration(seconds: 3),
     );
   }
+
+  static void showPersistentErrorToast(BuildContext context, String message) {
+    final theme = Theme.of(context);
+    showToast(
+      context,
+      message,
+      backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.9),
+      textColor: theme.colorScheme.onErrorContainer,
+      duration: const Duration(seconds: 10),
+    );
+  }
 }
