@@ -78,6 +78,7 @@ class MapCubit extends Cubit<MapState> {
   Future<void> close() {
     final current = state;
     current.controller.dispose();
+    _animatedController?.dispose(); // Dispose AnimatedMapController
     switch (current) {
       case MapOffline():
         final tiles = current.tiles;
