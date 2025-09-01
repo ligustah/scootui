@@ -59,6 +59,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   bool _vehicleStateExpanded = false;
   bool _otaStatusExpanded = false;
 
+  // GPS timestamp simulation
+  Timer? _gpsTimestampTimer;
+
   @override
   void initState() {
     super.initState();
@@ -178,6 +181,11 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       _publishEvent('gps', 'state', _gpsState),
       _publishEvent('ota', 'status', _otaStatus),
     ]);
+
+    // Start GPS timestamp simulation if GPS is already fix-established
+    if (_gpsState == 'fix-established') {
+      _startGpsTimestampSimulation();
+    }
   }
 
   Future<void> _updateEngineValues() async {
@@ -202,6 +210,21 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   Future<void> _publishEvent(String channel, String key, String value) async {
     await widget.repository.set(channel, key, value);
+  }
+
+  void _startGpsTimestampSimulation() {
+    _gpsTimestampTimer?.cancel();
+    _gpsTimestampTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (_gpsState == 'fix-established') {
+        final currentTimestamp = DateTime.now().toIso8601String();
+        await _publishEvent('gps', 'timestamp', currentTimestamp);
+      }
+    });
+  }
+
+  void _stopGpsTimestampSimulation() {
+    _gpsTimestampTimer?.cancel();
+    _gpsTimestampTimer = null;
   }
 
   // Button press/release methods
@@ -271,6 +294,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   @override
   void dispose() {
+    _gpsTimestampTimer?.cancel();
     super.dispose();
   }
 
@@ -694,6 +718,13 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               (value) {
                 setState(() => _gpsState = value);
                 _publishEvent('gps', 'state', value);
+
+                // Handle GPS timestamp simulation based on status
+                if (value == 'fix-established') {
+                  _startGpsTimestampSimulation();
+                } else {
+                  _stopGpsTimestampSimulation();
+                }
               },
             ),
           ],

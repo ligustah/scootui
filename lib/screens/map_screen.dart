@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/navigation_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../widgets/map/map_overlay_indicators.dart';
 import '../widgets/map/map_view.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';
 import '../widgets/status_bars/map_bottom_status_bar.dart';
@@ -40,9 +41,12 @@ class MapScreen extends StatelessWidget {
             ],
           ),
 
+          // Map overlay indicators (blinkers, warnings, odometer)
+          MapOverlayIndicators(),
+
           // Turn-by-turn instructions
           Positioned(
-            top: 60, // Adjust as needed
+            top: 60,
             left: 10,
             right: 10,
             child: TurnByTurnWidget(),
