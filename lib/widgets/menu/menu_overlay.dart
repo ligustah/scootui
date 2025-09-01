@@ -32,6 +32,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   // Submenu state
   final List<List<MenuItem>> _menuStack = [];
   final List<int> _selectedIndexStack = [];
+  final List<SubmenuType> _submenuTypeStack = [];  // Track submenu types
   bool _isInSubmenu = false;
 
   @override
@@ -89,10 +90,11 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     });
   }
 
-  void _enterSubmenu(List<MenuItem> submenuItems) {
+  void _enterSubmenu(List<MenuItem> submenuItems, SubmenuType submenuType) {
     setState(() {
       _menuStack.add(submenuItems);
       _selectedIndexStack.add(_selectedIndex);
+      _submenuTypeStack.add(submenuType);
       _selectedIndex = 0;
       _isInSubmenu = true;
     });
@@ -103,6 +105,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       setState(() {
         _menuStack.removeLast();
         _selectedIndex = _selectedIndexStack.removeLast();
+        _submenuTypeStack.removeLast();
         _isInSubmenu = _menuStack.isNotEmpty;
       });
     }
@@ -111,84 +114,166 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   void _resetMenuState() {
     _menuStack.clear();
     _selectedIndexStack.clear();
+    _submenuTypeStack.clear();
     _selectedIndex = 0;
     _isInSubmenu = false;
+  }
+
+  String _getSubmenuTitle() {
+    if (!_isInSubmenu || _submenuTypeStack.isEmpty) return 'MENU';
+    
+    // Use the submenu type to determine title
+    switch (_submenuTypeStack.last) {
+      case SubmenuType.savedLocations:
+        return 'SAVED LOCATIONS';
+      case SubmenuType.theme:
+        return 'CHANGE THEME';
+      case SubmenuType.other:
+        return 'SUBMENU';
+    }
   }
 
   List<MenuItem> _buildSavedLocationsSubmenu(BuildContext context) {
     final savedLocationsCubit = context.read<SavedLocationsCubit>();
     final locations = savedLocationsCubit.currentLocations;
 
-    if (locations.isEmpty) {
-      return [
-        MenuItem(
-          title: 'No saved locations',
-          type: MenuItemType.action,
-          onChanged: (_) {
-            _exitSubmenu();
-          },
-        ),
-        MenuItem(
-          title: 'Go back',
-          type: MenuItemType.action,
-          onChanged: (_) {
-            _exitSubmenu();
-          },
-        ),
-      ];
-    }
-
     final items = <MenuItem>[];
 
-    for (final location in locations) {
-      items.add(MenuItem(
-        title: location.label,
-        type: MenuItemType.submenu,
-        submenuItems: [
-          MenuItem(
-            title: 'Start navigation',
-            type: MenuItemType.action,
-            onChanged: (_) {
-              final mdbRepo = context.read<MDBRepository>();
-              mdbRepo.set("navigation", "destination", location.coordinatesString);
-              savedLocationsCubit.updateLastUsed(location.id);
-              context.read<MenuCubit>().hideMenu();
-            },
-          ),
-          MenuItem(
-            title: 'Go back',
-            type: MenuItemType.action,
-            onChanged: (_) {
-              _exitSubmenu();
-            },
-          ),
-          MenuItem(
-            title: 'Delete saved location',
-            type: MenuItemType.action,
-            onChanged: (_) async {
-              final success = await savedLocationsCubit.deleteLocation(location.id);
-              if (success) {
-                ToastService.showSuccess('Location deleted successfully!');
-              } else {
-                ToastService.showError('Failed to delete location.');
-              }
-              // Exit to the individual location submenu
-              _exitSubmenu();
-            },
-          ),
-        ],
-      ));
-    }
-
+    // Add "Go back" as first item
     items.add(MenuItem(
-      title: 'Go back',
+      title: '< Back',
       type: MenuItemType.action,
       onChanged: (_) {
         _exitSubmenu();
       },
     ));
 
+    // Add "Save Current Location" as second item
+    items.add(MenuItem(
+      title: 'Save Current Location',
+      type: MenuItemType.action,
+      onChanged: (_) async {
+        final gpsData = context.read<GpsSync>().state;
+        final internetData = context.read<InternetSync>().state;
+        final savedLocationsCubit = context.read<SavedLocationsCubit>();
+        final menuCubit = context.read<MenuCubit>();
+
+        // Validate GPS before attempting to save
+        if (!gpsData.hasRecentFix) {
+          ToastService.showError('No recent GPS fix available. Please wait for GPS signal.');
+          return;
+        }
+
+        if (gpsData.latitude == 0.0 && gpsData.longitude == 0.0) {
+          ToastService.showError('Invalid GPS coordinates. Please wait for valid location.');
+          return;
+        }
+
+        final success = await savedLocationsCubit.saveCurrentLocation(gpsData, internetData);
+        if (success) {
+          ToastService.showSuccess('Location saved successfully!');
+        } else {
+          ToastService.showError('Failed to save location. Storage may be full.');
+        }
+
+        if (mounted) {
+          menuCubit.hideMenu();
+        }
+      },
+    ));
+
+    if (locations.isEmpty) {
+      items.add(MenuItem(
+        title: 'No Saved Locations',
+        type: MenuItemType.action,
+        onChanged: (_) {},
+      ));
+    } else {
+      for (final location in locations) {
+        items.add(MenuItem(
+          title: location.label,
+          type: MenuItemType.submenu,
+          submenuItems: [
+            MenuItem(
+              title: 'Start Navigation',
+              type: MenuItemType.action,
+              onChanged: (_) {
+                final mdbRepo = context.read<MDBRepository>();
+                mdbRepo.set("navigation", "destination", location.coordinatesString);
+                savedLocationsCubit.updateLastUsed(location.id);
+                context.read<MenuCubit>().hideMenu();
+              },
+            ),
+            MenuItem(
+              title: '< Back',
+              type: MenuItemType.action,
+              onChanged: (_) {
+                _exitSubmenu();
+              },
+            ),
+            MenuItem(
+              title: 'Delete Saved Location',
+              type: MenuItemType.action,
+              onChanged: (_) async {
+                final success = await savedLocationsCubit.deleteLocation(location.id);
+                if (success) {
+                  ToastService.showSuccess('Location deleted successfully!');
+                } else {
+                  ToastService.showError('Failed to delete location.');
+                }
+                // Exit to the individual location submenu
+                _exitSubmenu();
+              },
+            ),
+          ],
+        ));
+      }
+    }
+
     return items;
+  }
+
+  List<MenuItem> _buildThemeSubmenu(BuildContext context, ThemeCubit theme) {
+    final themeState = theme.state;
+    
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) {
+          _exitSubmenu();
+        },
+      ),
+      MenuItem(
+        title: 'Automatic',
+        type: MenuItemType.action,
+        currentValue: themeState.isAutoMode ? 1 : 0, // Use currentValue to indicate selection
+        onChanged: (_) {
+          theme.updateAutoTheme(true);
+          context.read<MenuCubit>().hideMenu();
+        },
+      ),
+      MenuItem(
+        title: 'Dark Theme',
+        type: MenuItemType.action,
+        currentValue: (!themeState.isAutoMode && themeState.themeMode == ThemeMode.dark) ? 1 : 0,
+        onChanged: (_) {
+          theme.updateAutoTheme(false);
+          theme.updateTheme(ThemeMode.dark);
+          context.read<MenuCubit>().hideMenu();
+        },
+      ),
+      MenuItem(
+        title: 'Light Theme',
+        type: MenuItemType.action,
+        currentValue: (!themeState.isAutoMode && themeState.themeMode == ThemeMode.light) ? 1 : 0,
+        onChanged: (_) {
+          theme.updateAutoTheme(false);
+          theme.updateTheme(ThemeMode.light);
+          context.read<MenuCubit>().hideMenu();
+        },
+      ),
+    ];
   }
 
   List<MenuItem> _buildCurrentMenuItems(
@@ -207,7 +292,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     // Main menu items
     return [
       MenuItem(
-        title: 'Hazard lights',
+        title: 'Toggle Hazard Lights',
         type: MenuItemType.action,
         onChanged: (_) {
           vehicle.toggleHazardLights();
@@ -216,7 +301,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       ),
       if (_showMapView) ...[
         MenuItem(
-          title: 'Show Cluster View',
+          title: 'Switch to Cluster View',
           type: MenuItemType.action,
           onChanged: (_) {
             screen.showCluster();
@@ -234,7 +319,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       ],
       if (!_showMapView)
         MenuItem(
-          title: 'Show Map View',
+          title: 'Switch to Map View',
           type: MenuItemType.action,
           onChanged: (_) {
             screen.showMap();
@@ -245,45 +330,16 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         title: 'Saved Locations',
         type: MenuItemType.submenu,
         submenuItems: _buildSavedLocationsSubmenu(context),
+        submenuId: SubmenuType.savedLocations,
       ),
       MenuItem(
-        title: 'Save current location',
-        type: MenuItemType.action,
-        onChanged: (_) async {
-          final gpsData = context.read<GpsSync>().state;
-          final internetData = context.read<InternetSync>().state;
-          final savedLocationsCubit = context.read<SavedLocationsCubit>();
-
-          // Validate GPS before attempting to save
-          if (!gpsData.hasRecentFix) {
-            ToastService.showError('No recent GPS fix available. Please wait for GPS signal.');
-            return;
-          }
-
-          if (gpsData.latitude == 0.0 && gpsData.longitude == 0.0) {
-            ToastService.showError('Invalid GPS coordinates. Please wait for valid location.');
-            return;
-          }
-
-          final success = await savedLocationsCubit.saveCurrentLocation(gpsData, internetData);
-          if (success) {
-            ToastService.showSuccess('Location saved successfully!');
-          } else {
-            ToastService.showError('Failed to save location. Storage may be full.');
-          }
-
-          menu.hideMenu();
-        },
+        title: 'Change Theme',
+        type: MenuItemType.submenu,
+        submenuItems: _buildThemeSubmenu(context, theme),
+        submenuId: SubmenuType.theme,
       ),
       MenuItem(
-          title: "Switch Theme",
-          type: MenuItemType.action,
-          onChanged: (_) {
-            theme.toggleTheme();
-            menu.hideMenu();
-          }),
-      MenuItem(
-        title: 'Reset Trip',
+        title: 'Reset Trip Statistics',
         type: MenuItemType.action,
         onChanged: (_) {
           trip.reset();
@@ -310,11 +366,11 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     context.watch<SavedLocationsCubit>();
 
     // If we're in the saved locations submenu, refresh it when locations change
-    if (_isInSubmenu && _menuStack.isNotEmpty && _menuStack.length == 1) {
+    if (_isInSubmenu && _submenuTypeStack.isNotEmpty && _submenuTypeStack.last == SubmenuType.savedLocations) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {
-            _menuStack[0] = _buildSavedLocationsSubmenu(context);
+            _menuStack[_menuStack.length - 1] = _buildSavedLocationsSubmenu(context);
           });
         }
       });
@@ -366,7 +422,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       onRightPress: () {
         final item = items[_selectedIndex];
         if (item.type == MenuItemType.submenu) {
-          _enterSubmenu(item.submenuItems ?? []);
+          _enterSubmenu(item.submenuItems ?? [], item.submenuId ?? SubmenuType.other);
         } else {
           item.onChanged?.call(item.currentValue);
         }
@@ -381,7 +437,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
             children: [
               const SizedBox(height: 8),
               Text(
-                _isInSubmenu ? 'SAVED LOCATIONS' : 'MENU',
+                _getSubmenuTitle(),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

@@ -9,6 +9,12 @@ enum MenuItemType {
   value,     // Change a value (e.g. brightness)
 }
 
+enum SubmenuType {
+  savedLocations,
+  theme,
+  other,
+}
+
 class MenuItem {
   final String title;
   final MenuItemType type;
@@ -16,6 +22,7 @@ class MenuItem {
   int? currentValue;      // For value items
   final Function(dynamic)? onChanged;
   final List<MenuItem>? submenuItems;
+  final SubmenuType? submenuId;  // Identifier for the submenu type
 
   MenuItem({
     required this.title,
@@ -24,6 +31,7 @@ class MenuItem {
     this.currentValue,
     this.onChanged,
     this.submenuItems,
+    this.submenuId,
   }) : assert(
     (type == MenuItemType.toggle && options != null && currentValue != null) ||
     (type == MenuItemType.value && currentValue != null) ||
@@ -57,6 +65,15 @@ class MenuItemWidget extends StatelessWidget {
     this.isInSubmenu = false,
   });
 
+  String _getCurrentThemeText(BuildContext context) {
+    final themeState = ThemeCubit.watch(context);
+    if (themeState.isAutoMode) {
+      return 'Auto';
+    } else {
+      return themeState.isDark ? 'Dark' : 'Light';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ThemeState(:isDark) = ThemeCubit.watch(context);
@@ -80,20 +97,35 @@ class MenuItemWidget extends StatelessWidget {
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
-          // For theme item, show current theme name
-          if (item.title == 'Change Theme')
-            Text(
-              isDark ? 'Dark' : 'Light',
-              style: TextStyle(
-                fontSize: 20,
-                color: isDark ? Colors.white70 : Colors.black54,
-              ),
-            ),
-          if (item.type == MenuItemType.submenu)
-            Icon(
-              Icons.chevron_right,
-              color: isDark ? Colors.white70 : Colors.black54,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // For theme item, show current theme name
+              if (item.title == 'Change Theme') ...[
+                Text(
+                  _getCurrentThemeText(context),
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              // Show checkmark for selected theme options (currentValue == 1)
+              if (item.currentValue == 1)
+                Icon(
+                  Icons.check,
+                  color: isDark ? Colors.white : Colors.black,
+                  size: 20,
+                ),
+              // Show submenu arrow for submenu items
+              if (item.type == MenuItemType.submenu)
+                Icon(
+                  Icons.chevron_right,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+            ],
+          ),
         ],
       ),
     );
