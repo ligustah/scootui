@@ -104,7 +104,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
   void dispose() {
     _isDisposing = true;
     print("OnlineMapView: Starting disposal");
-    
+
     // Stop any ongoing animations in MapCubit before disposing the ticker provider
     try {
       final mapCubit = context.read<MapCubit>();
@@ -112,7 +112,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
     } catch (e) {
       print("OnlineMapView: Error stopping animations: $e");
     }
-    
+
     // Ensure any remaining tickers are properly disposed
     super.dispose();
     print("OnlineMapView: Disposal completed");
@@ -226,7 +226,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
   void dispose() {
     _isDisposing = true;
     print("OfflineMapView: Starting disposal");
-    
+
     // Stop any ongoing animations in MapCubit before disposing the ticker provider
     try {
       final mapCubit = context.read<MapCubit>();
@@ -234,10 +234,14 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
     } catch (e) {
       print("OfflineMapView: Error stopping animations: $e");
     }
-    
-    // Ensure any remaining tickers are properly disposed
-    super.dispose();
-    print("OfflineMapView: Disposal completed");
+
+    try {
+      // Ensure any remaining tickers are properly disposed
+      super.dispose();
+      print("OfflineMapView: Disposal completed");
+    } catch (e) {
+      print("OfflineMapView: Error during dispose: $e");
+    }
   }
 
   Widget? _routeLayer() {
