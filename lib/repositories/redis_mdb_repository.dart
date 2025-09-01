@@ -144,9 +144,6 @@ class RedisMDBRepository implements MDBRepository {
 
   @override
   Future<void> dashboardReady() async {
-    // Get the current vehicle state
-    final vehicleState = await get("vehicle", "state");
-
     // Read and publish the device serial number
     try {
       final serialNumber = await SerialNumberService.readSerialNumber();
@@ -160,10 +157,7 @@ class RedisMDBRepository implements MDBRepository {
       print('Error publishing serial number: $e');
     }
 
-    // Only set dashboard as ready if the vehicle is not in updating state
-    if (vehicleState != "updating") {
-      await set("dashboard", "ready", "true");
-    }
+    await set("dashboard", "ready", "true");
   }
 
   @override

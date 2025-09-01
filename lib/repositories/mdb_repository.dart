@@ -139,13 +139,7 @@ class InMemoryMDBRepository implements MDBRepository {
 
   @override
   Future<void> dashboardReady() async {
-    // Get the current vehicle state
-    final vehicleState = await get("vehicle", "state");
-
-    // Only set dashboard as ready if the vehicle is not in updating state
-    if (vehicleState != "updating") {
-      await set("dashboard", "ready", "true");
-    }
+    await set("dashboard", "ready", "true");
   }
 
   @override
