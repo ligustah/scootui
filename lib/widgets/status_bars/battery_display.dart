@@ -48,6 +48,9 @@ class BatteryStatusDisplay extends StatelessWidget {
     final textColor = iconColor;
     final backgroundColor = isDark ? Colors.black : Colors.white;
 
+    // Check for battery fault
+    final hasFault = battery.present && battery.fault != 0;
+
     // Determine which icon to show and what text to display
     Widget batteryIcon;
     String? labelText;
@@ -149,11 +152,35 @@ class BatteryStatusDisplay extends StatelessWidget {
       labelText = '${battery.charge}';
     }
 
+    // Wrap with fault overlay if there's a fault
+    final finalIcon = hasFault
+        ? Stack(
+            alignment: Alignment.center,
+            children: [
+              batteryIcon,
+              // Fault error overlay
+              SvgPicture.asset(
+                'assets/icons/librescoot-overlay-error.svg',
+                width: kBatteryIconWidth,
+                height: kBatteryIconHeight,
+                colorFilter: !isDark 
+                    ? const ColorFilter.matrix([ // Invert colors for light theme
+                        -1.0, 0.0, 0.0, 0.0, 255.0,
+                        0.0, -1.0, 0.0, 0.0, 255.0,
+                        0.0, 0.0, -1.0, 0.0, 255.0,
+                        0.0, 0.0, 0.0, 1.0, 0.0,
+                      ])
+                    : null, // No filter for dark theme - use original colors
+              ),
+            ],
+          )
+        : batteryIcon;
+
     // Return the battery icon with text label beside it
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        batteryIcon,
+        finalIcon,
         if (labelText != null) ...[
           const SizedBox(width: 2),
           Text(
@@ -374,6 +401,8 @@ class CombinedBatteryDisplay extends StatefulWidget {
 
 class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
   int? _lastSoc;
+  int? _lastBattery0Fault;
+  int? _lastBattery1Fault;
 
   void _checkBatteryWarnings(int soc) {
     if (_lastSoc == null || _lastSoc == soc) {
@@ -402,6 +431,57 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
     _lastSoc = soc;
   }
 
+  // Battery fault code descriptions
+  static const Map<int, String> _batteryFaultDescriptions = {
+    1: "Over-temperature while charging",
+    2: "Under-temperature while charging", 
+    3: "Over-temperature while discharging",
+    4: "Under-temperature while discharging",
+    5: "Signal wire broken",
+    6: "Critical over-temperature level",
+    7: "Pack over-voltage",
+    8: "MOSFET over-temperature",
+    9: "Cell over-voltage",
+    10: "Pack under-voltage",
+    11: "Cell under-voltage",
+    12: "Over-current while charging",
+    13: "Over-current while discharging",
+    14: "Short-circuit",
+    15: "Reserved",
+    16: "Reserved 2",
+    32: "BMS not following commands",
+    33: "BMS has zero data",
+    34: "BMS communication error",
+    35: "NFC reader error",
+  };
+
+  String _formatBatteryFault(int faultCode) {
+    final description = _batteryFaultDescriptions[faultCode] ?? "Unknown fault";
+    return "B$faultCode - $description";
+  }
+
+  void _checkBatteryFaults(BatteryData battery0, BatteryData battery1) {
+    // Check for new battery:0 fault (main battery - use persistent toast)
+    if (battery0.present && battery0.fault != 0 && 
+        (_lastBattery0Fault == null || _lastBattery0Fault != battery0.fault)) {
+      if (mounted) {
+        final faultMessage = _formatBatteryFault(battery0.fault);
+        ToastUtils.showPersistentErrorToast(context, "Battery 0: $faultMessage");
+      }
+    }
+    _lastBattery0Fault = battery0.fault;
+
+    // Check for new battery:1 fault (secondary battery - regular toast)
+    if (battery1.present && battery1.fault != 0 && 
+        (_lastBattery1Fault == null || _lastBattery1Fault != battery1.fault)) {
+      if (mounted) {
+        final faultMessage = _formatBatteryFault(battery1.fault);
+        ToastUtils.showWarningToast(context, "Battery 1: $faultMessage");
+      }
+    }
+    _lastBattery1Fault = battery1.fault;
+  }
+
   @override
   Widget build(BuildContext context) {
     final battery0 = Battery0Sync.watch(context); // battery:0 (main battery)
@@ -410,6 +490,9 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
 
     // Check for battery warnings
     _checkBatteryWarnings(battery0.charge);
+    
+    // Check for battery faults
+    _checkBatteryFaults(battery0, battery1);
 
     // Show turtle icon when battery is ≤10% (critical)
     final showTurtle = battery0.charge <= 10;

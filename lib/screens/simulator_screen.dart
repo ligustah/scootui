@@ -54,6 +54,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   // Battery states
   String _battery0State = 'unknown';
   String _battery1State = 'unknown';
+  
+  // Battery fault codes
+  int _battery0Fault = 0;
+  int _battery1Fault = 0;
 
   // CB Battery values
   int _cbBatteryCharge = 100;
@@ -115,6 +119,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       final battery1Present = await widget.repository.get('battery:1', 'present');
       final battery1Charge = await widget.repository.get('battery:1', 'charge');
       final battery1State = await widget.repository.get('battery:1', 'state');
+      
+      // Load battery fault codes
+      final battery0Fault = await widget.repository.get('battery:0', 'fault');
+      final battery1Fault = await widget.repository.get('battery:1', 'fault');
 
       // Load CB battery values
       final cbBatteryPresent = await widget.repository.get('cb-battery', 'present');
@@ -157,6 +165,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (battery1Present != null) _battery1Present = battery1Present.toLowerCase() == 'true';
         if (battery1Charge != null) _simulatedBatteryCharge1 = int.tryParse(battery1Charge) ?? 100;
         if (battery1State != null) _battery1State = battery1State;
+        
+        // Battery fault codes
+        if (battery0Fault != null) _battery0Fault = int.tryParse(battery0Fault) ?? 0;
+        if (battery1Fault != null) _battery1Fault = int.tryParse(battery1Fault) ?? 0;
 
         // CB battery values
         if (cbBatteryPresent != null) _cbBatteryPresent = cbBatteryPresent.toLowerCase() == 'true';
@@ -242,6 +254,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       _publishEvent('battery:1', 'present', _battery1Present.toString()),
       if (_battery0Present) _publishEvent('battery:0', 'charge', _simulatedBatteryCharge0.toString()),
       if (_battery1Present) _publishEvent('battery:1', 'charge', _simulatedBatteryCharge1.toString()),
+      _publishEvent('battery:0', 'fault', _battery0Fault.toString()),
+      _publishEvent('battery:1', 'fault', _battery1Fault.toString()),
     ];
     await Future.wait(futures);
   }
@@ -449,6 +463,22 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 _publishEvent('battery:0', 'state', value);
               },
             ),
+            const SizedBox(height: 8),
+            Text('Fault Code (Current: ${_battery0Fault == 0 ? "None" : "B$_battery0Fault"})', 
+                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                _buildFaultButton(0, 'Clear', 0),
+                _buildFaultButton(0, 'B7', 7),
+                _buildFaultButton(0, 'B13', 13),
+                _buildFaultButton(0, 'B14', 14),
+                _buildFaultButton(0, 'B32', 32),
+                _buildFaultButton(0, 'B34', 34),
+              ],
+            ),
           ],
         );
       case 2:
@@ -487,6 +517,22 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 setState(() => _battery1State = value);
                 _publishEvent('battery:1', 'state', value);
               },
+            ),
+            const SizedBox(height: 8),
+            Text('Fault Code (Current: ${_battery1Fault == 0 ? "None" : "B$_battery1Fault"})', 
+                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                _buildFaultButton(1, 'Clear', 0),
+                _buildFaultButton(1, 'B7', 7),
+                _buildFaultButton(1, 'B13', 13),
+                _buildFaultButton(1, 'B14', 14),
+                _buildFaultButton(1, 'B32', 32),
+                _buildFaultButton(1, 'B34', 34),
+              ],
             ),
           ],
         );
@@ -1124,6 +1170,34 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           }).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildFaultButton(int batteryId, String label, int faultCode) {
+    final currentFaultCode = batteryId == 0 ? _battery0Fault : _battery1Fault;
+    final isSelected = currentFaultCode == faultCode;
+    
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        minimumSize: const Size(0, 28),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: isSelected 
+            ? (faultCode == 0 ? Colors.green : Colors.red.shade700)
+            : null,
+        foregroundColor: isSelected ? Colors.white : null,
+      ),
+      onPressed: () {
+        setState(() {
+          if (batteryId == 0) {
+            _battery0Fault = faultCode;
+          } else {
+            _battery1Fault = faultCode;
+          }
+        });
+        _publishEvent('battery:$batteryId', 'fault', faultCode.toString());
+      },
+      child: Text(label, style: const TextStyle(fontSize: 10)),
     );
   }
 }
