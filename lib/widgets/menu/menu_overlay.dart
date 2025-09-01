@@ -366,9 +366,12 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     context.watch<SavedLocationsCubit>();
 
     // If we're in the saved locations submenu, refresh it when locations change
-    if (_isInSubmenu && _submenuTypeStack.isNotEmpty && _submenuTypeStack.last == SubmenuType.savedLocations) {
+    if (_isInSubmenu && 
+        _submenuTypeStack.isNotEmpty && 
+        _submenuTypeStack.last == SubmenuType.savedLocations &&
+        _menuStack.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && _isInSubmenu && _menuStack.isNotEmpty) {
           setState(() {
             _menuStack[_menuStack.length - 1] = _buildSavedLocationsSubmenu(context);
           });
