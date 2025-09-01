@@ -139,12 +139,16 @@ class MapCubit extends Cubit<MapState> {
     Offset offset = isOffRoute ? Offset.zero : _mapCenterOffset;
 
     // Use animated controller for smooth transitions
-    ctrl.animateTo(
-      dest: center,
-      zoom: zoom,
-      rotation: rotation,
-      offset: offset,
-    );
+    try {
+      ctrl.animateTo(
+        dest: center,
+        zoom: zoom,
+        rotation: rotation,
+        offset: offset,
+      );
+    } catch (e) {
+      // Widget disposed during animation, ignore the error
+    }
   }
 
   double _calculateDynamicZoom() {
@@ -201,11 +205,11 @@ class MapCubit extends Cubit<MapState> {
     final orientationForMarker = data.course;
 
     final rawPosition = LatLng(data.latitude, data.longitude);
-    
+
     // Use snapped position when navigating and on-route, otherwise use raw GPS position
     final navState = _currentNavigationState;
-    final positionForDisplay = (navState?.isNavigating == true && navState?.snappedPosition != null) 
-        ? navState!.snappedPosition! 
+    final positionForDisplay = (navState?.isNavigating == true && navState?.snappedPosition != null)
+        ? navState!.snappedPosition!
         : rawPosition;
 
     emit(current.copyWith(
