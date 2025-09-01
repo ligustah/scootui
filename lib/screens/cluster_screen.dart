@@ -18,6 +18,7 @@ import '../widgets/status_bars/unified_bottom_status_bar.dart';
 import '../widgets/indicators/indicator_lights.dart';
 import '../state/enums.dart';
 import '../state/vehicle.dart';
+import '../state/battery.dart';
 import '../cubits/navigation_cubit.dart';
 import '../cubits/navigation_state.dart';
 
@@ -119,12 +120,15 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
 
   Widget _buildWarningIndicators(BuildContext context, dynamic vehicleState, ThemeData theme, bool isDark) {
-    // Debug: Always show at least the parking brake if parked
+    final battery0 = Battery0Sync.watch(context);
+    final battery1 = Battery1Sync.watch(context);
+    
     final showEngineWarning = vehicleState.isUnableToDrive == Toggle.on;
     final showHazards = vehicleState.blinkerState == BlinkerState.both;
     final showParking = vehicleState.state == ScooterState.parked;
+    final showBatteryFault = (battery0.present && battery0.fault != 0) || (battery1.present && battery1.fault != 0);
     
-    if (!showEngineWarning && !showHazards && !showParking) {
+    if (!showEngineWarning && !showHazards && !showParking && !showBatteryFault) {
       return const SizedBox.shrink();
     }
 
@@ -133,28 +137,38 @@ class _ClusterScreenState extends State<ClusterScreen> {
       children: [
           if (showEngineWarning) ...[
             IndicatorLights.engineWarning(vehicleState),
-            if (showHazards || showParking)
+            if (showHazards || showParking || showBatteryFault)
               const SizedBox(width: 8),
           ],
           if (showHazards) ...[
             IndicatorLights.hazards(vehicleState),
-            if (showParking)
+            if (showParking || showBatteryFault)
               const SizedBox(width: 8),
           ],
-          if (showParking)
+          if (showParking) ...[
             IndicatorLights.parkingBrake(vehicleState),
+            if (showBatteryFault)
+              const SizedBox(width: 8),
+          ],
+          if (showBatteryFault)
+            IndicatorLights.batteryFault(battery0, battery1),
         ],
     );
   }
 
-  bool _hasTelltales(dynamic vehicleState) {
+  bool _hasTelltales(BuildContext context, dynamic vehicleState) {
+    final battery0 = Battery0Sync.watch(context);
+    final battery1 = Battery1Sync.watch(context);
+    final showBatteryFault = (battery0.present && battery0.fault != 0) || (battery1.present && battery1.fault != 0);
+    
     return vehicleState.isUnableToDrive == Toggle.on || 
            vehicleState.blinkerState == BlinkerState.both || 
-           vehicleState.state == ScooterState.parked;
+           vehicleState.state == ScooterState.parked ||
+           showBatteryFault;
   }
 
   Widget _buildBottomRow(BuildContext context, dynamic vehicleState, ThemeData theme, bool isDark, double powerOutput) {
-    final hasTelltales = _hasTelltales(vehicleState);
+    final hasTelltales = _hasTelltales(context, vehicleState);
     
     return SizedBox(
       height: 60, // Fixed height to prevent jitter

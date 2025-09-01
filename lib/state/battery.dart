@@ -74,6 +74,10 @@ class BatteryData extends Equatable with $BatteryData {
   final String firmwareVersion;
 
   @override
+  @StateField()
+  final int fault;
+
+  @override
   List<Object?> get props => [
         id,
         present,
@@ -91,6 +95,7 @@ class BatteryData extends Equatable with $BatteryData {
         serialNumber,
         manufacturingDate,
         firmwareVersion,
+        fault,
       ];
 
   BatteryData({
@@ -110,6 +115,7 @@ class BatteryData extends Equatable with $BatteryData {
     this.temperature2 = 0,
     this.temperature3 = 0,
     this.temperatureState = "",
+    this.fault = 0,
   });
 
   // Create a copy of this BatteryData with the given fields replaced
@@ -130,6 +136,7 @@ class BatteryData extends Equatable with $BatteryData {
     String? serialNumber,
     String? manufacturingDate,
     String? firmwareVersion,
+    int? fault,
   }) {
     return BatteryData(
       id: id ?? this.id,
@@ -148,6 +155,7 @@ class BatteryData extends Equatable with $BatteryData {
       serialNumber: serialNumber ?? this.serialNumber,
       manufacturingDate: manufacturingDate ?? this.manufacturingDate,
       firmwareVersion: firmwareVersion ?? this.firmwareVersion,
+      fault: fault ?? this.fault,
     );
   }
 }

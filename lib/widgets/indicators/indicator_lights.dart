@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../state/vehicle.dart';
+import '../../state/battery.dart';
 import '../../state/enums.dart';
 import 'indicator_light.dart';
 
@@ -41,5 +42,12 @@ final class IndicatorLights {
         activeColor: Colors.red,
         size: 36,
         blinking: true,
+      );
+
+  static IndicatorLight batteryFault(BatteryData battery0, BatteryData battery1) => IndicatorLight(
+        icon: IndicatorLight.svgAsset('librescoot-propulsion-battery-fault.svg'),
+        isActive: (battery0.present && battery0.fault != 0) || (battery1.present && battery1.fault != 0),
+        activeColor: Colors.yellow,
+        size: 36,
       );
 }

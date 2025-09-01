@@ -30,6 +30,7 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
   String get serialNumber;
   String get manufacturingDate;
   String get firmwareVersion;
+  int get fault;
   get syncSettings => SyncSettings(
       "battery:$id",
       Duration(microseconds: 30000000),
@@ -139,6 +140,13 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
             typeName: "String",
             defaultValue: null,
             interval: null),
+        SyncFieldSettings(
+            name: "fault",
+            variable: "fault",
+            type: SyncFieldType.int,
+            typeName: "int",
+            defaultValue: null,
+            interval: null),
       ],
       "id");
 
@@ -165,6 +173,7 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
       manufacturingDate:
           "manufacturing-date" != name ? manufacturingDate : value,
       firmwareVersion: "fw-version" != name ? firmwareVersion : value,
+      fault: "fault" != name ? fault : int.parse(value),
     );
   }
 
@@ -183,7 +192,8 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
         stateOfHealth,
         serialNumber,
         manufacturingDate,
-        firmwareVersion
+        firmwareVersion,
+        fault
       ];
   @override
   String toString() {
@@ -205,6 +215,7 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
     buf.writeln("	serialNumber = $serialNumber");
     buf.writeln("	manufacturingDate = $manufacturingDate");
     buf.writeln("	firmwareVersion = $firmwareVersion");
+    buf.writeln("	fault = $fault");
     buf.writeln(")");
 
     return buf.toString();

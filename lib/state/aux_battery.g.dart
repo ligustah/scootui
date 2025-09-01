@@ -6,11 +6,18 @@ part of 'aux_battery.dart';
 // StateGenerator
 // **************************************************************************
 
+final $_AuxChargeStatusMap = {
+  "not-charging": AuxChargeStatus.notCharging,
+  "float-charge": AuxChargeStatus.floatCharge,
+  "absorption-charge": AuxChargeStatus.absorptionCharge,
+  "bulk-charge": AuxChargeStatus.bulkCharge,
+};
+
 abstract mixin class $AuxBatteryData implements Syncable<AuxBatteryData> {
   int get dateStreamEnable;
   int get voltage;
   int get charge;
-  int get chargeStatus;
+  AuxChargeStatus get chargeStatus;
   get syncSettings => SyncSettings(
       "aux-battery",
       Duration(microseconds: 30000000),
@@ -39,9 +46,9 @@ abstract mixin class $AuxBatteryData implements Syncable<AuxBatteryData> {
         SyncFieldSettings(
             name: "chargeStatus",
             variable: "charge-status",
-            type: SyncFieldType.int,
-            typeName: "int",
-            defaultValue: null,
+            type: SyncFieldType.enum_,
+            typeName: "AuxChargeStatus",
+            defaultValue: "floatCharge",
             interval: null),
       ],
       "null");
@@ -53,7 +60,9 @@ abstract mixin class $AuxBatteryData implements Syncable<AuxBatteryData> {
           "date-stream-enable" != name ? dateStreamEnable : int.parse(value),
       voltage: "voltage" != name ? voltage : int.parse(value),
       charge: "charge" != name ? charge : int.parse(value),
-      chargeStatus: "charge-status" != name ? chargeStatus : int.parse(value),
+      chargeStatus: "charge-status" != name
+          ? chargeStatus
+          : $_AuxChargeStatusMap[value] ?? AuxChargeStatus.floatCharge,
     );
   }
 

@@ -79,12 +79,12 @@ class CbBatteryData extends Equatable with $CbBatteryData {
     this.fullCapacity = 0,
     this.remainingCapacity = 0,
     this.timeToFull = 0,
-    this.charge = 0,
+    this.charge = 100, // Default to full charge to avoid warnings
     this.stateOfHealth = 0,
     this.cycleCount = 0,
     this.timeToEmpty = 0,
     this.present = false,
-    this.chargeStatus = ChargeStatus.notCharging,
+    this.chargeStatus = ChargeStatus.charging, // Default to charging to avoid warnings
     this.partNumber = "",
     this.serialNumber = "",
     this.uniqueId = "",

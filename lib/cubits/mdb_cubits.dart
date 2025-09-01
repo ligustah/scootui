@@ -2,8 +2,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../repositories/mdb_repository.dart';
+import '../state/aux_battery.dart';
 import '../state/battery.dart';
 import '../state/bluetooth.dart';
+import '../state/cb_battery.dart';
 import '../state/engine.dart';
 import '../state/gps.dart';
 import '../state/internet.dart';
@@ -158,4 +160,22 @@ class SettingsSync extends SyncableCubit<SettingsData> {
       selector(context.select((SettingsSync e) => e.state));
 
   SettingsSync(MDBRepository repo) : super(redisRepository: repo, initialState: SettingsData());
+}
+
+class CbBatterySync extends SyncableCubit<CbBatteryData> {
+  static CbBatteryData watch(BuildContext context) => context.watch<CbBatterySync>().state;
+
+  static CbBatterySync create(BuildContext context) =>
+      CbBatterySync(RepositoryProvider.of<MDBRepository>(context))..start();
+
+  CbBatterySync(MDBRepository repo) : super(redisRepository: repo, initialState: CbBatteryData());
+}
+
+class AuxBatterySync extends SyncableCubit<AuxBatteryData> {
+  static AuxBatteryData watch(BuildContext context) => context.watch<AuxBatterySync>().state;
+
+  static AuxBatterySync create(BuildContext context) =>
+      AuxBatterySync(RepositoryProvider.of<MDBRepository>(context))..start();
+
+  AuxBatterySync(MDBRepository repo) : super(redisRepository: repo, initialState: AuxBatteryData());
 }
