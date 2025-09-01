@@ -40,7 +40,6 @@ final $_ScooterStateMap = {
   "hibernating-imminent": ScooterState.hibernatingImminent,
   "suspending": ScooterState.suspending,
   "suspending-imminent": ScooterState.suspendingImminent,
-  "updating": ScooterState.updating,
 };
 
 final $_HandleBarLockSensorMap = {

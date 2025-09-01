@@ -468,7 +468,6 @@ class _DebugOverlayState extends State<DebugOverlay> {
       ScooterState.hibernatingImminent => Colors.pink,
       ScooterState.suspending => Colors.red,
       ScooterState.suspendingImminent => Colors.pink,
-      ScooterState.updating => Colors.yellow,
     };
   }
 

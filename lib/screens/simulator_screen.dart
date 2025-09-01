@@ -690,7 +690,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             if (_vehicleStateExpanded)
               _buildSegmentedButton(
                 '',
-                ['hibernating', 'hibernating-imminent', 'suspending', 'suspending-imminent', 'off', 'updating'],
+                ['hibernating', 'hibernating-imminent', 'suspending', 'suspending-imminent', 'off'],
                 _vehicleState,
                 (value) {
                   setState(() => _vehicleState = value);

@@ -10,11 +10,4 @@ sealed class OtaState with _$OtaState {
     required OtaStatus status,
     required String statusText,
   }) = OtaStatusBar;
-
-  // Full-screen OTA display (shown in parked or standby mode)
-  const factory OtaState.fullScreen({
-    required OtaStatus status,
-    required String statusText,
-    required bool isParked, // Controls background opacity
-  }) = OtaFullScreen;
 }

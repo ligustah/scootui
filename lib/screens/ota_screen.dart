@@ -14,29 +14,6 @@ class OtaScreen extends StatelessWidget {
         return switch (state) {
           OtaInactive() => const SizedBox.shrink(), // Should not happen, but just in case
           OtaStatusBar() => const SizedBox.shrink(), // Should not happen in this screen
-          OtaFullScreen(:final status, :final statusText, :final isParked) => Container(
-              color: isParked ? Colors.black.withOpacity(0.7) : Colors.black, // 70% opacity in parked, 100% otherwise
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      statusText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
         };
       },
     );

@@ -22,8 +22,7 @@ enum ScooterState {
   hibernating,
   hibernatingImminent,
   suspending,
-  suspendingImminent,
-  updating
+  suspendingImminent
 }
 
 enum Kickstand { up, down }
