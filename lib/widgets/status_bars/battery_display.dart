@@ -178,7 +178,12 @@ class BatteryStatusDisplay extends StatelessWidget {
 }
 
 class CombinedBatteryDisplay extends StatefulWidget {
-  const CombinedBatteryDisplay({super.key});
+  final bool showNonPresentBattery1;
+
+  const CombinedBatteryDisplay({
+    super.key,
+    this.showNonPresentBattery1 = false,
+  });
 
   @override
   State<CombinedBatteryDisplay> createState() => _CombinedBatteryDisplayState();
@@ -227,12 +232,17 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
     final showTurtle = battery0.charge <= 10;
     final iconColor = isDark ? Colors.white : Colors.black;
 
+    // Show battery:1 only if present or explicitly requested
+    final showBattery1 = battery1.present || widget.showNonPresentBattery1;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         BatteryStatusDisplay(battery: battery0),
-        const SizedBox(width: 8),
-        BatteryStatusDisplay(battery: battery1),
+        if (showBattery1) ...[
+          const SizedBox(width: 4),
+          BatteryStatusDisplay(battery: battery1),
+        ],
         if (showTurtle) ...[
           const SizedBox(width: 4),
           SvgPicture.asset(
