@@ -32,7 +32,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   // Submenu state
   final List<List<MenuItem>> _menuStack = [];
   final List<int> _selectedIndexStack = [];
-  final List<SubmenuType> _submenuTypeStack = [];  // Track submenu types
+  final List<SubmenuType> _submenuTypeStack = []; // Track submenu types
+  final List<double> _scrollPositionStack = []; // Track scroll positions for each menu level
   bool _isInSubmenu = false;
 
   @override
@@ -66,18 +67,18 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   void _scrollToSelectedItem() {
     if (!mounted || !_scrollController.hasClients) return;
-    
+
     // Use post frame callback to ensure ListView is built and has dimensions
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_scrollController.hasClients) return;
-      
+
       final itemHeight = 54.0; // Updated height for reduced padding menu items
       final viewportHeight = _scrollController.position.viewportDimension;
       final halfViewport = viewportHeight / 2;
-      
+
       // Calculate target offset to center the selected item
       final targetOffset = (_selectedIndex * itemHeight) - halfViewport + (itemHeight / 2);
-      
+
       // Clamp the offset to valid scroll range
       final maxOffset = _scrollController.position.maxScrollExtent;
       final clampedOffset = targetOffset.clamp(0.0, maxOffset);
@@ -91,22 +92,44 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   }
 
   void _enterSubmenu(List<MenuItem> submenuItems, SubmenuType submenuType) {
+    // Save current scroll position before entering submenu
+    final currentScrollPosition = _scrollController.hasClients ? _scrollController.offset : 0.0;
+
     setState(() {
       _menuStack.add(submenuItems);
       _selectedIndexStack.add(_selectedIndex);
       _submenuTypeStack.add(submenuType);
+      _scrollPositionStack.add(currentScrollPosition);
       _selectedIndex = 0;
       _isInSubmenu = true;
+    });
+
+    // Reset scroll position to top for submenu
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+        _updateScrollIndicators();
+      }
     });
   }
 
   void _exitSubmenu() {
     if (_selectedIndexStack.isNotEmpty) {
+      final savedScrollPosition = _scrollPositionStack.isNotEmpty ? _scrollPositionStack.removeLast() : 0.0;
+
       setState(() {
         _menuStack.removeLast();
         _selectedIndex = _selectedIndexStack.removeLast();
         _submenuTypeStack.removeLast();
         _isInSubmenu = _menuStack.isNotEmpty;
+      });
+
+      // Restore previous scroll position
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(savedScrollPosition);
+          _updateScrollIndicators();
+        }
       });
     }
   }
@@ -115,13 +138,14 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     _menuStack.clear();
     _selectedIndexStack.clear();
     _submenuTypeStack.clear();
+    _scrollPositionStack.clear();
     _selectedIndex = 0;
     _isInSubmenu = false;
   }
 
   String _getSubmenuTitle() {
     if (!_isInSubmenu || _submenuTypeStack.isEmpty) return 'MENU';
-    
+
     // Use the submenu type to determine title
     switch (_submenuTypeStack.last) {
       case SubmenuType.savedLocations:
@@ -195,6 +219,13 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           type: MenuItemType.submenu,
           submenuItems: [
             MenuItem(
+              title: '< Back',
+              type: MenuItemType.action,
+              onChanged: (_) {
+                _exitSubmenu();
+              },
+            ),
+            MenuItem(
               title: 'Start Navigation',
               type: MenuItemType.action,
               onChanged: (_) {
@@ -202,13 +233,6 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                 mdbRepo.set("navigation", "destination", location.coordinatesString);
                 savedLocationsCubit.updateLastUsed(location.id);
                 context.read<MenuCubit>().hideMenu();
-              },
-            ),
-            MenuItem(
-              title: '< Back',
-              type: MenuItemType.action,
-              onChanged: (_) {
-                _exitSubmenu();
               },
             ),
             MenuItem(
@@ -235,7 +259,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   List<MenuItem> _buildThemeSubmenu(BuildContext context, ThemeCubit theme) {
     final themeState = theme.state;
-    
+
     return [
       MenuItem(
         title: '< Back',
@@ -309,7 +333,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           },
         ),
         MenuItem(
-          title: "Set Destination",
+          title: "Enter Destination Code",
           type: MenuItemType.action,
           onChanged: (_) {
             screen.showAddressSelection();
@@ -366,8 +390,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     context.watch<SavedLocationsCubit>();
 
     // If we're in the saved locations submenu, refresh it when locations change
-    if (_isInSubmenu && 
-        _submenuTypeStack.isNotEmpty && 
+    if (_isInSubmenu &&
+        _submenuTypeStack.isNotEmpty &&
         _submenuTypeStack.last == SubmenuType.savedLocations &&
         _menuStack.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

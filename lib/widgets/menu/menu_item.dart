@@ -89,12 +89,17 @@ class MenuItemWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            item.title,
-            style: TextStyle(
-              fontSize: 20,
-              color: isDark ? Colors.white : Colors.black,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          Expanded(
+            child: Text(
+              item.title,
+              style: TextStyle(
+                fontSize: 20,
+                color: isDark ? Colors.white : Colors.black,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              overflow: isSelected ? TextOverflow.visible : TextOverflow.ellipsis,
+              softWrap: isSelected,
+              maxLines: isSelected ? null : 1,
             ),
           ),
           Row(
