@@ -6,6 +6,7 @@ import '../../cubits/theme_cubit.dart';
 import '../../state/aux_battery.dart';
 import '../../state/battery.dart';
 import '../../state/cb_battery.dart';
+import '../../utils/condition_debouncer.dart';
 import '../../utils/toast_utils.dart';
 
 // Battery icon dimensions (scaled from 144x144)
@@ -258,6 +259,22 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
   bool _auxLowVoltageWarningShown = false;
   bool _auxCriticalVoltageWarningShown = false;
 
+  // Debouncers for each warning condition - require 3 seconds of consistent condition
+  late final ConditionDebouncer _cbWarningDebouncer;
+  late final ConditionDebouncer _auxLowChargeDebouncer;
+  late final ConditionDebouncer _auxLowVoltageDebouncer;
+  late final ConditionDebouncer _auxCriticalVoltageDebouncer;
+
+  @override
+  void initState() {
+    super.initState();
+    const debounceDelay = Duration(seconds: 3);
+    _cbWarningDebouncer = ConditionDebouncer(delay: debounceDelay);
+    _auxLowChargeDebouncer = ConditionDebouncer(delay: debounceDelay);
+    _auxLowVoltageDebouncer = ConditionDebouncer(delay: debounceDelay);
+    _auxCriticalVoltageDebouncer = ConditionDebouncer(delay: debounceDelay);
+  }
+
   bool _shouldShowCbWarning(CbBatteryData cbBattery, BatteryData mainBattery) {
     final cbChargeOk = cbBattery.charge < 95;
     final cbNotCharging = cbBattery.chargeStatus == ChargeStatus.notCharging;
@@ -314,10 +331,17 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     final auxBattery = AuxBatterySync.watch(context);
     final mainBattery = Battery0Sync.watch(context);
 
-    final showCbWarning = _shouldShowCbWarning(cbBattery, mainBattery);
-    final showAuxLowChargeWarning = _shouldShowAuxLowChargeWarning(auxBattery, mainBattery);
-    final showAuxLowVoltageWarning = _shouldShowAuxLowVoltageWarning(auxBattery);
-    final showAuxCriticalVoltageWarning = _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery);
+    // Check warning conditions and apply debouncing
+    final cbCondition = _shouldShowCbWarning(cbBattery, mainBattery);
+    final auxLowChargeCondition = _shouldShowAuxLowChargeWarning(auxBattery, mainBattery);
+    final auxLowVoltageCondition = _shouldShowAuxLowVoltageWarning(auxBattery);
+    final auxCriticalVoltageCondition = _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery);
+
+    // Apply debouncing - warnings only show after condition is true for 3 seconds
+    final showCbWarning = _cbWarningDebouncer.update(cbCondition);
+    final showAuxLowChargeWarning = _auxLowChargeDebouncer.update(auxLowChargeCondition);
+    final showAuxLowVoltageWarning = _auxLowVoltageDebouncer.update(auxLowVoltageCondition);
+    final showAuxCriticalVoltageWarning = _auxCriticalVoltageDebouncer.update(auxCriticalVoltageCondition);
     final showAnyAuxWarning = showAuxLowChargeWarning || showAuxLowVoltageWarning || showAuxCriticalVoltageWarning;
 
     // Show toast notifications
