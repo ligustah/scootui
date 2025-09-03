@@ -6,6 +6,7 @@ import '../../cubits/theme_cubit.dart';
 import '../../state/aux_battery.dart';
 import '../../state/battery.dart';
 import '../../state/cb_battery.dart';
+import '../../state/vehicle.dart';
 import '../../utils/condition_debouncer.dart';
 import '../../utils/toast_utils.dart';
 
@@ -411,6 +412,38 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
   }
 }
 
+class SeatboxIndicator extends StatelessWidget {
+  const SeatboxIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final vehicle = VehicleSync.watch(context);
+    final ThemeState(:isDark) = ThemeCubit.watch(context);
+    
+    final iconColor = isDark ? Colors.white : Colors.black;
+    
+    // Show seatbox open icon when seatbox:lock is not "closed"
+    final showSeatboxOpen = vehicle.seatboxLock != SeatboxLock.closed;
+    
+    if (!showSeatboxOpen) {
+      return const SizedBox.shrink();
+    }
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SvgPicture.asset(
+          'assets/icons/librescoot-seatbox-open.svg',
+          width: kBatteryIconWidth,
+          height: kBatteryIconHeight,
+          colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        ),
+        const SizedBox(width: 4),
+      ],
+    );
+  }
+}
+
 class CombinedBatteryDisplay extends StatefulWidget {
   final bool showNonPresentBattery1;
 
@@ -534,6 +567,7 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
           BatteryStatusDisplay(battery: battery1),
         ],
         const SizedBox(width: 8),
+        const SeatboxIndicator(),
         const BatteryWarningIndicators(),
         if (showTurtle) ...[
           SvgPicture.asset(
