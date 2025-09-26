@@ -276,46 +276,50 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     _auxCriticalVoltageDebouncer = ConditionDebouncer(delay: debounceDelay);
   }
 
-  bool _shouldShowCbWarning(CbBatteryData cbBattery, BatteryData mainBattery) {
+  bool _shouldShowCbWarning(CbBatteryData cbBattery, BatteryData mainBattery, VehicleData vehicle) {
     final cbChargeOk = cbBattery.charge < 95;
     final cbNotCharging = cbBattery.chargeStatus == ChargeStatus.notCharging;
     final mainPresent = mainBattery.present;
     final mainNonZero = mainBattery.charge > 0;
     final mainActive = mainBattery.state == BatteryState.active;
-    
-    print('CB Warning Check: cbCharge=${cbBattery.charge} (<95: $cbChargeOk), cbStatus=${cbBattery.chargeStatus} (notCharging: $cbNotCharging), mainPresent=$mainPresent, mainCharge=${mainBattery.charge} (>0: $mainNonZero), mainState=${mainBattery.state} (active: $mainActive)');
-    
-    return cbChargeOk && cbNotCharging && mainPresent && mainNonZero && mainActive;
+    final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
+
+    print('CB Warning Check: cbCharge=${cbBattery.charge} (<95: $cbChargeOk), cbStatus=${cbBattery.chargeStatus} (notCharging: $cbNotCharging), mainPresent=$mainPresent, mainCharge=${mainBattery.charge} (>0: $mainNonZero), mainState=${mainBattery.state} (active: $mainActive), seatboxClosed=$seatboxClosed');
+
+    return cbChargeOk && cbNotCharging && mainPresent && mainNonZero && mainActive && seatboxClosed;
   }
 
-  bool _shouldShowAuxLowChargeWarning(AuxBatteryData auxBattery, BatteryData mainBattery) {
+  bool _shouldShowAuxLowChargeWarning(AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final auxLowCharge = auxBattery.charge <= 25;
     final auxNotCharging = auxBattery.chargeStatus == AuxChargeStatus.notCharging;
     final mainPresent = mainBattery.present;
     final mainNonZero = mainBattery.charge > 0;
     final mainActive = mainBattery.state == BatteryState.active;
-    
-    print('AUX Low Charge Warning Check: auxCharge=${auxBattery.charge} (<=25: $auxLowCharge), auxStatus=${auxBattery.chargeStatus} (notCharging: $auxNotCharging), mainPresent=$mainPresent, mainCharge=${mainBattery.charge} (>0: $mainNonZero), mainState=${mainBattery.state} (active: $mainActive)');
-    
-    return auxLowCharge && auxNotCharging && mainPresent && mainNonZero && mainActive;
+    final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
+
+    print('AUX Low Charge Warning Check: auxCharge=${auxBattery.charge} (<=25: $auxLowCharge), auxStatus=${auxBattery.chargeStatus} (notCharging: $auxNotCharging), mainPresent=$mainPresent, mainCharge=${mainBattery.charge} (>0: $mainNonZero), mainState=${mainBattery.state} (active: $mainActive), seatboxClosed=$seatboxClosed');
+
+    return auxLowCharge && auxNotCharging && mainPresent && mainNonZero && mainActive && seatboxClosed;
   }
 
-  bool _shouldShowAuxLowVoltageWarning(AuxBatteryData auxBattery) {
+  bool _shouldShowAuxLowVoltageWarning(AuxBatteryData auxBattery, VehicleData vehicle) {
     final lowVoltage = auxBattery.voltage < 11500;
     final notCharging = auxBattery.chargeStatus == AuxChargeStatus.notCharging;
-    
-    print('AUX Low Voltage Warning Check: auxVoltage=${auxBattery.voltage} (<11500: $lowVoltage), auxStatus=${auxBattery.chargeStatus} (notCharging: $notCharging)');
-    
-    return lowVoltage && notCharging;
+    final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
+
+    print('AUX Low Voltage Warning Check: auxVoltage=${auxBattery.voltage} (<11500: $lowVoltage), auxStatus=${auxBattery.chargeStatus} (notCharging: $notCharging), seatboxClosed=$seatboxClosed');
+
+    return lowVoltage && notCharging && seatboxClosed;
   }
 
-  bool _shouldShowAuxCriticalVoltageWarning(AuxBatteryData auxBattery, BatteryData mainBattery) {
+  bool _shouldShowAuxCriticalVoltageWarning(AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final criticalVoltage = auxBattery.voltage < 11000; // 11.0V = 11000mV
     final mainPresent = mainBattery.present;
-    
-    print('AUX Critical Voltage Warning Check: auxVoltage=${auxBattery.voltage} (<11000: $criticalVoltage), mainPresent=$mainPresent');
-    
-    return criticalVoltage;
+    final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
+
+    print('AUX Critical Voltage Warning Check: auxVoltage=${auxBattery.voltage} (<11000: $criticalVoltage), mainPresent=$mainPresent, seatboxClosed=$seatboxClosed');
+
+    return criticalVoltage && seatboxClosed;
   }
 
   void _showToastIfNeeded(BuildContext context, String message, bool wasShown, Function(bool) setShown) {
@@ -331,12 +335,13 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     final cbBattery = CbBatterySync.watch(context);
     final auxBattery = AuxBatterySync.watch(context);
     final mainBattery = Battery0Sync.watch(context);
+    final vehicle = VehicleSync.watch(context);
 
     // Check warning conditions and apply debouncing
-    final cbCondition = _shouldShowCbWarning(cbBattery, mainBattery);
-    final auxLowChargeCondition = _shouldShowAuxLowChargeWarning(auxBattery, mainBattery);
-    final auxLowVoltageCondition = _shouldShowAuxLowVoltageWarning(auxBattery);
-    final auxCriticalVoltageCondition = _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery);
+    final cbCondition = _shouldShowCbWarning(cbBattery, mainBattery, vehicle);
+    final auxLowChargeCondition = _shouldShowAuxLowChargeWarning(auxBattery, mainBattery, vehicle);
+    final auxLowVoltageCondition = _shouldShowAuxLowVoltageWarning(auxBattery, vehicle);
+    final auxCriticalVoltageCondition = _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery, vehicle);
 
     // Apply debouncing - warnings only show after condition is true for 3 seconds
     final showCbWarning = _cbWarningDebouncer.update(cbCondition);
