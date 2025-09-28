@@ -34,6 +34,7 @@ final List<SingleChildWidget> allCubits = [
       create: (context) => NavigationCubit(
             gpsStream: context.read<GpsSync>().stream,
             navigationSync: context.read<NavigationSync>(),
+            vehicleStream: context.read<VehicleSync>().stream,
           )),
   BlocProvider(create: SpeedLimitSync.create),
   BlocProvider(create: SystemCubit.create),

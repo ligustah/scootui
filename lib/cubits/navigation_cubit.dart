@@ -10,15 +10,18 @@ import '../routing/valhalla.dart';
 import '../services/toast_service.dart';
 import '../state/gps.dart';
 import '../state/navigation.dart';
+import '../state/vehicle.dart';
 import 'mdb_cubits.dart';
 import 'navigation_state.dart';
 
 class NavigationCubit extends Cubit<NavigationState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<NavigationData> _navigationSub;
+  late final StreamSubscription<VehicleData> _vehicleSub;
   final NavigationSync _navigationSync;
+  VehicleData _vehicleData;
 
-  static const double _arrivalProximityMeters = 100.0;
+  static const double _arrivalProximityMeters = 25.0;
   static const double _offRouteTolerance = 40.0; // meters
   DateTime? _lastReroute;
   LatLng? _currentPosition;
@@ -28,13 +31,20 @@ class NavigationCubit extends Cubit<NavigationState> {
   NavigationCubit({
     required Stream<GpsData> gpsStream,
     required NavigationSync navigationSync,
+    required Stream<VehicleData> vehicleStream,
   })  : _navigationSync = navigationSync,
+        _vehicleData = VehicleData(), // Initialize with a default or initial value
         super(const NavigationState()) {
     _gpsSub = gpsStream.listen(_onGpsData);
     _navigationSub = _navigationSync.stream.listen(_onNavigationData);
+    _vehicleSub = vehicleStream.listen(_onVehicleData);
 
     // Process initial navigation data if available
     _processInitialNavigationData();
+  }
+
+  void _onVehicleData(VehicleData data) {
+    _vehicleData = data;
   }
 
   @override
@@ -44,9 +54,19 @@ class NavigationCubit extends Cubit<NavigationState> {
       print("NavigationCubit: Clearing destination on shutdown since we've arrived.");
       await clearNavigation();
     }
-    
+    // If the scooter shuts down and the current location is within 100m of the GPS destination,
+    // then CLEAR THE GPS navigation destination.
+    else if (_vehicleData.state == ScooterState.shuttingDown &&
+        state.destination != null &&
+        _currentPosition != null &&
+        distanceCalculator.as(LengthUnit.Meter, _currentPosition!, state.destination!) < 100.0) {
+      print("NavigationCubit: Clearing destination due to shutdown within 100m of destination.");
+      await clearNavigation();
+    }
+
     _gpsSub.cancel();
     _navigationSub.cancel();
+    _vehicleSub.cancel();
     return super.close();
   }
 
@@ -242,6 +262,19 @@ class NavigationCubit extends Cubit<NavigationState> {
       destination,
     );
 
+
+    // Check if we were arrived but now moved away and scooter is not shutting down
+    if (state.status == NavigationStatus.arrived &&
+        distanceToDestination >= _arrivalProximityMeters &&
+        _vehicleData.state != ScooterState.shuttingDown) {
+      print("NavigationCubit: Resuming navigation after moving away from destination.");
+      ToastService.showInfo('Resuming navigation.');
+      emit(state.copyWith(
+        status: NavigationStatus.navigating,
+        distanceToDestination: distanceToDestination,
+      ));
+      // Continue to recalculate instructions and check for off-route
+    }
 
     // Check if we've arrived
     if (distanceToDestination < _arrivalProximityMeters) {
