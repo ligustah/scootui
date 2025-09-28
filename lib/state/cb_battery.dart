@@ -10,7 +10,7 @@ enum ChargeStatus {
   notCharging,
 }
 
-@StateClass("cb-battery", Duration(seconds: 60))
+@StateClass("cb-battery", Duration(seconds: 30))
 class CbBatteryData extends Equatable with $CbBatteryData {
   @override
   @StateField()

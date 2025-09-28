@@ -153,16 +153,30 @@ class CbBatterySync extends SyncableCubit<CbBatteryData> {
   static CbBatteryData watch(BuildContext context) => context.watch<CbBatterySync>().state;
 
   static CbBatterySync create(BuildContext context) =>
-      CbBatterySync(RepositoryProvider.of<MDBRepository>(context))..start();
+      CbBatterySync(RepositoryProvider.of<MDBRepository>(context), context.read<VehicleSync>())..start();
 
-  CbBatterySync(MDBRepository repo) : super(redisRepository: repo, initialState: CbBatteryData());
+  CbBatterySync(MDBRepository repo, VehicleSync vehicleSync) : super(redisRepository: repo, initialState: CbBatteryData()) {
+    vehicleSync.stream.listen((vehicleState) {
+      // Check if seatbox just closed
+      if (vehicleState.seatboxLock == SeatboxLock.closed) {
+        this.refreshAllFields();
+      }
+    });
+  }
 }
 
 class AuxBatterySync extends SyncableCubit<AuxBatteryData> {
   static AuxBatteryData watch(BuildContext context) => context.watch<AuxBatterySync>().state;
 
   static AuxBatterySync create(BuildContext context) =>
-      AuxBatterySync(RepositoryProvider.of<MDBRepository>(context))..start();
+      AuxBatterySync(RepositoryProvider.of<MDBRepository>(context), context.read<VehicleSync>())..start();
 
-  AuxBatterySync(MDBRepository repo) : super(redisRepository: repo, initialState: AuxBatteryData());
+  AuxBatterySync(MDBRepository repo, VehicleSync vehicleSync) : super(redisRepository: repo, initialState: AuxBatteryData()) {
+    vehicleSync.stream.listen((vehicleState) {
+      // Check if seatbox just closed
+      if (vehicleState.seatboxLock == SeatboxLock.closed) {
+        this.refreshAllFields();
+      }
+    });
+  }
 }

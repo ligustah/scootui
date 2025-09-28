@@ -29,7 +29,7 @@ abstract mixin class $CbBatteryData implements Syncable<CbBatteryData> {
   String get uniqueId;
   get syncSettings => SyncSettings(
       "cb-battery",
-      Duration(microseconds: 60000000),
+      Duration(microseconds: 30000000),
       [
         SyncFieldSettings(
             name: "charge",

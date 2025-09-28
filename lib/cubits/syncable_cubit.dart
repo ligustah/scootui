@@ -32,6 +32,12 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
     });
   }
 
+  void refreshAllFields() {
+    for (final field in state.syncSettings.fields) {
+      _doRefresh(field.variable);
+    }
+  }
+
   void _refresh(String variable) {
     // print("SyncableCubit (${state.syncSettings.channel}): _refresh called for variable: $variable");
     if (_isClosing) return;
