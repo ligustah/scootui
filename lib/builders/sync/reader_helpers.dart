@@ -21,22 +21,22 @@ Duration? durationFromObject(DartObject? obj) {
   return Duration(microseconds: micros!);
 }
 
-List<String> enumFields(EnumElement element) =>
-    element.fields
-        .where((field) => field.name != 'values')
-        .map((field) => field.name)
-        .toList();
+List<String> enumFields(EnumElement element) => element.fields
+    .where((field) => field.name != 'values')
+    .map((field) => field.name)
+    .toList();
 
 SyncSettings stateFromReader(
   ConstantReader reader,
   List<SyncFieldSettings> fields,
-    String? discriminator,
+  List<SyncSetFieldSettings> setFields,
+  String? discriminator,
 ) {
   final channel = reader.read("channel").stringValue;
   final interval = reader.read("interval").objectValue;
   final duration = durationFromObject(interval);
 
-  return SyncSettings(channel, duration!, fields, discriminator);
+  return SyncSettings(channel, duration!, fields, discriminator, setFields);
 }
 
 SyncFieldType syncFieldType(DartType fieldType) {
@@ -52,11 +52,11 @@ SyncFieldType syncFieldType(DartType fieldType) {
     return SyncFieldType.bool;
   }
 
-  if(fieldType.isDartCoreInt) {
+  if (fieldType.isDartCoreInt) {
     return SyncFieldType.int;
   }
 
-  if(fieldType.isDartCoreDouble) {
+  if (fieldType.isDartCoreDouble) {
     return SyncFieldType.double;
   }
 
@@ -64,7 +64,34 @@ SyncFieldType syncFieldType(DartType fieldType) {
     return SyncFieldType.enum_;
   }
 
+  // Check if it's a Set type
+  if (fieldType.isDartCoreSet) {
+    final typeArgs = (fieldType as dynamic).typeArguments;
+    if (typeArgs != null && typeArgs.isNotEmpty) {
+      final elementType = typeArgs[0] as DartType;
+      if (elementType.isDartCoreInt) {
+        return SyncFieldType.set_int;
+      }
+      if (elementType.isDartCoreString) {
+        return SyncFieldType.set_string;
+      }
+    }
+    throw ArgumentError(
+        "Set type must have int or String element type, got $fieldType");
+  }
+
   throw ArgumentError("The supplied type $fieldType is not supported");
+}
+
+SyncFieldType syncSetElementType(String elementType) {
+  switch (elementType) {
+    case "int":
+      return SyncFieldType.set_int;
+    case "string":
+      return SyncFieldType.set_string;
+    default:
+      throw ArgumentError("Unsupported Set element type: $elementType");
+  }
 }
 
 SyncFieldSettings stateFieldFromObject(
@@ -83,7 +110,7 @@ SyncFieldSettings stateFieldFromObject(
     defaultValue = obj.getField("defaultValue")?.toStringValue();
   }
 
-  if(type == SyncFieldType.enum_ && defaultValue == null) {
+  if (type == SyncFieldType.enum_ && defaultValue == null) {
     throw ArgumentError("Enum fields need to declare a default value");
   }
 
@@ -93,6 +120,31 @@ SyncFieldSettings stateFieldFromObject(
     defaultValue: defaultValue,
     typeName: fieldType.getDisplayString(),
     type: type,
+    interval: durationFromObject(interval),
+  );
+}
+
+SyncSetFieldSettings setFieldFromObject(
+  String fieldName,
+  DartType fieldType,
+  DartObject obj,
+) {
+  final setKey = obj.getField("setKey")?.toStringValue();
+  if (setKey == null) {
+    throw ArgumentError("SetField annotation must have a setKey parameter");
+  }
+
+  final elementTypeStr =
+      obj.getField("elementType")?.toStringValue() ?? "string";
+  final interval = obj.getField("interval");
+
+  final elementType = syncSetElementType(elementTypeStr);
+
+  return SyncSetFieldSettings(
+    name: fieldName,
+    setKey: setKey,
+    elementType: elementType,
+    typeName: fieldType.getDisplayString(),
     interval: durationFromObject(interval),
   );
 }

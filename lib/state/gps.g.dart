@@ -75,7 +75,8 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
             defaultValue: "off",
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   GpsData update(String name, String value) {
@@ -87,6 +88,19 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
       altitude: "altitude" != name ? altitude : double.parse(value),
       timestamp: "timestamp" != name ? timestamp : value,
       state: "state" != name ? state : $_GpsStateMap[value] ?? GpsState.off,
+    );
+  }
+
+  @override
+  GpsData updateSet(String name, Set<dynamic> value) {
+    return GpsData(
+      latitude: latitude,
+      longitude: longitude,
+      course: course,
+      speed: speed,
+      altitude: altitude,
+      timestamp: timestamp,
+      state: state,
     );
   }
 

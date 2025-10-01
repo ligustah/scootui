@@ -27,6 +27,7 @@ class _EnumType {
 }
 
 final _stateFieldChecker = TypeChecker.fromRuntime(StateField);
+final _setFieldChecker = TypeChecker.fromRuntime(SetField);
 final _stateDiscriminatorChecker = TypeChecker.fromRuntime(StateDiscriminator);
 
 class StateGenerator extends GeneratorForAnnotation<StateClass> {
@@ -37,6 +38,7 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
     BuildStep buildStep,
   ) sync* {
     final fields = List<SyncFieldSettings>.empty(growable: true);
+    final setFields = List<SyncSetFieldSettings>.empty(growable: true);
     final enumsFields = <String, _EnumType>{};
     String? discriminator;
 
@@ -60,9 +62,14 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
           fields.add(stateFieldFromObject(child.name, child.type, ann));
         }
 
+        for (final ann in _setFieldChecker.annotationsOf(child)) {
+          setFields.add(setFieldFromObject(child.name, child.type, ann));
+        }
+
         for (final ann in _stateDiscriminatorChecker.annotationsOf(child)) {
           if (discriminator != null) {
-            throw ArgumentError("There can only be one discriminator in a state class");
+            throw ArgumentError(
+                "There can only be one discriminator in a state class");
           }
 
           discriminator = child.name;
@@ -84,7 +91,7 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
       }
     }
 
-    final state = stateFromReader(annotation, fields, discriminator);
+    final state = stateFromReader(annotation, fields, setFields, discriminator);
 
     final buf = StringBuffer();
 
@@ -96,6 +103,9 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
       buf.writeln("dynamic get $discriminator;");
     }
     for (final f in fields) {
+      buf.writeln("${f.typeName} get ${f.name};");
+    }
+    for (final f in setFields) {
       buf.writeln("${f.typeName} get ${f.name};");
     }
 
@@ -130,6 +140,49 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
           buf.writeln(
             '${e!.mapName}[value] ?? ${field.typeName}.${field.defaultValue},',
           );
+        case SyncFieldType.set_int:
+        case SyncFieldType.set_string:
+          // Set fields are handled by updateSet(), not update()
+          buf.writeln("${field.name},");
+      }
+    }
+
+    // Preserve Set fields in update() method
+    for (final field in state.setFields) {
+      buf.writeln('${field.name}: ${field.name},');
+    }
+
+    buf.writeln('''
+        );
+      }''');
+
+    // Generate updateSet method for Set fields
+    buf.writeln('''
+      @override
+      ${element.name} updateSet(String name, Set<dynamic> value) {
+       return ${element.name}(
+        ''');
+
+    if (discriminator != null) {
+      buf.writeln("$discriminator:$discriminator,");
+    }
+
+    for (final field in state.fields) {
+      buf.writeln('${field.name}: ${field.name},');
+    }
+
+    for (final field in state.setFields) {
+      buf.write('${field.name}: "${field.name}" != name ? ${field.name} : ');
+
+      switch (field.elementType) {
+        case SyncFieldType.set_int:
+          buf.writeln('value.cast<int>(),');
+          break;
+        case SyncFieldType.set_string:
+          buf.writeln('value.cast<String>(),');
+          break;
+        default:
+          buf.writeln('value,');
       }
     }
 
@@ -137,8 +190,12 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
         );
       }''');
 
+    final allFields = [
+      ...state.fields.map((f) => f.name),
+      ...state.setFields.map((f) => f.name)
+    ];
     buf.writeln(
-      "List<Object?> get props => [${state.fields.map((f) => f.name).join(",")}];",
+      "List<Object?> get props => [${allFields.join(",")}];",
     );
 
     buf.writeln('''
@@ -149,6 +206,10 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
         buf.writeln("${element.name}(");''');
 
     for (final field in fields) {
+      buf.writeln('buf.writeln("\t${field.name} = \$${field.name}");');
+    }
+
+    for (final field in setFields) {
       buf.writeln('buf.writeln("\t${field.name} = \$${field.name}");');
     }
 

@@ -52,7 +52,8 @@ abstract mixin class $DashboardData implements Syncable<DashboardData> {
             defaultValue: null,
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   DashboardData update(String name, String value) {
@@ -62,6 +63,17 @@ abstract mixin class $DashboardData implements Syncable<DashboardData> {
       theme: "theme" != name ? theme : value,
       mode: "mode" != name ? mode : value,
       debug: "debug" != name ? debug : value,
+    );
+  }
+
+  @override
+  DashboardData updateSet(String name, Set<dynamic> value) {
+    return DashboardData(
+      brightness: brightness,
+      backlight: backlight,
+      theme: theme,
+      mode: mode,
+      debug: debug,
     );
   }
 

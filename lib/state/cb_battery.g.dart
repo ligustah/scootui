@@ -137,7 +137,8 @@ abstract mixin class $CbBatteryData implements Syncable<CbBatteryData> {
             defaultValue: null,
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   CbBatteryData update(String name, String value) {
@@ -161,6 +162,27 @@ abstract mixin class $CbBatteryData implements Syncable<CbBatteryData> {
       partNumber: "part-number" != name ? partNumber : value,
       serialNumber: "serial-number" != name ? serialNumber : value,
       uniqueId: "unique-id" != name ? uniqueId : value,
+    );
+  }
+
+  @override
+  CbBatteryData updateSet(String name, Set<dynamic> value) {
+    return CbBatteryData(
+      charge: charge,
+      current: current,
+      remainingCapacity: remainingCapacity,
+      temperature: temperature,
+      cycleCount: cycleCount,
+      timeToFull: timeToFull,
+      timeToEmpty: timeToEmpty,
+      cellVoltage: cellVoltage,
+      fullCapacity: fullCapacity,
+      stateOfHealth: stateOfHealth,
+      present: present,
+      chargeStatus: chargeStatus,
+      partNumber: partNumber,
+      serialNumber: serialNumber,
+      uniqueId: uniqueId,
     );
   }
 

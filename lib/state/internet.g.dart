@@ -95,7 +95,8 @@ abstract mixin class $InternetData implements Syncable<InternetData> {
             defaultValue: null,
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   InternetData update(String name, String value) {
@@ -116,6 +117,21 @@ abstract mixin class $InternetData implements Syncable<InternetData> {
       simImei: "sim-imei" != name ? simImei : value,
       simImsi: "sim-imsi" != name ? simImsi : value,
       simIccid: "sim-iccid" != name ? simIccid : value,
+    );
+  }
+
+  @override
+  InternetData updateSet(String name, Set<dynamic> value) {
+    return InternetData(
+      modemState: modemState,
+      unuCloud: unuCloud,
+      status: status,
+      ipAddress: ipAddress,
+      accessTech: accessTech,
+      signalQuality: signalQuality,
+      simImei: simImei,
+      simImsi: simImsi,
+      simIccid: simIccid,
     );
   }
 

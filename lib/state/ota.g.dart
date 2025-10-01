@@ -52,7 +52,8 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
             defaultValue: "",
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   OtaData update(String name, String value) {
@@ -62,6 +63,17 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       dbcStatus: "status:dbc" != name ? dbcStatus : value,
       mdbStatus: "status:mdb" != name ? mdbStatus : value,
       dbcUpdateVersion: "update-version:dbc" != name ? dbcUpdateVersion : value,
+    );
+  }
+
+  @override
+  OtaData updateSet(String name, Set<dynamic> value) {
+    return OtaData(
+      otaStatus: otaStatus,
+      updateType: updateType,
+      dbcStatus: dbcStatus,
+      mdbStatus: mdbStatus,
+      dbcUpdateVersion: dbcUpdateVersion,
     );
   }
 

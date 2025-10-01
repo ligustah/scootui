@@ -30,7 +30,7 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
   String get serialNumber;
   String get manufacturingDate;
   String get firmwareVersion;
-  int get fault;
+  Set<int> get fault;
   get syncSettings => SyncSettings(
       "battery:$id",
       Duration(microseconds: 30000000),
@@ -140,15 +140,16 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
             typeName: "String",
             defaultValue: null,
             interval: null),
-        SyncFieldSettings(
-            name: "fault",
-            variable: "fault",
-            type: SyncFieldType.int,
-            typeName: "int",
-            defaultValue: null,
-            interval: null),
       ],
-      "id");
+      "id",
+      [
+        SyncSetFieldSettings(
+            name: "fault",
+            setKey: "battery:$id:fault",
+            elementType: SyncFieldType.set_int,
+            typeName: "Set<int>",
+            interval: null),
+      ]);
 
   @override
   BatteryData update(String name, String value) {
@@ -173,7 +174,30 @@ abstract mixin class $BatteryData implements Syncable<BatteryData> {
       manufacturingDate:
           "manufacturing-date" != name ? manufacturingDate : value,
       firmwareVersion: "fw-version" != name ? firmwareVersion : value,
-      fault: "fault" != name ? fault : int.parse(value),
+      fault: fault,
+    );
+  }
+
+  @override
+  BatteryData updateSet(String name, Set<dynamic> value) {
+    return BatteryData(
+      id: id,
+      present: present,
+      state: state,
+      voltage: voltage,
+      current: current,
+      charge: charge,
+      temperature0: temperature0,
+      temperature1: temperature1,
+      temperature2: temperature2,
+      temperature3: temperature3,
+      temperatureState: temperatureState,
+      cycleCount: cycleCount,
+      stateOfHealth: stateOfHealth,
+      serialNumber: serialNumber,
+      manufacturingDate: manufacturingDate,
+      firmwareVersion: firmwareVersion,
+      fault: "fault" != name ? fault : value.cast<int>(),
     );
   }
 

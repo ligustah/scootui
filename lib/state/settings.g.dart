@@ -20,12 +20,20 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
             defaultValue: "false",
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   SettingsData update(String name, String value) {
     return SettingsData(
       showRawSpeed: "dashboard.show-raw-speed" != name ? showRawSpeed : value,
+    );
+  }
+
+  @override
+  SettingsData updateSet(String name, Set<dynamic> value) {
+    return SettingsData(
+      showRawSpeed: showRawSpeed,
     );
   }
 

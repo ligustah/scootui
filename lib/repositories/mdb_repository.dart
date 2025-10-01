@@ -8,7 +8,8 @@ abstract class MDBRepository {
 
   Future<List<(String, String)>> getAll(String channel);
 
-  Future<void> set(String channel, String variable, String value, {bool publish = true});
+  Future<void> set(String channel, String variable, String value,
+      {bool publish = true});
 
   Stream<(String, String)> subscribe(String channel);
 
@@ -21,8 +22,10 @@ abstract class MDBRepository {
 
   // For Redis sets
   Future<List<String>> getSetMembers(String setKey);
+  Future<void> addToSet(String setKey, String member);
+  Future<void> removeFromSet(String setKey, String member);
 
-  Future<void> hdel(String key, String field); // Added method
+  Future<void> hdel(String key, String field);
 }
 
 class InMemoryMDBRepository implements MDBRepository {
@@ -44,12 +47,14 @@ class InMemoryMDBRepository implements MDBRepository {
     set('dashboard', 'brightness', '20.0', publish: false);
 
     // Simulate changing brightness every 10 seconds for testing
-    _brightnessSimulationTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _brightnessSimulationTimer =
+        Timer.periodic(const Duration(seconds: 10), (timer) {
       final random = Random();
       // Simulate brightness values between 5 and 50 lux
       final brightness = 5.0 + random.nextDouble() * 45.0;
       set('dashboard', 'brightness', brightness.toStringAsFixed(1));
-      print('InMemoryMDBRepository: Simulated brightness: ${brightness.toStringAsFixed(1)} lux');
+      print(
+          'InMemoryMDBRepository: Simulated brightness: ${brightness.toStringAsFixed(1)} lux');
     });
   }
 
@@ -81,7 +86,8 @@ class InMemoryMDBRepository implements MDBRepository {
   }
 
   @override
-  Future<void> set(String channel, String variable, String value, {bool publish = true}) async {
+  Future<void> set(String channel, String variable, String value,
+      {bool publish = true}) async {
     _storage.putIfAbsent(channel, () => {});
     _storage[channel]![variable] = value;
 
@@ -142,12 +148,28 @@ class InMemoryMDBRepository implements MDBRepository {
     await set("dashboard", "ready", "true");
   }
 
+  // Separate storage for Sets to avoid confusion with hashes
+  final Map<String, Set<String>> _setStorage = {};
+
   @override
   Future<List<String>> getSetMembers(String setKey) async {
-    // For in-memory implementation, we'll simulate Redis sets using a special format
-    // in our storage map: setKey -> {"member1": "1", "member2": "1", ...}
-    final setData = _storage[setKey] ?? {};
-    return setData.keys.toList();
+    // For in-memory implementation, we maintain a separate storage for Sets
+    final setData = _setStorage[setKey] ?? {};
+    return setData.toList();
+  }
+
+  @override
+  Future<void> addToSet(String setKey, String member) async {
+    _setStorage.putIfAbsent(setKey, () => {});
+    _setStorage[setKey]!.add(member);
+  }
+
+  @override
+  Future<void> removeFromSet(String setKey, String member) async {
+    _setStorage[setKey]?.remove(member);
+    if (_setStorage[setKey]?.isEmpty ?? false) {
+      _setStorage.remove(setKey);
+    }
   }
 
   @override

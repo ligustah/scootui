@@ -20,12 +20,20 @@ abstract mixin class $NavigationData implements Syncable<NavigationData> {
             defaultValue: null,
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   NavigationData update(String name, String value) {
     return NavigationData(
       destination: "destination" != name ? destination : value,
+    );
+  }
+
+  @override
+  NavigationData updateSet(String name, Set<dynamic> value) {
+    return NavigationData(
+      destination: destination,
     );
   }
 

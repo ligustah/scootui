@@ -36,7 +36,8 @@ abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
             defaultValue: null,
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   SpeedLimitData update(String name, String value) {
@@ -44,6 +45,15 @@ abstract mixin class $SpeedLimitData implements Syncable<SpeedLimitData> {
       speedLimit: "speed-limit" != name ? speedLimit : value,
       roadName: "road-name" != name ? roadName : value,
       roadType: "road-type" != name ? roadType : value,
+    );
+  }
+
+  @override
+  SpeedLimitData updateSet(String name, Set<dynamic> value) {
+    return SpeedLimitData(
+      speedLimit: speedLimit,
+      roadName: roadName,
+      roadType: roadType,
     );
   }
 

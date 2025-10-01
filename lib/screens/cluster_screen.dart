@@ -47,7 +47,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
   // Track previous odometer values for animation
   double _previousTrip = 0.0;
   double _previousTotal = 0.0;
-  
+
   // Track blinker state to force animation restart on changes
   BlinkerState? _previousBlinkerState;
   Key _leftBlinkerKey = UniqueKey();
@@ -77,99 +77,105 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
   Widget _buildLeftBlinker(BuildContext context) {
     final vehicleState = VehicleSync.watch(context);
-    
+
     // Check if blinker state has changed and restart animations if needed
     if (_previousBlinkerState != vehicleState.blinkerState) {
       _previousBlinkerState = vehicleState.blinkerState;
       _leftBlinkerKey = UniqueKey(); // Force widget rebuild with new animations
-      _rightBlinkerKey = UniqueKey(); // Force widget rebuild with new animations
+      _rightBlinkerKey =
+          UniqueKey(); // Force widget rebuild with new animations
     }
-    
-    return (vehicleState.blinkerState == BlinkerState.left || vehicleState.blinkerState == BlinkerState.both)
-      ? SizedBox(
-          key: _leftBlinkerKey,
-          width: 56,
-          height: 56,
-          child: Center(
-            child: Transform.scale(
-              scale: 0.8,
-              child: IndicatorLights.leftBlinker(vehicleState),
+
+    return (vehicleState.blinkerState == BlinkerState.left ||
+            vehicleState.blinkerState == BlinkerState.both)
+        ? SizedBox(
+            key: _leftBlinkerKey,
+            width: 56,
+            height: 56,
+            child: Center(
+              child: Transform.scale(
+                scale: 0.8,
+                child: IndicatorLights.leftBlinker(vehicleState),
+              ),
             ),
-          ),
-        )
-      : const SizedBox(width: 56);
+          )
+        : const SizedBox(width: 56);
   }
 
   Widget _buildRightBlinker(BuildContext context) {
     final vehicleState = VehicleSync.watch(context);
-    
-    return (vehicleState.blinkerState == BlinkerState.right || vehicleState.blinkerState == BlinkerState.both)
-      ? SizedBox(
-          key: _rightBlinkerKey,
-          width: 56,
-          height: 56,
-          child: Center(
-            child: Transform.scale(
-              scale: 0.8,
-              child: IndicatorLights.rightBlinker(vehicleState),
+
+    return (vehicleState.blinkerState == BlinkerState.right ||
+            vehicleState.blinkerState == BlinkerState.both)
+        ? SizedBox(
+            key: _rightBlinkerKey,
+            width: 56,
+            height: 56,
+            child: Center(
+              child: Transform.scale(
+                scale: 0.8,
+                child: IndicatorLights.rightBlinker(vehicleState),
+              ),
             ),
-          ),
-        )
-      : const SizedBox(width: 56);
+          )
+        : const SizedBox(width: 56);
   }
 
-
-  Widget _buildWarningIndicators(BuildContext context, dynamic vehicleState, ThemeData theme, bool isDark) {
+  Widget _buildWarningIndicators(BuildContext context, dynamic vehicleState,
+      ThemeData theme, bool isDark) {
     final battery0 = Battery0Sync.watch(context);
     final battery1 = Battery1Sync.watch(context);
-    
+
     final showEngineWarning = vehicleState.isUnableToDrive == Toggle.on;
     final showHazards = vehicleState.blinkerState == BlinkerState.both;
     final showParking = vehicleState.state == ScooterState.parked;
-    final showBatteryFault = (battery0.present && battery0.fault != 0) || (battery1.present && battery1.fault != 0);
-    
-    if (!showEngineWarning && !showHazards && !showParking && !showBatteryFault) {
+    final showBatteryFault = (battery0.present && battery0.fault.isNotEmpty) ||
+        (battery1.present && battery1.fault.isNotEmpty);
+
+    if (!showEngineWarning &&
+        !showHazards &&
+        !showParking &&
+        !showBatteryFault) {
       return const SizedBox.shrink();
     }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-          if (showEngineWarning) ...[
-            IndicatorLights.engineWarning(vehicleState),
-            if (showHazards || showParking || showBatteryFault)
-              const SizedBox(width: 8),
-          ],
-          if (showHazards) ...[
-            IndicatorLights.hazards(vehicleState),
-            if (showParking || showBatteryFault)
-              const SizedBox(width: 8),
-          ],
-          if (showParking) ...[
-            IndicatorLights.parkingBrake(vehicleState),
-            if (showBatteryFault)
-              const SizedBox(width: 8),
-          ],
-          if (showBatteryFault)
-            IndicatorLights.batteryFault(battery0, battery1),
+        if (showEngineWarning) ...[
+          IndicatorLights.engineWarning(vehicleState),
+          if (showHazards || showParking || showBatteryFault)
+            const SizedBox(width: 8),
         ],
+        if (showHazards) ...[
+          IndicatorLights.hazards(vehicleState),
+          if (showParking || showBatteryFault) const SizedBox(width: 8),
+        ],
+        if (showParking) ...[
+          IndicatorLights.parkingBrake(vehicleState),
+          if (showBatteryFault) const SizedBox(width: 8),
+        ],
+        if (showBatteryFault) IndicatorLights.batteryFault(battery0, battery1),
+      ],
     );
   }
 
   bool _hasTelltales(BuildContext context, dynamic vehicleState) {
     final battery0 = Battery0Sync.watch(context);
     final battery1 = Battery1Sync.watch(context);
-    final showBatteryFault = (battery0.present && battery0.fault != 0) || (battery1.present && battery1.fault != 0);
-    
-    return vehicleState.isUnableToDrive == Toggle.on || 
-           vehicleState.blinkerState == BlinkerState.both || 
-           vehicleState.state == ScooterState.parked ||
-           showBatteryFault;
+    final showBatteryFault = (battery0.present && battery0.fault.isNotEmpty) ||
+        (battery1.present && battery1.fault.isNotEmpty);
+
+    return vehicleState.isUnableToDrive == Toggle.on ||
+        vehicleState.blinkerState == BlinkerState.both ||
+        vehicleState.state == ScooterState.parked ||
+        showBatteryFault;
   }
 
-  Widget _buildBottomRow(BuildContext context, dynamic vehicleState, ThemeData theme, bool isDark, double powerOutput) {
+  Widget _buildBottomRow(BuildContext context, dynamic vehicleState,
+      ThemeData theme, bool isDark, double powerOutput) {
     final hasTelltales = _hasTelltales(context, vehicleState);
-    
+
     return SizedBox(
       height: 60, // Fixed height to prevent jitter
       child: AnimatedSwitcher(
@@ -177,7 +183,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
         child: hasTelltales
             ? Center(
                 key: const ValueKey('telltales'),
-                child: _buildWarningIndicators(context, vehicleState, theme, isDark),
+                child: _buildWarningIndicators(
+                    context, vehicleState, theme, isDark),
               )
             : SizedBox(
                 key: const ValueKey('power'),
@@ -194,7 +201,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
   Widget build(BuildContext context) {
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
-    final (odometer, powerOutput) = EngineSync.select(context, (data) => (data.odometer, data.powerOutput));
+    final (odometer, powerOutput) =
+        EngineSync.select(context, (data) => (data.odometer, data.powerOutput));
     final trip = TripCubit.watch(context);
 
     // Store current odometer values before update
@@ -222,7 +230,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
               children: [
                 // Speedometer fills entire area as background
                 SpeedometerDisplay(),
-                
+
                 // Overlay content in Column layout (top to bottom)
                 Padding(
                   padding: const EdgeInsets.all(8),
@@ -230,37 +238,44 @@ class _ClusterScreenState extends State<ClusterScreen> {
                     children: [
                       // Turn-by-turn navigation (top priority)
                       TurnByTurnWidget(),
-                      
+
                       // Conditional spacing (only if turn-by-turn is active)
                       BlocBuilder<NavigationCubit, NavigationState>(
                         builder: (context, navState) {
-                          final hasNavContent = (navState.status == NavigationStatus.idle && navState.hasDestination && navState.hasPendingConditions) ||
-                                                 (navState.hasInstructions && navState.status != NavigationStatus.idle) ||
-                                                 navState.status == NavigationStatus.arrived;
-                          
-                          return hasNavContent ? const SizedBox(height: 8) : const SizedBox.shrink();
+                          final hasNavContent = (navState.status ==
+                                      NavigationStatus.idle &&
+                                  navState.hasDestination &&
+                                  navState.hasPendingConditions) ||
+                              (navState.hasInstructions &&
+                                  navState.status != NavigationStatus.idle) ||
+                              navState.status == NavigationStatus.arrived;
+
+                          return hasNavContent
+                              ? const SizedBox(height: 8)
+                              : const SizedBox.shrink();
                         },
                       ),
-                      
+
                       // Blinker row (below turn-by-turn)
                       Row(
                         children: [
                           // Left blinker
                           _buildLeftBlinker(context),
-                          
+
                           // Spacer
                           const Expanded(child: SizedBox()),
-                          
+
                           // Right blinker
                           _buildRightBlinker(context),
                         ],
                       ),
-                      
+
                       // Free space (expand)
                       const Expanded(child: SizedBox()),
-                      
+
                       // Bottom row with telltales or power display
-                      _buildBottomRow(context, VehicleSync.watch(context), theme, isDark, powerOutput),
+                      _buildBottomRow(context, VehicleSync.watch(context),
+                          theme, isDark, powerOutput),
                     ],
                   ),
                 ),
@@ -272,7 +287,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
                     left: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       color: Colors.red.withOpacity(0.8),
                       child: Text(
                         _errorMessage!,

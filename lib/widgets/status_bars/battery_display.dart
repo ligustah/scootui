@@ -8,6 +8,7 @@ import '../../state/battery.dart';
 import '../../state/cb_battery.dart';
 import '../../state/vehicle.dart';
 import '../../utils/condition_debouncer.dart';
+import '../../utils/fault_codes.dart';
 import '../../utils/toast_utils.dart';
 
 // Battery icon dimensions (scaled from 144x144)
@@ -51,7 +52,7 @@ class BatteryStatusDisplay extends StatelessWidget {
     final backgroundColor = isDark ? Colors.black : Colors.white;
 
     // Check for battery fault
-    final hasFault = battery.present && battery.fault != 0;
+    final hasFault = battery.present && battery.fault.isNotEmpty;
 
     // Determine which icon to show and what text to display
     Widget batteryIcon;
@@ -65,7 +66,8 @@ class BatteryStatusDisplay extends StatelessWidget {
         height: kBatteryIconHeight,
         colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
       );
-    } else if (battery.state == BatteryState.asleep || battery.state == BatteryState.idle) {
+    } else if (battery.state == BatteryState.asleep ||
+        battery.state == BatteryState.idle) {
       // Battery is asleep or idle - show normal charge icon with asleep mask and overlay
       final chargeWidth = (battery.charge / 100.0) * kChargeRectMaxWidth;
 
@@ -165,8 +167,9 @@ class BatteryStatusDisplay extends StatelessWidget {
                 'assets/icons/librescoot-overlay-error.svg',
                 width: kBatteryIconWidth,
                 height: kBatteryIconHeight,
-                colorFilter: !isDark 
-                    ? const ColorFilter.matrix([ // Invert colors for light theme
+                colorFilter: !isDark
+                    ? const ColorFilter.matrix([
+                        // Invert colors for light theme
                         -1.0, 0.0, 0.0, 0.0, 255.0,
                         0.0, -1.0, 0.0, 0.0, 255.0,
                         0.0, 0.0, -1.0, 0.0, 255.0,
@@ -215,7 +218,7 @@ class BatteryWarningIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconColor = isDark ? Colors.white : Colors.black;
-    
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -226,15 +229,16 @@ class BatteryWarningIcon extends StatelessWidget {
           height: kBatteryIconHeight,
           colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
         ),
-        
+
         // Error overlay with built-in colors (white X on black circle)
         // Render with inversion for light theme to make it visible
         SvgPicture.asset(
           'assets/icons/librescoot-overlay-error.svg',
           width: kBatteryIconWidth,
           height: kBatteryIconHeight,
-          colorFilter: !isDark 
-              ? const ColorFilter.matrix([ // Invert colors for light theme
+          colorFilter: !isDark
+              ? const ColorFilter.matrix([
+                  // Invert colors for light theme
                   -1.0, 0.0, 0.0, 0.0, 255.0,
                   0.0, -1.0, 0.0, 0.0, 255.0,
                   0.0, 0.0, -1.0, 0.0, 255.0,
@@ -251,7 +255,8 @@ class BatteryWarningIndicators extends StatefulWidget {
   const BatteryWarningIndicators({super.key});
 
   @override
-  State<BatteryWarningIndicators> createState() => _BatteryWarningIndicatorsState();
+  State<BatteryWarningIndicators> createState() =>
+      _BatteryWarningIndicatorsState();
 }
 
 class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
@@ -276,7 +281,8 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     _auxCriticalVoltageDebouncer = ConditionDebouncer(delay: debounceDelay);
   }
 
-  bool _shouldShowCbWarning(CbBatteryData cbBattery, BatteryData mainBattery, VehicleData vehicle) {
+  bool _shouldShowCbWarning(
+      CbBatteryData cbBattery, BatteryData mainBattery, VehicleData vehicle) {
     final cbChargeOk = cbBattery.charge < 95;
     final cbNotCharging = cbBattery.chargeStatus == ChargeStatus.notCharging;
     final mainPresent = mainBattery.present;
@@ -284,45 +290,52 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     final mainActive = mainBattery.state == BatteryState.active;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
-    print('CB Warning Check: cbCharge=${cbBattery.charge} (<95: $cbChargeOk), cbStatus=${cbBattery.chargeStatus} (notCharging: $cbNotCharging), mainPresent=$mainPresent, mainCharge=${mainBattery.charge} (>0: $mainNonZero), mainState=${mainBattery.state} (active: $mainActive), seatboxClosed=$seatboxClosed');
-
-    return cbChargeOk && cbNotCharging && mainPresent && mainNonZero && mainActive && seatboxClosed;
+    return cbChargeOk &&
+        cbNotCharging &&
+        mainPresent &&
+        mainNonZero &&
+        mainActive &&
+        seatboxClosed;
   }
 
-  bool _shouldShowAuxLowChargeWarning(AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
+  bool _shouldShowAuxLowChargeWarning(
+      AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final auxLowCharge = auxBattery.charge <= 25;
-    final auxNotCharging = auxBattery.chargeStatus == AuxChargeStatus.notCharging;
+    final auxNotCharging =
+        auxBattery.chargeStatus == AuxChargeStatus.notCharging;
     final mainPresent = mainBattery.present;
     final mainNonZero = mainBattery.charge > 0;
     final mainActive = mainBattery.state == BatteryState.active;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
-    print('AUX Low Charge Warning Check: auxCharge=${auxBattery.charge} (<=25: $auxLowCharge), auxStatus=${auxBattery.chargeStatus} (notCharging: $auxNotCharging), mainPresent=$mainPresent, mainCharge=${mainBattery.charge} (>0: $mainNonZero), mainState=${mainBattery.state} (active: $mainActive), seatboxClosed=$seatboxClosed');
-
-    return auxLowCharge && auxNotCharging && mainPresent && mainNonZero && mainActive && seatboxClosed;
+    return auxLowCharge &&
+        auxNotCharging &&
+        mainPresent &&
+        mainNonZero &&
+        mainActive &&
+        seatboxClosed;
   }
 
-  bool _shouldShowAuxLowVoltageWarning(AuxBatteryData auxBattery, VehicleData vehicle) {
+  bool _shouldShowAuxLowVoltageWarning(
+      AuxBatteryData auxBattery, VehicleData vehicle) {
     final lowVoltage = auxBattery.voltage < 11500;
     final notCharging = auxBattery.chargeStatus == AuxChargeStatus.notCharging;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
-    print('AUX Low Voltage Warning Check: auxVoltage=${auxBattery.voltage} (<11500: $lowVoltage), auxStatus=${auxBattery.chargeStatus} (notCharging: $notCharging), seatboxClosed=$seatboxClosed');
-
     return lowVoltage && notCharging && seatboxClosed;
   }
 
-  bool _shouldShowAuxCriticalVoltageWarning(AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
+  bool _shouldShowAuxCriticalVoltageWarning(
+      AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final criticalVoltage = auxBattery.voltage < 11000; // 11.0V = 11000mV
     final mainPresent = mainBattery.present;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
-    print('AUX Critical Voltage Warning Check: auxVoltage=${auxBattery.voltage} (<11000: $criticalVoltage), mainPresent=$mainPresent, seatboxClosed=$seatboxClosed');
-
     return criticalVoltage && seatboxClosed;
   }
 
-  void _showToastIfNeeded(BuildContext context, String message, bool wasShown, Function(bool) setShown) {
+  void _showToastIfNeeded(BuildContext context, String message, bool wasShown,
+      Function(bool) setShown) {
     if (!wasShown && mounted) {
       ToastUtils.showWarningToast(context, message);
       setShown(true);
@@ -339,49 +352,67 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
 
     // Check warning conditions and apply debouncing
     final cbCondition = _shouldShowCbWarning(cbBattery, mainBattery, vehicle);
-    final auxLowChargeCondition = _shouldShowAuxLowChargeWarning(auxBattery, mainBattery, vehicle);
-    final auxLowVoltageCondition = _shouldShowAuxLowVoltageWarning(auxBattery, vehicle);
-    final auxCriticalVoltageCondition = _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery, vehicle);
+    final auxLowChargeCondition =
+        _shouldShowAuxLowChargeWarning(auxBattery, mainBattery, vehicle);
+    final auxLowVoltageCondition =
+        _shouldShowAuxLowVoltageWarning(auxBattery, vehicle);
+    final auxCriticalVoltageCondition =
+        _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery, vehicle);
 
     // Apply debouncing - warnings only show after condition is true for 3 seconds
     final showCbWarning = _cbWarningDebouncer.update(cbCondition);
-    final showAuxLowChargeWarning = _auxLowChargeDebouncer.update(auxLowChargeCondition);
-    final showAuxLowVoltageWarning = _auxLowVoltageDebouncer.update(auxLowVoltageCondition);
-    final showAuxCriticalVoltageWarning = _auxCriticalVoltageDebouncer.update(auxCriticalVoltageCondition);
-    final showAnyAuxWarning = showAuxLowChargeWarning || showAuxLowVoltageWarning || showAuxCriticalVoltageWarning;
+    final showAuxLowChargeWarning =
+        _auxLowChargeDebouncer.update(auxLowChargeCondition);
+    final showAuxLowVoltageWarning =
+        _auxLowVoltageDebouncer.update(auxLowVoltageCondition);
+    final showAuxCriticalVoltageWarning =
+        _auxCriticalVoltageDebouncer.update(auxCriticalVoltageCondition);
+    final showAnyAuxWarning = showAuxLowChargeWarning ||
+        showAuxLowVoltageWarning ||
+        showAuxCriticalVoltageWarning;
 
     // Show toast notifications
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (showCbWarning) {
-        _showToastIfNeeded(context, "CB Battery not charging", _cbWarningShown, (shown) => _cbWarningShown = shown);
+        _showToastIfNeeded(context, "CB Battery not charging", _cbWarningShown,
+            (shown) => _cbWarningShown = shown);
       } else {
         _cbWarningShown = false;
       }
 
       if (showAuxLowChargeWarning) {
-        _showToastIfNeeded(context, "AUX Battery low and not charging", _auxLowChargeWarningShown, (shown) => _auxLowChargeWarningShown = shown);
+        _showToastIfNeeded(
+            context,
+            "AUX Battery low and not charging",
+            _auxLowChargeWarningShown,
+            (shown) => _auxLowChargeWarningShown = shown);
       } else {
         _auxLowChargeWarningShown = false;
       }
 
       if (showAuxLowVoltageWarning) {
-        _showToastIfNeeded(context, "AUX Battery voltage low", _auxLowVoltageWarningShown, (shown) => _auxLowVoltageWarningShown = shown);
+        _showToastIfNeeded(
+            context,
+            "AUX Battery voltage low",
+            _auxLowVoltageWarningShown,
+            (shown) => _auxLowVoltageWarningShown = shown);
       } else {
         _auxLowVoltageWarningShown = false;
       }
 
       if (showAuxCriticalVoltageWarning) {
-        final message = mainBattery.present 
+        final message = mainBattery.present
             ? "AUX Battery voltage very low - may need replacement"
             : "AUX Battery voltage very low - insert main battery to charge";
-        _showToastIfNeeded(context, message, _auxCriticalVoltageWarningShown, (shown) => _auxCriticalVoltageWarningShown = shown);
+        _showToastIfNeeded(context, message, _auxCriticalVoltageWarningShown,
+            (shown) => _auxCriticalVoltageWarningShown = shown);
       } else {
         _auxCriticalVoltageWarningShown = false;
       }
     });
 
     final List<Widget> warningIcons = [];
-    
+
     if (showCbWarning) {
       warningIcons.add(
         BatteryWarningIcon(
@@ -390,7 +421,7 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
         ),
       );
     }
-    
+
     if (showAnyAuxWarning) {
       warningIcons.add(
         BatteryWarningIcon(
@@ -424,16 +455,16 @@ class SeatboxIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final vehicle = VehicleSync.watch(context);
     final ThemeState(:isDark) = ThemeCubit.watch(context);
-    
+
     final iconColor = isDark ? Colors.white : Colors.black;
-    
+
     // Show seatbox open icon when seatbox:lock is not "closed"
     final showSeatboxOpen = vehicle.seatboxLock != SeatboxLock.closed;
-    
+
     if (!showSeatboxOpen) {
       return const SizedBox.shrink();
     }
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -463,8 +494,8 @@ class CombinedBatteryDisplay extends StatefulWidget {
 
 class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
   int? _lastSoc;
-  int? _lastBattery0Fault;
-  int? _lastBattery1Fault;
+  Set<int>? _lastBattery0Fault;
+  Set<int>? _lastBattery1Fault;
 
   void _checkBatteryWarnings(int soc) {
     if (_lastSoc == null || _lastSoc == soc) {
@@ -493,52 +524,55 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
     _lastSoc = soc;
   }
 
-  // Battery fault code descriptions
-  static const Map<int, String> _batteryFaultDescriptions = {
-    1: "Over-temperature while charging",
-    2: "Under-temperature while charging", 
-    3: "Over-temperature while discharging",
-    4: "Under-temperature while discharging",
-    5: "Signal wire broken",
-    6: "Critical over-temperature level",
-    7: "Pack over-voltage",
-    8: "MOSFET over-temperature",
-    9: "Cell over-voltage",
-    10: "Pack under-voltage",
-    11: "Cell under-voltage",
-    12: "Over-current while charging",
-    13: "Over-current while discharging",
-    14: "Short-circuit",
-    15: "Reserved",
-    16: "Reserved 2",
-    32: "BMS not following commands",
-    33: "BMS has zero data",
-    34: "BMS communication error",
-    35: "NFC reader error",
-  };
+  String _formatBatteryFaults(Set<int> faultCodes) {
+    if (faultCodes.isEmpty) return "";
 
-  String _formatBatteryFault(int faultCode) {
-    final description = _batteryFaultDescriptions[faultCode] ?? "Unknown fault";
-    return "B$faultCode - $description";
+    if (faultCodes.length == 1) {
+      // Single fault: show with full description
+      return FaultFormatter.formatSingleFault(faultCodes.first);
+    }
+
+    // Multiple faults: show comma-separated list
+    return FaultFormatter.formatMultipleFaults(faultCodes);
   }
 
   void _checkBatteryFaults(BatteryData battery0, BatteryData battery1) {
-    // Check for new battery:0 fault (main battery - use persistent toast)
-    if (battery0.present && battery0.fault != 0 && 
+    // Check for new battery:0 fault (main battery)
+    if (battery0.present &&
+        battery0.fault.isNotEmpty &&
         (_lastBattery0Fault == null || _lastBattery0Fault != battery0.fault)) {
       if (mounted) {
-        final faultMessage = _formatBatteryFault(battery0.fault);
-        ToastUtils.showPersistentErrorToast(context, "Battery 0: $faultMessage");
+        final faultMessage = _formatBatteryFaults(battery0.fault);
+        final hasCritical = FaultFormatter.hasAnyCritical(battery0.fault);
+        final title = battery0.fault.length > 1
+            ? FaultFormatter.getMultipleFaultsTitle(battery0.fault)
+            : "Battery 0";
+
+        if (hasCritical) {
+          ToastUtils.showPersistentErrorToast(context, "$title: $faultMessage");
+        } else {
+          ToastUtils.showWarningToast(context, "$title: $faultMessage");
+        }
       }
     }
     _lastBattery0Fault = battery0.fault;
 
-    // Check for new battery:1 fault (secondary battery - regular toast)
-    if (battery1.present && battery1.fault != 0 && 
+    // Check for new battery:1 fault (secondary battery)
+    if (battery1.present &&
+        battery1.fault.isNotEmpty &&
         (_lastBattery1Fault == null || _lastBattery1Fault != battery1.fault)) {
       if (mounted) {
-        final faultMessage = _formatBatteryFault(battery1.fault);
-        ToastUtils.showWarningToast(context, "Battery 1: $faultMessage");
+        final faultMessage = _formatBatteryFaults(battery1.fault);
+        final hasCritical = FaultFormatter.hasAnyCritical(battery1.fault);
+        final title = battery1.fault.length > 1
+            ? FaultFormatter.getMultipleFaultsTitle(battery1.fault)
+            : "Battery 1";
+
+        if (hasCritical) {
+          ToastUtils.showPersistentErrorToast(context, "$title: $faultMessage");
+        } else {
+          ToastUtils.showWarningToast(context, "$title: $faultMessage");
+        }
       }
     }
     _lastBattery1Fault = battery1.fault;
@@ -552,7 +586,7 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
 
     // Check for battery warnings
     _checkBatteryWarnings(battery0.charge);
-    
+
     // Check for battery faults
     _checkBatteryFaults(battery0, battery1);
 

@@ -41,7 +41,8 @@ abstract mixin class $BluetoothData implements Syncable<BluetoothData> {
             defaultValue: null,
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   BluetoothData update(String name, String value) {
@@ -51,6 +52,15 @@ abstract mixin class $BluetoothData implements Syncable<BluetoothData> {
           : $_ConnectionStatusMap[value] ?? ConnectionStatus.disconnected,
       macAddress: "mac-address" != name ? macAddress : value,
       pinCode: "pin-code" != name ? pinCode : value,
+    );
+  }
+
+  @override
+  BluetoothData updateSet(String name, Set<dynamic> value) {
+    return BluetoothData(
+      status: status,
+      macAddress: macAddress,
+      pinCode: pinCode,
     );
   }
 

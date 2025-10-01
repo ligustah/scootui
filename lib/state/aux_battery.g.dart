@@ -51,7 +51,8 @@ abstract mixin class $AuxBatteryData implements Syncable<AuxBatteryData> {
             defaultValue: "floatCharge",
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   AuxBatteryData update(String name, String value) {
@@ -63,6 +64,16 @@ abstract mixin class $AuxBatteryData implements Syncable<AuxBatteryData> {
       chargeStatus: "charge-status" != name
           ? chargeStatus
           : $_AuxChargeStatusMap[value] ?? AuxChargeStatus.floatCharge,
+    );
+  }
+
+  @override
+  AuxBatteryData updateSet(String name, Set<dynamic> value) {
+    return AuxBatteryData(
+      dateStreamEnable: dateStreamEnable,
+      voltage: voltage,
+      charge: charge,
+      chargeStatus: chargeStatus,
     );
   }
 

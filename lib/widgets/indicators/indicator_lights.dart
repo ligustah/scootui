@@ -8,7 +8,8 @@ import 'indicator_light.dart';
 final class IndicatorLights {
   static IndicatorLight rightBlinker(VehicleData state) => IndicatorLight(
         icon: IndicatorLight.svgAsset('librescoot-turn-right.svg'),
-        isActive: state.blinkerState == BlinkerState.right || state.blinkerState == BlinkerState.both,
+        isActive: state.blinkerState == BlinkerState.right ||
+            state.blinkerState == BlinkerState.both,
         activeColor: Colors.green,
         size: 64,
         blinking: true,
@@ -16,7 +17,8 @@ final class IndicatorLights {
 
   static IndicatorLight leftBlinker(VehicleData state) => IndicatorLight(
         icon: IndicatorLight.svgAsset('librescoot-turn-left.svg'),
-        isActive: state.blinkerState == BlinkerState.left || state.blinkerState == BlinkerState.both,
+        isActive: state.blinkerState == BlinkerState.left ||
+            state.blinkerState == BlinkerState.both,
         activeColor: Colors.green,
         size: 64,
         blinking: true,
@@ -44,9 +46,13 @@ final class IndicatorLights {
         blinking: true,
       );
 
-  static IndicatorLight batteryFault(BatteryData battery0, BatteryData battery1) => IndicatorLight(
-        icon: IndicatorLight.svgAsset('librescoot-propulsion-battery-fault.svg'),
-        isActive: (battery0.present && battery0.fault != 0) || (battery1.present && battery1.fault != 0),
+  static IndicatorLight batteryFault(
+          BatteryData battery0, BatteryData battery1) =>
+      IndicatorLight(
+        icon:
+            IndicatorLight.svgAsset('librescoot-propulsion-battery-fault.svg'),
+        isActive: (battery0.present && battery0.fault.isNotEmpty) ||
+            (battery1.present && battery1.fault.isNotEmpty),
         activeColor: Colors.yellow,
         size: 36,
       );

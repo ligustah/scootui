@@ -158,7 +158,8 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
             defaultValue: "off",
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   VehicleData update(String name, String value) {
@@ -196,6 +197,24 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
       isUnableToDrive: "unable-to-drive" != name
           ? isUnableToDrive
           : $_ToggleMap[value] ?? Toggle.off,
+    );
+  }
+
+  @override
+  VehicleData updateSet(String name, Set<dynamic> value) {
+    return VehicleData(
+      blinkerState: blinkerState,
+      blinkerSwitch: blinkerSwitch,
+      brakeLeft: brakeLeft,
+      brakeRight: brakeRight,
+      kickstand: kickstand,
+      state: state,
+      handleBarLockSensor: handleBarLockSensor,
+      handleBarPosition: handleBarPosition,
+      seatboxButton: seatboxButton,
+      seatboxLock: seatboxLock,
+      hornButton: hornButton,
+      isUnableToDrive: isUnableToDrive,
     );
   }
 

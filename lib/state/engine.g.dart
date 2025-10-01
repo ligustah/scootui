@@ -113,7 +113,8 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
             defaultValue: null,
             interval: null),
       ],
-      "null");
+      "null",
+      []);
 
   @override
   EngineData update(String name, String value) {
@@ -132,6 +133,24 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
       firmwareVersion: "fw-version" != name ? firmwareVersion : value,
       odometer: "odometer" != name ? odometer : double.parse(value),
       temperature: "temperature" != name ? temperature : double.parse(value),
+    );
+  }
+
+  @override
+  EngineData updateSet(String name, Set<dynamic> value) {
+    return EngineData(
+      powerState: powerState,
+      kers: kers,
+      kersReasonOff: kersReasonOff,
+      motorVoltage: motorVoltage,
+      motorCurrent: motorCurrent,
+      rpm: rpm,
+      speed: speed,
+      rawSpeed: rawSpeed,
+      throttle: throttle,
+      firmwareVersion: firmwareVersion,
+      odometer: odometer,
+      temperature: temperature,
     );
   }
 

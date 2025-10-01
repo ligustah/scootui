@@ -12,6 +12,7 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
   bool _isClosing = false;
   final Map<String, Timer> _timers = {};
   final Map<String, SyncFieldSettings> _fields = {};
+  final Map<String, SyncSetFieldSettings> _setFields = {};
 
   void _doRefresh(String variable) {
     // print("SyncableCubit (${state.syncSettings.channel}): _doRefresh called for variable: $variable");
@@ -25,16 +26,61 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
       // If variable is 'destination' and value is null, it means it was cleared.
       // We should emit an update with an empty string or handle as cleared.
       // The `update` method in `NavigationData` should handle `null` appropriately for `destination`.
-      emit(state.update(variable, value ?? "")); // Pass empty string if null, or let `update` handle null
+      emit(state.update(
+          variable,
+          value ??
+              "")); // Pass empty string if null, or let `update` handle null
       _refresh(variable);
     }).catchError((e) {
-      print("SyncableCubit (${state.syncSettings.channel}): Error in _doRefresh for $variable: $e");
+      print(
+          "SyncableCubit (${state.syncSettings.channel}): Error in _doRefresh for $variable: $e");
+    });
+  }
+
+  void _doRefreshSet(String name, SyncSetFieldSettings field) {
+    // Interpolate discriminator if needed
+    String interpolateKey(String key) {
+      if (field.setKey.contains('\$')) {
+        // Simple string interpolation for discriminator
+        final discriminator = state.syncSettings.discriminator;
+        if (discriminator != null) {
+          final discriminatorValue = (state as dynamic).id ?? '';
+          return key.replaceAll('\$$discriminator', discriminatorValue);
+        }
+      }
+      return key;
+    }
+
+    final setKey = interpolateKey(field.setKey);
+
+    redisRepository.getSetMembers(setKey).then((members) {
+      Set<dynamic> parsedSet;
+
+      switch (field.elementType) {
+        case SyncFieldType.set_int:
+          parsedSet = members.map((m) => int.tryParse(m) ?? 0).toSet();
+          break;
+        case SyncFieldType.set_string:
+          parsedSet = members.toSet();
+          break;
+        default:
+          parsedSet = members.toSet();
+      }
+
+      emit(state.updateSet(name, parsedSet));
+      _refreshSet(name, field);
+    }).catchError((e) {
+      print(
+          "SyncableCubit (${state.syncSettings.channel}): Error in _doRefreshSet for $name: $e");
     });
   }
 
   void refreshAllFields() {
     for (final field in state.syncSettings.fields) {
       _doRefresh(field.variable);
+    }
+    for (final field in state.syncSettings.setFields) {
+      _doRefreshSet(field.name, field);
     }
   }
 
@@ -43,12 +89,28 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
     if (_isClosing) return;
 
     Timer getTimer() {
-      final newInterval = _fields[variable]?.interval ?? state.syncSettings.interval;
+      final newInterval =
+          _fields[variable]?.interval ?? state.syncSettings.interval;
 
       return Timer(newInterval, () => _doRefresh(variable));
     }
 
     _timers.update(variable, (activeTimer) {
+      activeTimer.cancel();
+      return getTimer();
+    }, ifAbsent: getTimer);
+  }
+
+  void _refreshSet(String name, SyncSetFieldSettings field) {
+    if (_isClosing) return;
+
+    Timer getTimer() {
+      final newInterval = field.interval ?? state.syncSettings.interval;
+      return Timer(newInterval, () => _doRefreshSet(name, field));
+    }
+
+    final timerKey = "set:$name";
+    _timers.update(timerKey, (activeTimer) {
       activeTimer.cancel();
       return getTimer();
     }, ifAbsent: getTimer);
@@ -74,15 +136,29 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
       _refresh(field.variable);
     }
 
+    // set up all set field timers
+    for (final field in settings.setFields) {
+      _setFields[field.name] = field;
+      _doRefreshSet(field.name, field);
+    }
+
     redisRepository.subscribe(settings.channel).forEach((rec) {
-      final (channel, pubSubVar) = rec; // Renamed to avoid confusion with loop variable
+      final (channel, pubSubVar) =
+          rec; // Renamed to avoid confusion with loop variable
       // print("SyncableCubit (${state.syncSettings.channel}): Received PUBSUB message on channel '$channel': $pubSubVar");
 
       if (channel == settings.channel) {
-        _doRefresh(pubSubVar); // Use the variable from PUBSUB message
+        // Check if this is a set field update
+        final setField = _setFields[pubSubVar];
+        if (setField != null) {
+          _doRefreshSet(pubSubVar, setField);
+        } else {
+          _doRefresh(pubSubVar); // Use the variable from PUBSUB message
+        }
       }
     }).catchError((e) {
-      print("SyncableCubit (${state.syncSettings.channel}): Error in PUBSUB subscription: $e");
+      print(
+          "SyncableCubit (${state.syncSettings.channel}): Error in PUBSUB subscription: $e");
     });
   }
 

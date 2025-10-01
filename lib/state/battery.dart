@@ -74,8 +74,8 @@ class BatteryData extends Equatable with $BatteryData {
   final String firmwareVersion;
 
   @override
-  @StateField()
-  final int fault;
+  @SetField(setKey: "battery:\$id:fault", elementType: "int")
+  final Set<int> fault;
 
   @override
   List<Object?> get props => [
@@ -115,7 +115,7 @@ class BatteryData extends Equatable with $BatteryData {
     this.temperature2 = 0,
     this.temperature3 = 0,
     this.temperatureState = "",
-    this.fault = 0,
+    this.fault = const {},
   });
 
   // Create a copy of this BatteryData with the given fields replaced
@@ -136,7 +136,7 @@ class BatteryData extends Equatable with $BatteryData {
     String? serialNumber,
     String? manufacturingDate,
     String? firmwareVersion,
-    int? fault,
+    Set<int>? fault,
   }) {
     return BatteryData(
       id: id ?? this.id,
