@@ -20,7 +20,13 @@ class VersionOverlayCubit extends Cubit<bool> {
       : _mdbRepository = mdbRepository,
         super(false) {
     // Subscribe to direct button events channel for more responsive UI
-    _buttonEventsSubscription = _mdbRepository.subscribe("buttons").listen(_handleButtonEvent);
+    _buttonEventsSubscription = _mdbRepository.subscribe("buttons").listen(
+      _handleButtonEvent,
+      onError: (e) {
+        print('VERSION_OVERLAY: Error in button subscription: $e');
+      },
+      cancelOnError: false,
+    );
   }
 
   static VersionOverlayCubit create(BuildContext context) {

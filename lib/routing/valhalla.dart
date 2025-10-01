@@ -240,20 +240,21 @@ class ValhallaService {
     // print('ValhallaService: Request to $serverURL$_routeEndpoint');
     // print('ValhallaService: Request data: $requestData');
 
-    final response = await _dio.post(
-      _routeEndpoint,
-      data: requestData,
-    );
+    try {
+      final response = await _dio.post(
+        _routeEndpoint,
+        data: requestData,
+      );
 
-    // print('ValhallaService: Response status: ${response.statusCode}');
-    // print('ValhallaService: Response data: ${response.data}');
+      // print('ValhallaService: Response status: ${response.statusCode}');
+      // print('ValhallaService: Response data: ${response.data}');
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to get route from Valhalla');
-    }
+      if (response.statusCode != 200) {
+        throw Exception('Failed to get route from Valhalla');
+      }
 
-    final valhallaResponse = ValhallaResponse.fromJson(response.data);
-    final leg = valhallaResponse.trip.legs.first;
+      final valhallaResponse = ValhallaResponse.fromJson(response.data);
+      final leg = valhallaResponse.trip.legs.first;
 
     final List<LatLng> waypoints = [];
     final List<RouteInstruction> instructions = [];
@@ -291,6 +292,32 @@ class ValhallaService {
       waypoints: waypoints,
       instructions: instructions,
     );
+    } on DioException catch (e) {
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+          throw Exception('Connection to routing server timed out. Please try again.');
+        case DioExceptionType.receiveTimeout:
+          throw Exception('Routing server took too long to respond. Please try again.');
+        case DioExceptionType.connectionError:
+          throw Exception('Cannot connect to routing server. Check your connection.');
+        case DioExceptionType.badResponse:
+          final statusCode = e.response?.statusCode;
+          if (statusCode == 400) {
+            throw Exception('Invalid route request. Destination may be unreachable.');
+          } else if (statusCode == 429) {
+            throw Exception('Too many routing requests. Please wait a moment.');
+          } else if (statusCode != null && statusCode >= 500) {
+            throw Exception('Routing server error. Please try again later.');
+          }
+          throw Exception('Routing request failed: ${e.response?.statusMessage ?? "Unknown error"}');
+        case DioExceptionType.cancel:
+          throw Exception('Routing request was cancelled.');
+        default:
+          throw Exception('Routing failed: ${e.message ?? "Unknown error"}');
+      }
+    } catch (e) {
+      throw Exception('Failed to calculate route: $e');
+    }
   }
 
   RouteInstruction? _createInstruction(Maneuver maneuver, double distance, LatLng location, int roundaboutExitCount) {

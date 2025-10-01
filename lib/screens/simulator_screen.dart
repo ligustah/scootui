@@ -33,6 +33,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   // System values
   int _signalQuality = 0;
   String? _errorMessage;
+  StreamSubscription? _connectionStateSubscription;
 
   // Current states
   String _blinkerState = 'off';
@@ -80,14 +81,44 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   void initState() {
     super.initState();
     _loadInitialValues();
+    _setupConnectionStateListener();
+  }
+
+  void _setupConnectionStateListener() {
+    try {
+      final dynamic repo = widget.repository;
+      if (repo.connectionStateStream != null) {
+        _connectionStateSubscription = (repo.connectionStateStream as Stream).listen((connectionState) {
+          final stateStr = connectionState.toString().split('.').last;
+          if (stateStr == 'connected' && _errorMessage != null) {
+            // Retry loading values when reconnected
+            _loadInitialValues();
+          }
+        });
+      }
+    } catch (e) {
+      // Repository doesn't support connection state monitoring
+    }
   }
 
   Future<void> _loadInitialValues() async {
-    // Load current values from Redis
-    await _loadCurrentValues();
+    try {
+      // Load current values from Redis
+      await _loadCurrentValues();
 
-    // Initialize values if not already set
-    await _initializeValues();
+      // Initialize values if not already set
+      await _initializeValues();
+
+      // Clear error if successful
+      _clearErrorMessage();
+    } catch (e) {
+      // Error already set by _loadCurrentValues, or set it here
+      if (_errorMessage == null) {
+        setState(() {
+          _errorMessage = 'Error initializing: $e';
+        });
+      }
+    }
   }
 
   Future<void> _loadCurrentValues() async {
@@ -231,6 +262,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     }
   }
 
+  void _clearErrorMessage() {
+    if (_errorMessage != null) {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
+  }
+
   Future<void> _initializeValues() async {
     // Initialize engine values
     await _updateEngineValues();
@@ -351,7 +390,12 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   }
 
   Future<void> _publishEvent(String channel, String key, String value) async {
-    await widget.repository.set(channel, key, value);
+    try {
+      await widget.repository.set(channel, key, value);
+      _clearErrorMessage(); // Clear error when operation succeeds
+    } catch (e) {
+      // Silently ignore Redis errors in simulator - it will reconnect automatically
+    }
   }
 
   void _startGpsTimestampSimulation() {
@@ -438,6 +482,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   @override
   void dispose() {
     _gpsTimestampTimer?.cancel();
+    _connectionStateSubscription?.cancel();
     super.dispose();
   }
 
